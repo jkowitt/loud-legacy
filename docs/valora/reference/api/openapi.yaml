@@ -1,0 +1,544 @@
+openapi: 3.0.3
+info:
+  title: VALORA Public API
+  version: 1.0.0
+  description: |
+    REST API for instant asset valuation, usage metering, and administration.
+servers:
+  - url: https://api.valora.app/v1
+    description: Production
+  - url: https://staging.api.valora.app/v1
+    description: Staging
+tags:
+  - name: Valuations
+  - name: Jobs
+  - name: Comparables
+  - name: Usage
+  - name: Webhooks
+paths:
+  /valuations:
+    post:
+      summary: Create a valuation
+      description: |
+        Submits an asset for valuation. Depending on plan quotas and cache hits,
+        returns a synchronous valuation or a `202 Accepted` for asynchronous processing.
+      operationId: createValuation
+      tags: [Valuations]
+      security:
+        - OAuth2: [valuations:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateValuationRequest'
+      responses:
+        '200':
+          description: Valuation generated synchronously.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValuationResponse'
+        '202':
+          description: Accepted for asynchronous processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /valuations/{valuationId}:
+    get:
+      summary: Retrieve a valuation
+      tags: [Valuations]
+      operationId: getValuation
+      security:
+        - OAuth2: [valuations:read]
+      parameters:
+        - $ref: '#/components/parameters/ValuationId'
+      responses:
+        '200':
+          description: Valuation found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValuationResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /valuations/bulk:
+    post:
+      summary: Submit bulk valuation CSV
+      tags: [Valuations, Jobs]
+      operationId: createBulkValuationJob
+      security:
+        - OAuth2: [valuations:write]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file containing assets for valuation.
+                options:
+                  type: object
+                  additionalProperties: true
+                  description: Optional bulk processing overrides.
+      responses:
+        '202':
+          description: Job accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedResponse'
+        '415':
+          description: Unsupported media type.
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+  /jobs/{jobId}:
+    get:
+      summary: Fetch job status
+      tags: [Jobs]
+      operationId: getJobStatus
+      security:
+        - OAuth2: [jobs:read]
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Job status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /comps/search:
+    get:
+      summary: Search comparables
+      tags: [Comparables]
+      operationId: searchComparables
+      security:
+        - OAuth2: [comps:read]
+      parameters:
+        - name: class
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/AssetClass'
+        - name: latitude
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: longitude
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: radius_mi
+          in: query
+          schema:
+            type: number
+            format: double
+            default: 5
+        - name: filters
+          in: query
+          schema:
+            type: string
+            description: JSON-encoded filter options.
+      responses:
+        '200':
+          description: Comparable results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComparableSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /usage:
+    get:
+      summary: Retrieve current usage
+      tags: [Usage]
+      operationId: getUsage
+      security:
+        - OAuth2: [usage:read]
+      responses:
+        '200':
+          description: Monthly usage and costs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageResponse'
+  /webhooks:
+    post:
+      summary: Register a webhook endpoint
+      tags: [Webhooks]
+      operationId: registerWebhook
+      security:
+        - OAuth2: [webhooks:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookRegistration'
+      responses:
+        '201':
+          description: Webhook registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '409':
+          description: Webhook already exists.
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.valora.app/oauth/token
+          scopes:
+            valuations:write: Submit valuation requests
+            valuations:read: Read valuations
+            jobs:read: Inspect job status
+            comps:read: Search comparable assets
+            usage:read: View usage data
+            webhooks:write: Manage webhooks
+  parameters:
+    ValuationId:
+      name: valuationId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Identifier returned when the valuation was created.
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Bulk job identifier.
+  responses:
+    BadRequest:
+      description: Request cannot be processed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required.
+    Forbidden:
+      description: Token lacks required scopes.
+    NotFound:
+      description: Resource not found.
+    RateLimited:
+      description: Request rejected due to rate limiting.
+    ValidationFailed:
+      description: Input failed validation rules.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+  schemas:
+    AssetClass:
+      type: string
+      enum:
+        - real_estate
+        - auto
+    CreateValuationRequest:
+      type: object
+      required:
+        - class
+        - attributes
+      properties:
+        class:
+          $ref: '#/components/schemas/AssetClass'
+        attributes:
+          type: object
+          description: Asset-specific attributes
+          additionalProperties: true
+        options:
+          type: object
+          description: Request-level overrides such as `confidenceTarget`.
+          additionalProperties: true
+        correlatorId:
+          type: string
+          description: Optional client-supplied id for tracing.
+    ValuationResponse:
+      type: object
+      required:
+        - valuationId
+        - estimate
+        - confidence
+        - intervalLow
+        - intervalHigh
+        - explanations
+        - comps
+      properties:
+        valuationId:
+          type: string
+        status:
+          type: string
+          enum:
+            - completed
+            - pending
+            - failed
+          default: completed
+        estimate:
+          type: number
+          format: double
+        confidence:
+          type: number
+          format: float
+        intervalLow:
+          type: number
+          format: double
+        intervalHigh:
+          type: number
+          format: double
+        currency:
+          type: string
+          default: USD
+        method:
+          type: string
+          description: Model identifier used for the valuation.
+        explanations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Explanation'
+        comps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comparable'
+        metadata:
+          type: object
+          additionalProperties: true
+    AcceptedResponse:
+      type: object
+      required:
+        - jobId
+        - status
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          enum:
+            - accepted
+            - queued
+        estimatedCompletionSeconds:
+          type: integer
+          minimum: 0
+    JobStatus:
+      type: object
+      required:
+        - jobId
+        - status
+        - submittedAt
+        - updatedAt
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          enum:
+            - queued
+            - running
+            - succeeded
+            - failed
+            - partial
+        submittedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        progress:
+          type: object
+          properties:
+            processed:
+              type: integer
+            total:
+              type: integer
+            succeeded:
+              type: integer
+            failed:
+              type: integer
+        resultUrl:
+          type: string
+          format: uri
+    ComparableSearchResponse:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comparable'
+        paging:
+          type: object
+          properties:
+            nextCursor:
+              type: string
+            prevCursor:
+              type: string
+    Comparable:
+      type: object
+      required:
+        - comparableId
+        - address
+        - price
+        - distanceMi
+      properties:
+        comparableId:
+          type: string
+        assetId:
+          type: string
+        address:
+          type: string
+        price:
+          type: number
+          format: double
+        distanceMi:
+          type: number
+          format: double
+        attributes:
+          type: object
+          additionalProperties: true
+        source:
+          type: string
+        saleDate:
+          type: string
+          format: date
+    Explanation:
+      type: object
+      required:
+        - feature
+        - direction
+        - magnitude
+      properties:
+        feature:
+          type: string
+        direction:
+          type: string
+          enum: ['+', '-']
+        magnitude:
+          type: number
+          format: float
+        humanReadable:
+          type: string
+          description: Natural language summary of the feature impact.
+    UsageResponse:
+      type: object
+      properties:
+        month:
+          type: string
+          example: 2025-05
+        totals:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageItem'
+    UsageItem:
+      type: object
+      required:
+        - feature
+        - included
+        - overage
+        - cost
+      properties:
+        feature:
+          type: string
+        included:
+          type: integer
+        consumed:
+          type: integer
+        overage:
+          type: integer
+        cost:
+          type: number
+          format: double
+        currency:
+          type: string
+          default: USD
+    WebhookRegistration:
+      type: object
+      required:
+        - url
+        - events
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+              - valuation.completed
+              - valuation.failed
+              - job.completed
+              - job.failed
+              - usage.threshold.reached
+        secret:
+          type: string
+          description: Optional shared secret for HMAC signatures.
+    Webhook:
+      type: object
+      properties:
+        webhookId:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    ValidationError:
+      type: object
+      properties:
+        code:
+          type: string
+          example: validation_error
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              value:
+                nullable: true
+*** End Patch

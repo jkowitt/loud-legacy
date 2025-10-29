@@ -1,0 +1,31 @@
+{
+  "name": "mr-fix-it",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "export": "next build && next export"
+  },
+  "dependencies": {
+    "@loud-legacy/shared-analytics": "file:../../packages/shared-analytics",
+    "@loud-legacy/shared-auth": "file:../../packages/shared-auth",
+    "@loud-legacy/shared-design-system": "file:../../packages/shared-design-system",
+    "next": "14.2.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.12",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.19",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.3",
+    "postcss": "8.4.38",
+    "tailwindcss": "3.4.4",
+    "typescript": "5.4.5"
+  }
+}

@@ -1,0 +1,30 @@
+.showcase header {
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  padding: 18px;
+  background: var(--color-surface-alt);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tagline {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.empty {
+  color: var(--color-text-muted);
+}

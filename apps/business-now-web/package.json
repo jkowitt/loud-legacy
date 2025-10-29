@@ -1,0 +1,27 @@
+{
+  "name": "@loud-legacy/business-now-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@loud-legacy/shared-design-system": "file:../../packages/shared-design-system",
+    "@loud-legacy/shared-auth": "file:../../packages/shared-auth",
+    "@loud-legacy/shared-analytics": "file:../../packages/shared-analytics",
+    "next": "14.2.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.12",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.3",
+    "typescript": "5.4.5"
+  }
+}

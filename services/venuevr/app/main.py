@@ -1,0 +1,33 @@
+"""FastAPI application entrypoint."""
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .api import get_api_router
+from .core.config import get_settings
+
+settings = get_settings()
+
+
+def create_app() -> FastAPI:
+    """Application factory for tests and ASGI servers."""
+    app = FastAPI(title=settings.app_name)
+    app.include_router(get_api_router(), prefix="/api")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app.get("/")
+    def root() -> dict:
+        """Landing route for quick sanity checks."""
+        return {"service": settings.app_name, "status": "ok"}
+
+    return app
+
+
+app = create_app()

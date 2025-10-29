@@ -1,0 +1,40 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.timestamp {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.tile {
+  border-radius: 12px;
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--color-text);
+}
+
+.green {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.yellow {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.red {
+  border-color: rgba(239, 68, 68, 0.4);
+}

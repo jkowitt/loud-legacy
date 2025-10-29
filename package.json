@@ -1,0 +1,23 @@
+{
+  "name": "loud-legacy",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "bootstrap": "npm run install:packages && npm run install:apps",
+    "install:packages": "npm --prefix packages/shared-design-system install --no-package-lock && npm --prefix packages/shared-auth install --no-package-lock && npm --prefix packages/shared-analytics install --no-package-lock",
+    "install:apps": "npm --prefix apps/hub-web install && npm --prefix apps/valora-web install && npm --prefix apps/venuevr-web install && npm --prefix apps/diy-mr-fix-it-web install && npm --prefix apps/business-now-web install && npm --prefix apps/legacy-crm-web install && npm --prefix apps/valora-mobile install && npm --prefix apps/venuevr-mobile install",
+    "dev:hub": "npm --prefix apps/hub-web run dev",
+    "dev:valora": "npm --prefix apps/valora-web run dev",
+    "dev:venuevr": "npm --prefix apps/venuevr-web run dev",
+    "dev:mfix": "npm --prefix apps/diy-mr-fix-it-web run dev",
+    "dev:business": "npm --prefix apps/business-now-web run dev",
+    "dev:legacy-crm": "npm --prefix apps/legacy-crm-web run dev",
+    "dev:valora-mobile": "npm --prefix apps/valora-mobile run start",
+    "dev:venuevr-mobile": "npm --prefix apps/venuevr-mobile run start",
+    "postinstall": "npm run bootstrap",
+    "lint": "npm --prefix apps/valora-web run lint && npm --prefix apps/venuevr-web run lint && npm --prefix apps/diy-mr-fix-it-web run lint && npm --prefix apps/hub-web run lint && npm --prefix apps/business-now-web run lint && npm --prefix apps/legacy-crm-web run lint"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

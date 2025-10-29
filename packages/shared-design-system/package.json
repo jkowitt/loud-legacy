@@ -1,0 +1,17 @@
+{
+  "name": "@loud-legacy/shared-design-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens/tokens.css",
+    "./tokens.json": "./src/tokens/tokens.json",
+    "./components": "./src/components/index.ts"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  }
+}

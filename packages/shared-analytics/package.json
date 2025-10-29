@@ -1,0 +1,12 @@
+{
+  "name": "@loud-legacy/shared-analytics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./events": "./src/events.ts",
+    "./venuevr/types": "./src/venuevr/types.ts"
+  }
+}

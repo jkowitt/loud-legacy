@@ -1,0 +1,29 @@
+{
+  "name": "sports-event-vr-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@loud-legacy/shared-analytics": "file:../../packages/shared-analytics",
+    "@loud-legacy/shared-auth": "file:../../packages/shared-auth",
+    "@loud-legacy/shared-design-system": "file:../../packages/shared-design-system",
+    "@tanstack/react-query": "^5.29.0",
+    "next": "14.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "14.1.0",
+    "typescript": "^5.3.3"
+  }
+}

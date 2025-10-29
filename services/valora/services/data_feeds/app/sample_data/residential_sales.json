@@ -1,0 +1,12 @@
+{
+  "period": "2025-05",
+  "region": "US",
+  "total_sales": 48231,
+  "median_price": 412000,
+  "median_days_on_market": 19,
+  "top_markets": [
+    {"msa": "Austin-Round Rock, TX", "median_price": 512000, "volume": 1850},
+    {"msa": "Chicago-Naperville, IL", "median_price": 372000, "volume": 2430},
+    {"msa": "Phoenix-Mesa, AZ", "median_price": 398000, "volume": 1980}
+  ]
+}

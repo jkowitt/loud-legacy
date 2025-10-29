@@ -1,0 +1,119 @@
+export const colorTokens = {
+  brand: {
+    50: "#f3f5f7",
+    100: "#d1d8e0",
+    200: "#aab4c5",
+    300: "#8390aa",
+    400: "#5b6c90",
+    500: "#405274",
+    600: "#303f59",
+    700: "#202b3d",
+    800: "#131a26",
+    900: "#090d13"
+  },
+  accent: {
+    500: "#88ffc7"
+  },
+  text: {
+    primary: "#f8fafc",
+    secondary: "#cbd5f5"
+  },
+  surface: {
+    base: "#0c0d0f",
+    raised: "#14171c",
+    overlay: "#1c2026"
+  },
+  border: {
+    subtle: "#2a2f3a",
+    strong: "#3b4251"
+  },
+  feedback: {
+    success: "#75f0a0",
+    warning: "#f5a623",
+    danger: "#ff5d5d"
+  },
+  link: {
+    default: "#88ffc7",
+    hover: "#5fe6ab"
+  }
+} as const;
+
+export const typographyTokens = {
+  fontFamily: {
+    sans: "'Inter', system-ui, -apple-system, sans-serif",
+    mono: "'Share Tech Mono', monospace"
+  },
+  fontSize: {
+    xs: "0.75rem",
+    sm: "0.875rem",
+    md: "1rem",
+    lg: "1.125rem",
+    xl: "1.25rem",
+    "2xl": "1.5rem",
+    "3xl": "2.5rem"
+  },
+  lineHeight: {
+    tight: 1.1,
+    normal: 1.4,
+    relaxed: 1.6
+  },
+  fontWeight: {
+    regular: 400,
+    medium: 500,
+    semibold: 600,
+    bold: 700
+  }
+} as const;
+
+export const spaceTokens = {
+  0: "0px",
+  1: "4px",
+  2: "8px",
+  3: "12px",
+  4: "16px",
+  6: "24px",
+  8: "32px",
+  12: "48px",
+  16: "64px",
+  24: "96px",
+  32: "128px"
+} as const;
+
+export const radiusTokens = {
+  sm: "6px",
+  md: "12px",
+  lg: "20px",
+  pill: "9999px"
+} as const;
+
+export const shadowTokens = {
+  sm: "0 2px 8px rgba(8, 11, 20, 0.25)",
+  md: "0 10px 40px rgba(0, 0, 0, 0.45)",
+  lg: "0 20px 60px rgba(1, 4, 12, 0.5)",
+  focusRing: "0 0 0 2px var(--color-brand-accent-500)"
+} as const;
+
+export const motionTokens = {
+  duration: {
+    fast: "120ms",
+    base: "200ms",
+    slow: "300ms"
+  },
+  easing: {
+    standard: "cubic-bezier(0.4, 0, 0.2, 1)",
+    emphasized: "cubic-bezier(0.2, 0, 0, 1)"
+  }
+} as const;
+
+export const tokens = {
+  colors: colorTokens,
+  typography: typographyTokens,
+  space: spaceTokens,
+  radius: radiusTokens,
+  shadows: shadowTokens,
+  motion: motionTokens
+} as const;
+
+export type DesignTokens = typeof tokens;
+
+export * from "./components/AppShell";

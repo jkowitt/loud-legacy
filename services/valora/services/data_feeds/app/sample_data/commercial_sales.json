@@ -1,0 +1,18 @@
+{
+  "period": "2025-Q1",
+  "region": "US",
+  "total_volume": 12800000000,
+  "median_cap_rate": 6.1,
+  "asset_mix": [
+    {"category": "Industrial", "share": 0.34},
+    {"category": "Multifamily", "share": 0.28},
+    {"category": "Office", "share": 0.18},
+    {"category": "Retail", "share": 0.12},
+    {"category": "Hospitality", "share": 0.08}
+  ],
+  "top_transactions": [
+    {"name": "Seaport Logistics Hub", "market": "Los Angeles, CA", "price": 425000000},
+    {"name": "Riverfront Towers", "market": "Chicago, IL", "price": 310000000},
+    {"name": "Sunset Retail Portfolio", "market": "Phoenix, AZ", "price": 205000000}
+  ]
+}

@@ -1,0 +1,43 @@
+# Node dependencies and build output
+node_modules/
+dist/
+build/
+
+# Logs and diagnostics
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Environment and local configs
+.env
+.env.*
+
+# Editor and system artifacts
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Coverage output
+coverage/
+
+# Mac Finder metadata
+._*
+
+# Next.js build artifacts
+.next/
+out/
+
+# Python virtual environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# macOS
+.DS_Store

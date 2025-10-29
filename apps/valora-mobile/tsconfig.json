@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "jsx": "react-native",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "types": ["react", "react-native"]
+  },
+  "include": ["app", "screens", "lib", "App.tsx"]
+}

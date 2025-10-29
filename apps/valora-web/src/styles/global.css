@@ -1,0 +1,31 @@
+@import "@loud-legacy/shared-design-system/tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  font-family: var(--font-family-sans);
+  background: var(--color-surface-base);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--color-surface-base);
+  color: var(--color-text-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cpath fill='%2314171c' d='M0 0h160v160H0z'/%3E%3Cpath fill='%230f1216' d='M160 0v160h-40c0-13.255-10.745-24-24-24H64c-13.255 0-24 10.745-24 24H0V0h160z' opacity='.35'/%3E%3C/svg%3E");
+  background-size: cover;
+}
+
+.dark .shadow-hard {
+  box-shadow: 0 0 0 1px rgba(136, 255, 199, 0.08), 0 10px 40px rgba(0, 0, 0, 0.55);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(136, 255, 199, 0.25);
+  border-radius: 9999px;
+}
