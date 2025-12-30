@@ -1,0 +1,8 @@
+[build]
+base = "apps/loud-legacy-web"
+command = "npm install && npm run build"
+publish = "out"
+
+[build.environment]
+NODE_VERSION = "18"
+
