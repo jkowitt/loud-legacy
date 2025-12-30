@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { brandUrl } from "@/lib/brandLinks";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -18,10 +17,10 @@ export function Footer() {
         
         <div>
           <h4>Products</h4>
-          <a href={brandUrl("valora")} target="_blank" rel="noopener noreferrer">VALORA</a>
-          <a href={brandUrl("venuevr")} target="_blank" rel="noopener noreferrer">VenueVR</a>
-          <a href={brandUrl("business")} target="_blank" rel="noopener noreferrer">Business Now</a>
-          <a href={brandUrl("diy")} target="_blank" rel="noopener noreferrer">DIY Mr Fix It</a>
+          <Link href="/valora">VALORA</Link>
+          <Link href="/venuevr">VenueVR</Link>
+          <Link href="/business-now">Business Now</Link>
+          <Link href="/diy">DIY Mr Fix It</Link>
         </div>
         
         <div>
