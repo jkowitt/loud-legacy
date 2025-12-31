@@ -1,5 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const reactJsxRuntime = require.resolve("react/jsx-runtime");
 
 // Use a base path in production so Valora can be served under
 // loud-legacy.com's /valora/ subpath without any environment config.
@@ -7,9 +10,11 @@ export default defineConfig(({ mode }) => ({
   base: mode === "production" ? "/valora/" : "/",
   plugins: [react()],
   resolve: {
-    // Ensure only one React copy and allow linked packages to resolve runtime
+    // Ensure only one React copy and force JSX runtime resolution
     dedupe: ["react", "react-dom"],
-    preserveSymlinks: true,
+    alias: {
+      "react/jsx-runtime": reactJsxRuntime,
+    },
   },
   optimizeDeps: {
     include: ["react", "react-dom", "react/jsx-runtime"],
