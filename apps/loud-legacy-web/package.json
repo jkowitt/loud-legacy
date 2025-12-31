@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3007",
-    "build": "next build && next export",
+    "build": "next build",
     "postinstall": "next telemetry disable || true",
-    "postbuild": "node scripts/bundle-subapps.cjs",
+    "prebuild": "node scripts/bundle-subapps.cjs",
     "start": "next start",
     "lint": "next lint"
   },
