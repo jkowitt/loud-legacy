@@ -14,8 +14,8 @@
     "@loud-legacy/shared-analytics": "file:../../packages/shared-analytics",
     "@loud-legacy/shared-auth": "file:../../packages/shared-auth",
     "@loud-legacy/shared-design-system": "file:../../packages/shared-design-system",
-    "@next/swc-linux-x64-gnu": "14.2.3",
-    "next": "14.2.3",
+    "@next/swc-linux-x64-gnu": "14.2.16",
+    "next": "14.2.16",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
@@ -24,11 +24,8 @@
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "eslint": "8.57.0",
-    "eslint-config-next": "14.2.3",
+    "eslint-config-next": "14.2.16",
     "typescript": "5.4.5"
   }
-  ,
-  "optionalDependencies": {
-    "@next/swc-linux-x64-gnu": "14.2.3"
-  }
+  
 }
