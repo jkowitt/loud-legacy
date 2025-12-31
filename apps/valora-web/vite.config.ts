@@ -6,6 +6,14 @@ import react from "@vitejs/plugin-react-swc";
 export default defineConfig(({ mode }) => ({
   base: mode === "production" ? "/valora/" : "/",
   plugins: [react()],
+  resolve: {
+    // Ensure only one React copy and allow linked packages to resolve runtime
+    dedupe: ["react", "react-dom"],
+    preserveSymlinks: true,
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom", "react/jsx-runtime"],
+  },
   server: {
     port: 5173,
     host: "0.0.0.0",
