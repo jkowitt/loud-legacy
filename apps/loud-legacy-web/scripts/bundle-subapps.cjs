@@ -25,22 +25,9 @@ if (existsSync(valoraDir)) {
   cpSync(src, dest, { recursive: true });
 }
 
-// Helper to build Next.js subapps and copy their `out/`
-function buildNextSub(appName, targetPathName) {
-  const dir = join(root, appName);
-  if (!existsSync(dir)) return;
-  run('npm install', dir);
-  run('npm run build', dir); // build then export per package.json
-  const src = join(dir, 'out');
-  const dest = join(landingOut, targetPathName);
-  mkdirSync(dest, { recursive: true });
-  cpSync(src, dest, { recursive: true });
-}
-
-buildNextSub('hub-web', 'hub');
-buildNextSub('business-now-web', 'business-now');
-buildNextSub('legacy-crm-web', 'crm');
-buildNextSub('venuevr-web', 'venuevr');
+// Note: Next sub-app routes (/venuevr, /business-now, /crm) are
+// exported by the landing app itself (we added pages for them), so
+// no need to build/copy those apps here. Keeping this script lean
+// prevents flaky monorepo builds on Netlify.
 
 console.log('Sub-apps bundled into out/');
-
