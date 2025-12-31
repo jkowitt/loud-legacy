@@ -1,4 +1,5 @@
-/valora/* /valora/index.html 200
+# First, let the /valora static files generated into public/ be served directly
+/valora/* /valora/:splat 200
 /venuevr/* /venuevr/index.html 200
 /business-now/* /business-now/index.html 200
 /diy/* /diy/index.html 200
