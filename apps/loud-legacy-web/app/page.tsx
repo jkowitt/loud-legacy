@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BrandShowcase } from "@/components/BrandShowcase";
-import Link from "next/link";
 
 export default function HomePage() {
   return (
