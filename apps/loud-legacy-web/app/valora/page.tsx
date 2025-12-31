@@ -2,8 +2,8 @@
 import { useEffect } from "react";
 import "../../styles/redirect.css";
 
-const target =
-  (process.env.NEXT_PUBLIC_VALORA_URL || "https://valora.loud-legacy.com").trim();
+// Default to same-domain subpath where we stage the Vite build.
+const target = (process.env.NEXT_PUBLIC_VALORA_URL || "/valora/").trim();
 
 export default function ValoraRedirect() {
   useEffect(() => {
