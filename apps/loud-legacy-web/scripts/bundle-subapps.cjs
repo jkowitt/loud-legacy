@@ -4,7 +4,7 @@
   so paths like /valora, /venuevr, /business-now, /diy work without env.
 */
 const { execSync } = require('node:child_process');
-const { existsSync, mkdirSync, cpSync } = require('node:fs');
+const { existsSync, mkdirSync, cpSync, rmSync } = require('node:fs');
 const { join } = require('node:path');
 
 const root = join(__dirname, '..', '..'); // apps/
@@ -14,13 +14,14 @@ function run(cmd, cwd) {
   execSync(cmd, { stdio: 'inherit', cwd });
 }
 
-// Build Valora (Vite) and copy to /out/valora
+// Build Valora (Vite) and stage into /public/valora
 const valoraDir = join(root, 'valora-web');
 if (existsSync(valoraDir)) {
   run('npm ci', valoraDir);
   run('npm run build', valoraDir);
   const src = join(valoraDir, 'dist');
-  const dest = join(__dirname, '..', 'out', 'valora');
+  const dest = join(__dirname, '..', 'public', 'valora');
+  if (existsSync(dest)) rmSync(dest, { recursive: true, force: true });
   mkdirSync(dest, { recursive: true });
   cpSync(src, dest, { recursive: true });
 }
