@@ -14,6 +14,7 @@
     "@loud-legacy/shared-analytics": "file:../../packages/shared-analytics",
     "@loud-legacy/shared-auth": "file:../../packages/shared-auth",
     "@loud-legacy/shared-design-system": "file:../../packages/shared-design-system",
+    "@next/swc-linux-x64-gnu": "14.2.3",
     "next": "14.2.3",
     "react": "18.3.1",
     "react-dom": "18.3.1"
