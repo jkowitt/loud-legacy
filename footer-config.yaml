@@ -1,0 +1,10 @@
+# Loud Legacy Footer Configuration
+
+# Available Footer Links
+resources:
+  - name: Valora
+    url: "https://loud-legacy.com/valora" # Updated URL for Valora link
+  - name: Other Resource
+    url: "https://example.com/other-resource"
+
+# Additional footer details can go here
