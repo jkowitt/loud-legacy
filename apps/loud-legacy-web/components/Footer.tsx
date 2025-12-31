@@ -1,22 +1,20 @@
-import Link from 'next/link';
+import React from 'react';
 
-export const Footer = () => {
+const Footer = () => {
   return (
     <footer>
-      <div>
-        <h4>Resources</h4>
+      <div className="footer-content">
         <ul>
-          {
-            // Removed GitHub link
-          }
+          <li><a href="example.com">Example Link</a></li>
         </ul>
-      </div>
-      <div>
-        <h4>Contact</h4>
-        <ul>
-          <li><Link href="mailto:support@example.com">Email</Link></li>
-        </ul>
+        <div className="resources-section">
+          <ul>
+            <li><a href="valora.loud-legacy.com">Valora</a></li>
+          </ul>
+        </div>
       </div>
     </footer>
   );
 };
+
+export default Footer;
