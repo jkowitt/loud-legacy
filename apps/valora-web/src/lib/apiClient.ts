@@ -5,7 +5,7 @@ const defaultBaseUrl = import.meta.env.VITE_VALORA_API ?? "http://localhost:8000
 export const valoraApi = createApiClient({
   baseUrl: defaultBaseUrl,
   onUnauthorized: () => {
-    // API returned 401 — redirecting to login
+    console.warn("Valora API returned 401 — redirecting to login.");
     window.location.href = "/login";
   }
 });

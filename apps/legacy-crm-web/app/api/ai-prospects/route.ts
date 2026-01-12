@@ -116,7 +116,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorPayload = await response.text();
-      // OpenAI prospect agent error - returning 502 to client
+      console.error("OpenAI prospect agent error", response.status, errorPayload);
       return NextResponse.json(
         { error: "Prospect agent unavailable", details: errorPayload },
         { status: 502 }
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ suggestions });
   } catch (error) {
-    // Unexpected prospect agent error
+    console.error("Prospect agent route error", error);
     return NextResponse.json({ error: "Unexpected prospect agent error" }, { status: 500 });
   }
 }

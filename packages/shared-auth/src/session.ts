@@ -47,7 +47,7 @@ export class SessionManager {
       this.setStatus(user ? "authenticated" : "unauthenticated");
       return user;
     } catch (error) {
-      // Session bootstrap failed, setting to unauthenticated
+      console.error("Session bootstrap failed", error);
       this.user = null;
       this.setStatus("unauthenticated");
       return null;
@@ -66,7 +66,7 @@ export class SessionManager {
     try {
       return await this.adapter.getToken();
     } catch (error) {
-      // Token fetch failed, attempting to re-bootstrap if authenticated
+      console.error("Token fetch failed", error);
       if (this.status === "authenticated") {
         await this.bootstrap();
       }
