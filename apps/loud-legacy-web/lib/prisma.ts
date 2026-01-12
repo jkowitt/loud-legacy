@@ -5,10 +5,31 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-export const prisma = global.prisma || new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-});
+// Lazy initialization - only create client when needed at runtime
+let prismaClient: PrismaClient | null = null;
 
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma;
+function getPrismaClient(): PrismaClient {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not configured. Please set it in your environment variables.');
+  }
+
+  if (!prismaClient) {
+    prismaClient = new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
+
+    if (process.env.NODE_ENV !== 'production') {
+      global.prisma = prismaClient;
+    }
+  }
+
+  return prismaClient;
 }
+
+// Export a proxy that initializes on first use
+export const prisma = new Proxy({} as PrismaClient, {
+  get(target, prop) {
+    const client = getPrismaClient();
+    return (client as any)[prop];
+  },
+});
