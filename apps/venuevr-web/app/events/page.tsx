@@ -25,7 +25,7 @@ async function fetchEvents(): Promise<EventSummary[]> {
     }
     return res.json();
   } catch (error) {
-    // API unavailable, falling back to sample events
+    console.warn("[events] Falling back to sample events:", error);
     return FALLBACK_EVENTS;
   }
 }
