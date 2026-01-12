@@ -48,7 +48,7 @@ export const CameraUploadScreen = () => {
       alert("Upload successful");
       setPreviewUri(null);
     } catch (error) {
-      console.error(error);
+      // Upload failed
       alert("Upload failed. Check network or server configuration.");
     } finally {
       setIsUploading(false);
