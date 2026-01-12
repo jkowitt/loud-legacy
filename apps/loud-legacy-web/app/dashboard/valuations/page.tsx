@@ -47,9 +47,9 @@ export default function ValuationsPage() {
           <h1>Valuations</h1>
           <p>Manage your property valuations and financial models</p>
         </div>
-        <button className="button button--primary">
+        <Link href="/dashboard/valuations/new" className="button button--primary">
           ➕ New Valuation
-        </button>
+        </Link>
       </div>
 
       {loading ? (
@@ -61,9 +61,9 @@ export default function ValuationsPage() {
           <div className="empty-icon">💰</div>
           <h2>No valuations yet</h2>
           <p>Create your first valuation to start analyzing properties</p>
-          <button className="button button--primary">
+          <Link href="/dashboard/valuations/new" className="button button--primary">
             Create First Valuation
-          </button>
+          </Link>
         </div>
       ) : (
         <div className="data-table">
