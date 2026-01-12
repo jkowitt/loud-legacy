@@ -1,18 +1,28 @@
 import OpenAI from 'openai';
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY is not configured');
-}
+// Lazy initialization - only create client when needed
+let openaiClient: OpenAI | null = null;
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient(): OpenAI {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not configured');
+  }
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+
+  return openaiClient;
+}
 
 /**
  * Analyze property image for condition, wear and tear
  */
 export async function analyzePropertyImage(imageUrl: string) {
   try {
+    const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
       model: "gpt-4-vision-preview",
       messages: [
@@ -66,6 +76,7 @@ export async function generatePropertyRecommendations(propertyData: {
   issues?: string[];
 }) {
   try {
+    const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
@@ -110,6 +121,7 @@ Format as JSON array with keys: priority, recommendation, estimatedCost, valueIn
  */
 export async function geocodePropertyFromImage(imageUrl: string) {
   try {
+    const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
       model: "gpt-4-vision-preview",
       messages: [
@@ -161,6 +173,7 @@ export async function analyzeMarketTrends(marketData: {
   recentSales: Array<{ price: number; date: string; sqft: number }>;
 }) {
   try {
+    const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
