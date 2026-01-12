@@ -11,14 +11,6 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { imageUrl, propertyId } = body;
 
@@ -32,8 +24,8 @@ export async function POST(request: NextRequest) {
     // Analyze image with AI
     const analysis = await analyzePropertyImage(imageUrl);
 
-    // If propertyId is provided, save the image and analysis
-    if (propertyId) {
+    // If authenticated and propertyId is provided, save the image and analysis
+    if (session && session.user && propertyId) {
       await prisma.propertyImage.create({
         data: {
           propertyId,
@@ -87,6 +79,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Return analysis for both authenticated and demo users
     return NextResponse.json({
       success: true,
       analysis,

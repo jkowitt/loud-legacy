@@ -16,14 +16,6 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const folder = (formData.get('folder') as string) || 'general';
@@ -76,40 +68,44 @@ export async function POST(request: NextRequest) {
     // Generate public URL
     const url = `/uploads/${folder}/${fileName}`;
 
-    // Save to database
-    const mediaAsset = await prisma.mediaAsset.create({
-      data: {
-        fileName,
-        originalName: file.name,
-        mimeType: file.type,
-        size: file.size,
-        url,
-        folder,
-        alt,
-        caption,
-        uploadedBy: (session.user as any).id,
-      },
-    });
-
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: (session.user as any).id,
-        action: 'uploaded_file',
-        entityType: 'media',
-        entityId: mediaAsset.id,
-        details: {
-          fileName: file.name,
-          fileSize: file.size,
+    // If authenticated, save to database
+    let mediaAssetId = `demo-${timestamp}`;
+    if (session && session.user) {
+      const mediaAsset = await prisma.mediaAsset.create({
+        data: {
+          fileName,
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          url,
           folder,
+          alt,
+          caption,
+          uploadedBy: (session.user as any).id,
         },
-      },
-    });
+      });
+      mediaAssetId = mediaAsset.id;
+
+      // Log activity
+      await prisma.activityLog.create({
+        data: {
+          userId: (session.user as any).id,
+          action: 'uploaded_file',
+          entityType: 'media',
+          entityId: mediaAsset.id,
+          details: {
+            fileName: file.name,
+            fileSize: file.size,
+            folder,
+          },
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
       file: {
-        id: mediaAsset.id,
+        id: mediaAssetId,
         url,
         fileName,
         originalName: file.name,

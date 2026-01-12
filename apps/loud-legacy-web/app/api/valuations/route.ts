@@ -11,11 +11,20 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
+    // Demo mode: return empty data if no session
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      const page = parseInt(new URL(request.url).searchParams.get('page') || '1');
+      const limit = parseInt(new URL(request.url).searchParams.get('limit') || '20');
+
+      return NextResponse.json({
+        valuations: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      });
     }
 
     const { searchParams } = new URL(request.url);
@@ -83,14 +92,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const {
       propertyId,
@@ -116,6 +117,33 @@ export async function POST(request: NextRequest) {
     // Calculate financial metrics
     const noi = calculateNOI(incomeData, expenseData);
     const capRate = currentValue ? (noi / currentValue) * 100 : null;
+
+    // Demo mode: return mock valuation without saving
+    if (!session || !session.user) {
+      const mockValuation = {
+        id: `demo-${Date.now()}`,
+        propertyId,
+        userId: 'demo-user',
+        organizationId,
+        name,
+        purchasePrice,
+        currentValue,
+        incomeData,
+        expenseData,
+        financingData,
+        noi,
+        capRate,
+        notes,
+        tags: tags || [],
+        status: 'DRAFT',
+        visibility: 'PRIVATE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        property: null,
+      };
+
+      return NextResponse.json(mockValuation, { status: 201 });
+    }
 
     const valuation = await prisma.valuation.create({
       data: {
