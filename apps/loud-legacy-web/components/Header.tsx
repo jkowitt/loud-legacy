@@ -9,7 +9,7 @@ export function Header() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(window.scrollY > 10);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -20,11 +20,10 @@ export function Header() {
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
       <div className="container header-content">
         <Link href="/" className="logo">
-          <span className="logo-text">Loud Legacy</span>
+          Loud Legacy
         </Link>
 
         <nav className={`nav ${isOpen ? 'open' : ''}`}>
-          <Link href="/" className="nav-link">Home</Link>
           <Link href="/valora" className="nav-link">VALORA</Link>
           <Link href="/sportify" className="nav-link">Sportify</Link>
           <Link href="/business-now" className="nav-link">Business Now</Link>
