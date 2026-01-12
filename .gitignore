@@ -49,3 +49,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Local Netlify folder
+.netlify
