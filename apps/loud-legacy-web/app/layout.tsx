@@ -18,7 +18,6 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  // Minimal, explicit App Router root layout to satisfy CI detection.
   return (
     <html lang="en">
       <body>{children}</body>
