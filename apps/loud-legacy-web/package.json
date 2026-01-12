@@ -6,9 +6,10 @@
     "dev": "next dev -p 3007",
     "build": "next build",
     "postinstall": "next telemetry disable || true",
-    "prebuild": "node scripts/bundle-subapps.cjs",
+    "prebuild": "bash verify-build.sh && node scripts/bundle-subapps.cjs",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify": "bash verify-build.sh"
   },
   "dependencies": {
     "@loud-legacy/shared-analytics": "file:../../packages/shared-analytics",
