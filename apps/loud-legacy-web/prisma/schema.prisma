@@ -1,0 +1,478 @@
+// Prisma Schema for VALORA
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// USER MANAGEMENT & AUTHENTICATION
+// ==========================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?   // Hashed password
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(USER)
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  organizations OrganizationMember[]
+  valuations    Valuation[]
+  activities    ActivityLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  ANALYST
+  VIEWER
+  SUPER_ADMIN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==========================================
+// ORGANIZATION & TEAM MANAGEMENT
+// ==========================================
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logo        String?
+
+  // Subscription
+  planType    PlanType @default(FREE)
+  planExpiry  DateTime?
+
+  // Relations
+  members     OrganizationMember[]
+  valuations  Valuation[]
+  portfolios  Portfolio[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+enum PlanType {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgRole  @default(MEMBER)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// ==========================================
+// PROPERTY & VALUATION
+// ==========================================
+
+model Property {
+  id          String       @id @default(cuid())
+  address     String
+  city        String?
+  state       String?
+  zip         String?
+  country     String?     @default("USA")
+
+  // Property Details
+  propertyType PropertyType
+  subType      String?     // Office, Retail, Apartment, etc.
+  squareFeet   Float?
+  units        Int?        // For multifamily
+  yearBuilt    Int?
+  lotSize      Float?
+
+  // Coordinates
+  latitude     Float?
+  longitude    Float?
+
+  // AI Analysis
+  aiConditionScore Float?   // 0-100
+  aiWearTearNotes  String?  @db.Text
+  aiRecommendations String? @db.Text
+
+  // Images
+  images       PropertyImage[]
+
+  // Relations
+  valuations   Valuation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([address])
+  @@index([propertyType])
+  @@index([city, state])
+}
+
+enum PropertyType {
+  COMMERCIAL
+  RESIDENTIAL
+  MULTIFAMILY
+  INDUSTRIAL
+  MIXED_USE
+  LAND
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  caption    String?
+  type       ImageType @default(EXTERIOR)
+
+  // AI Analysis
+  aiAnalysis String?  @db.Text
+  aiTags     String[] // Detected features
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  uploadedAt DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+enum ImageType {
+  EXTERIOR
+  INTERIOR
+  AERIAL
+  FLOORPLAN
+  OTHER
+}
+
+model Valuation {
+  id             String          @id @default(cuid())
+  propertyId     String
+  userId         String
+  organizationId String?
+
+  // Valuation Basics
+  name           String
+  status         ValuationStatus @default(DRAFT)
+  visibility     Visibility      @default(PRIVATE)
+
+  // Financial Data (stored as JSON for flexibility)
+  purchasePrice     Float?
+  currentValue      Float?
+  estimatedValue    Float?
+
+  // P&L Data
+  incomeData        Json?  // { rent: 100000, otherIncome: 5000, ... }
+  expenseData       Json?  // { taxes: 10000, insurance: 5000, ... }
+  financingData     Json?  // { loanAmount: 500000, interestRate: 4.5, ... }
+
+  // Analysis Results
+  noi               Float?  // Net Operating Income
+  capRate           Float?
+  irr               Float?  // Internal Rate of Return
+  cashOnCash        Float?
+  dscr              Float?  // Debt Service Coverage Ratio
+
+  // Scenarios
+  scenarios         ValuationScenario[]
+
+  // Comparables
+  comparables       Comparable[]
+
+  // Relations
+  property      Property      @relation(fields: [propertyId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  portfolio     Portfolio?    @relation(fields: [portfolioId], references: [id])
+  portfolioId   String?
+
+  // Approval Workflow
+  approvalStatus ApprovalStatus @default(NOT_SUBMITTED)
+  approvedBy     String?
+  approvedAt     DateTime?
+
+  // Metadata
+  notes         String?       @db.Text
+  tags          String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([propertyId])
+  @@index([status])
+}
+
+enum ValuationStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum Visibility {
+  PRIVATE
+  ORGANIZATION
+  PUBLIC
+}
+
+enum ApprovalStatus {
+  NOT_SUBMITTED
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model ValuationScenario {
+  id           String @id @default(cuid())
+  valuationId  String
+  name         String  // "Base Case", "Best Case", "Worst Case"
+
+  // Scenario-specific assumptions
+  assumptions  Json    // All variable assumptions
+  results      Json    // Calculated results
+
+  valuation    Valuation @relation(fields: [valuationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([valuationId])
+}
+
+model Comparable {
+  id           String @id @default(cuid())
+  valuationId  String
+
+  // Comp Property Details
+  address      String
+  propertyType PropertyType
+  squareFeet   Float?
+  salePrice    Float
+  saleDate     DateTime
+  capRate      Float?
+  pricePerSF   Float?
+
+  // Source
+  source       String?  // MLS, Public Records, etc.
+  sourceUrl    String?
+
+  valuation    Valuation @relation(fields: [valuationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([valuationId])
+}
+
+// ==========================================
+// PORTFOLIO MANAGEMENT
+// ==========================================
+
+model Portfolio {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+
+  // Relations
+  valuations     Valuation[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+// ==========================================
+// MARKET DATA
+// ==========================================
+
+model MarketData {
+  id           String       @id @default(cuid())
+
+  // Location
+  city         String
+  state        String
+  zip          String?
+  market       String?      // "Downtown", "Suburbs", etc.
+
+  // Property Type
+  propertyType PropertyType
+
+  // Market Metrics
+  avgCapRate   Float?
+  avgRentPSF   Float?
+  vacancyRate  Float?
+  absorption   Float?       // SF absorbed in period
+  inventory    Float?       // Available SF
+
+  // Date
+  period       DateTime     // Month/Quarter this data represents
+
+  // Source
+  source       String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([city, state, propertyType, period])
+  @@index([city, state])
+  @@index([propertyType])
+}
+
+// ==========================================
+// CMS & CONTENT MANAGEMENT
+// ==========================================
+
+model CMSContent {
+  id        String      @id @default(cuid())
+  key       String      @unique  // "homepage_hero_title", "valora_cta_text"
+  value     String      @db.Text
+  type      ContentType @default(TEXT)
+  section   String?     // "homepage", "valora", "footer"
+
+  updatedBy String?
+  updatedAt DateTime    @updatedAt
+  createdAt DateTime    @default(now())
+
+  @@index([section])
+}
+
+enum ContentType {
+  TEXT
+  HTML
+  MARKDOWN
+  JSON
+}
+
+model MediaAsset {
+  id          String    @id @default(cuid())
+  fileName    String
+  originalName String
+  mimeType    String
+  size        Int       // bytes
+  url         String
+
+  // Organization
+  folder      String?   // "logos", "property-images", etc.
+  tags        String[]
+
+  // Metadata
+  alt         String?
+  caption     String?
+
+  uploadedBy  String?
+  uploadedAt  DateTime  @default(now())
+
+  @@index([folder])
+}
+
+// ==========================================
+// ACTIVITY LOGS & AUDIT TRAIL
+// ==========================================
+
+model ActivityLog {
+  id             String       @id @default(cuid())
+  userId         String?
+  organizationId String?
+
+  action         String       // "created_valuation", "updated_property"
+  entityType     String       // "valuation", "property", "user"
+  entityId       String?
+
+  details        Json?        // Additional context
+  ipAddress      String?
+  userAgent      String?
+
+  user           User?        @relation(fields: [userId], references: [id])
+
+  createdAt      DateTime     @default(now())
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ==========================================
+// SYSTEM CONFIGURATION
+// ==========================================
+
+model SystemConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+
+  updatedAt DateTime @updatedAt
+}
