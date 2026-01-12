@@ -19,9 +19,3 @@ command = "npm install && npm run build"
 # Deploy previews for pull requests
 [context.deploy-preview]
 command = "npm install && npm run build"
-
-# SPA redirect for client-side routing
-[[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
