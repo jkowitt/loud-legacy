@@ -1,7 +1,7 @@
 [build]
 base = "apps/loud-legacy-web"
 command = "npm install && npm run build"
-publish = "out"
+publish = ".next"
 
 [build.environment]
 NODE_VERSION = "20"
@@ -19,3 +19,7 @@ command = "npm install && npm run build"
 # Deploy previews for pull requests
 [context.deploy-preview]
 command = "npm install && npm run build"
+
+# Netlify plugin for Next.js
+[[plugins]]
+package = "@netlify/plugin-nextjs"
