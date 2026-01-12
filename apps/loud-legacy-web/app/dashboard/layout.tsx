@@ -1,44 +1,21 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useEffect } from "react";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { data: session } = useSession();
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-    }
-  }, [status, router]);
-
-  if (status === "loading") {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh'
-      }}>
-        <div>Loading...</div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return null;
-  }
-
   const isActive = (path: string) => pathname === path;
-  const userRole = (session.user as any)?.role;
+  const userRole = (session?.user as any)?.role;
+  const userName = session?.user?.name || 'Demo User';
+  const userEmail = session?.user?.email || 'demo@valora.com';
 
   return (
     <div className="dashboard-layout">
@@ -82,36 +59,38 @@ export default function DashboardLayout({
             <span>AI Tools</span>
           </Link>
 
-          {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
-            <>
-              <div className="nav-divider"></div>
-              <Link
-                href="/dashboard/admin"
-                className={`nav-item ${isActive('/dashboard/admin') ? 'active' : ''}`}
-              >
-                <span>⚙️</span>
-                <span>Admin</span>
-              </Link>
-            </>
-          )}
+          <div className="nav-divider"></div>
+          <Link
+            href="/dashboard/admin"
+            className={`nav-item ${isActive('/dashboard/admin') ? 'active' : ''}`}
+          >
+            <span>⚙️</span>
+            <span>Admin</span>
+          </Link>
         </nav>
 
         <div className="sidebar-footer">
           <div className="user-info">
             <div className="user-avatar">
-              {session.user?.name?.[0]?.toUpperCase() || 'U'}
+              {userName[0]?.toUpperCase()}
             </div>
             <div className="user-details">
-              <div className="user-name">{session.user?.name}</div>
-              <div className="user-email">{session.user?.email}</div>
+              <div className="user-name">{userName}</div>
+              <div className="user-email">{userEmail}</div>
             </div>
           </div>
-          <button
-            onClick={() => signOut({ callbackUrl: '/' })}
-            className="sign-out-btn"
-          >
-            Sign Out
-          </button>
+          {session ? (
+            <button
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className="sign-out-btn"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link href="/auth/signin" className="sign-out-btn" style={{ textAlign: 'center', display: 'block', textDecoration: 'none' }}>
+              Sign In
+            </Link>
+          )}
         </div>
       </aside>
 
