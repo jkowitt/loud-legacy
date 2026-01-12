@@ -29,16 +29,17 @@ export async function middleware(request: NextRequest) {
       secret: process.env.NEXTAUTH_SECRET,
     });
 
-    // Not authenticated
-    if (!token) {
+    // For demo mode: allow unauthenticated access to non-admin routes
+    // Only block admin routes without authentication
+    if (isAdminRoute && !token) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { error: 'Authentication required for admin access' },
         { status: 401 }
       );
     }
 
     // Check admin access
-    if (isAdminRoute) {
+    if (isAdminRoute && token) {
       const userRole = token.role as string;
       if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
         return NextResponse.json(

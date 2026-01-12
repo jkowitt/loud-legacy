@@ -11,11 +11,20 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
+    // Demo mode: return empty data if no session
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      const page = parseInt(new URL(request.url).searchParams.get('page') || '1');
+      const limit = parseInt(new URL(request.url).searchParams.get('limit') || '20');
+
+      return NextResponse.json({
+        properties: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      });
     }
 
     const { searchParams } = new URL(request.url);
@@ -98,14 +107,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const {
       address,
@@ -129,6 +130,34 @@ export async function POST(request: NextRequest) {
         { error: 'Address and property type are required' },
         { status: 400 }
       );
+    }
+
+    // Demo mode: return mock property without saving
+    if (!session || !session.user) {
+      const mockProperty = {
+        id: `demo-${Date.now()}`,
+        address,
+        city,
+        state,
+        zip,
+        country: country || 'USA',
+        propertyType,
+        subType,
+        squareFeet,
+        units,
+        yearBuilt,
+        lotSize,
+        latitude,
+        longitude,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        images: [],
+        _count: {
+          valuations: 0,
+        },
+      };
+
+      return NextResponse.json(mockProperty, { status: 201 });
     }
 
     const property = await prisma.property.create({

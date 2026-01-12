@@ -42,7 +42,7 @@ export function calculateNOI(income: IncomeData, expenses: ExpenseData): number 
   const effectiveIncome = totalIncome * (1 - vacancyRate / 100);
 
   // Calculate total expenses
-  const totalExpenses = Object.values(expenses).reduce((sum, value) => {
+  const totalExpenses = Object.values(expenses).reduce<number>((sum, value) => {
     return sum + (value || 0);
   }, 0);
 
