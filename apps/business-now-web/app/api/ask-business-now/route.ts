@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorPayload = await response.text();
-      // OpenAI API error - returning 502 to client
+      console.error("OpenAI API error", response.status, errorPayload);
       return NextResponse.json(
         { error: "Advisor service unavailable", details: errorPayload },
         { status: 502 }
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply, usage: data.usage });
   } catch (error) {
-    // Unexpected advisor error
+    console.error("Advisor route error", error);
     return NextResponse.json({ error: "Unexpected advisor error" }, { status: 500 });
   }
 }
