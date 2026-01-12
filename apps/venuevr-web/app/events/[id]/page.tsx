@@ -34,7 +34,7 @@ async function fetchEvent(eventId: string): Promise<EventDetail | null> {
     }
     return res.json();
   } catch (error) {
-    console.warn(`[event:${eventId}] Falling back to sample event`, error);
+    // API unavailable, falling back to sample event
     return { ...FALLBACK_EVENT, id: eventId };
   }
 }
@@ -47,7 +47,7 @@ async function fetchPlacements(eventId: string): Promise<CreativePlacement[]> {
     }
     return res.json();
   } catch (error) {
-    console.warn(`[event:${eventId}] Falling back to empty placements`, error);
+    // API unavailable, falling back to empty placements
     return [];
   }
 }

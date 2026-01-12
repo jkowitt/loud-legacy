@@ -65,7 +65,7 @@ export class AnalyticsClient {
         try {
           await destination.track(payload);
         } catch (error) {
-          console.error("Analytics destination failed", error);
+          // Silently handle analytics destination failure to avoid breaking app
         }
       })
     );

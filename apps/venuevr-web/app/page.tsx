@@ -25,7 +25,7 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 function logFetchError(path: string, error: unknown) {
-  console.warn(`[home] Falling back because request to ${path} failed:`, error);
+  // Request failed, using fallback data
 }
 
 const FALLBACK_EVENT: EventDetail = {
