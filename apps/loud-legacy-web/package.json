@@ -6,9 +6,10 @@
     "dev": "next dev -p 3007",
     "build": "next build",
     "postinstall": "next telemetry disable || true",
-    "prebuild": "node scripts/bundle-subapps.cjs",
+    "prebuild": "bash verify-build.sh",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify": "bash verify-build.sh"
   },
   "dependencies": {
     "@loud-legacy/shared-analytics": "file:../../packages/shared-analytics",
@@ -27,5 +28,5 @@
     "eslint-config-next": "14.2.16",
     "typescript": "5.4.5"
   }
-  
 }
+

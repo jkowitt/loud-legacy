@@ -16,10 +16,9 @@ export function Header() {
         <nav className={`nav ${isOpen ? 'open' : ''}`}>
           <Link href="/">Home</Link>
           <Link href="/valora">VALORA</Link>
-          <Link href="/venuevr">VenueVR</Link>
+          <Link href="/sportify">Sportify</Link>
           <Link href="/business-now">Business Now</Link>
-          <Link href="/diy">DIY</Link>
-          <Link href="/(hub)/contact">Contact</Link>
+          <Link href="/legacy-crm">Legacy CRM</Link>
         </nav>
 
         <button 

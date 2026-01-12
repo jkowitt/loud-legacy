@@ -32,6 +32,14 @@ coverage/
 # Next.js build artifacts
 .next/
 out/
+cache/
+package-lock.json
+
+# Bundled sub-apps (generated during build)
+apps/loud-legacy-web/public/valora/
+apps/loud-legacy-web/public/venuevr/
+apps/loud-legacy-web/public/business-now/
+apps/loud-legacy-web/public/diy/
 
 # Python virtual environments and caches
 .venv/
@@ -41,3 +49,10 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Local Netlify folder
+.netlify
+
+# Deployment archives
+*.tar.gz
+*.zip
