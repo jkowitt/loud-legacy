@@ -3,16 +3,16 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Loud Legacy - Build Louder",
+  title: "Loud Legacy - Systems-Driven Business Software",
   description:
-    "Loud Legacy connects VALORA, VenueVR, Business Now, and DIY Mr Fix It into one unified ecosystem for builders, creators, and operators.",
-  keywords: "real estate, events, coaching, tools, DIY, property management",
+    "Loud Legacy builds intelligent operational systems. VALORA for real estate intelligence, Sportify for live event execution, Business Now for structured operations, and Legacy CRM for relationship discipline.",
+  keywords: "real estate valuation, event management, business operations, CRM, underwriting, sports events, relationship management, operational systems",
   icons: {
     icon: "/favicon.ico"
   },
   openGraph: {
-    title: "Loud Legacy - Build Louder",
-    description: "Unified ecosystem of builder tools and platforms",
+    title: "Loud Legacy - Operational Excellence Through Intelligent Systems",
+    description: "Four products solving real operational problems. Built for professionals who value structure, discipline, and long-term leverage.",
     type: "website",
   },
 };
