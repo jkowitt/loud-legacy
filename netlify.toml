@@ -7,3 +7,21 @@ publish = "out"
 NODE_VERSION = "20"
 NEXT_TELEMETRY_DISABLED = "1"
 NEXT_DISABLE_SWC_WASM = "1"
+
+# Production branch deployment
+[context.production]
+command = "npm install && npm run build"
+
+# Branch deploys (deploy previews for all branches)
+[context.branch-deploy]
+command = "npm install && npm run build"
+
+# Deploy previews for pull requests
+[context.deploy-preview]
+command = "npm install && npm run build"
+
+# SPA redirect for client-side routing
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
