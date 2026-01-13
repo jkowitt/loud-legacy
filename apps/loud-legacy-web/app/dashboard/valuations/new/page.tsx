@@ -51,9 +51,77 @@ export default function NewValuationPage() {
 
   // Results
   const [results, setResults] = useState<any>(null);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Check if property type requires P&L (not single-family residential)
   const showPandL = propertyType !== "RESIDENTIAL";
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('valuation_draft');
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        setName(draft.name || "");
+        setPropertyAddress(draft.propertyAddress || "");
+        setPropertyType(draft.propertyType || "RESIDENTIAL");
+        setPurchasePrice(draft.purchasePrice || "0");
+        setCurrentValue(draft.currentValue || "0");
+        setEnableIncome(draft.enableIncome || false);
+        setEnableExpenses(draft.enableExpenses || false);
+        setEnableFinancing(draft.enableFinancing || false);
+        setEnableGrossRent(draft.enableGrossRent !== undefined ? draft.enableGrossRent : true);
+        setEnableOtherIncome(draft.enableOtherIncome || false);
+        setEnableVacancy(draft.enableVacancy !== undefined ? draft.enableVacancy : true);
+        setEnablePropertyTax(draft.enablePropertyTax !== undefined ? draft.enablePropertyTax : true);
+        setEnableInsurance(draft.enableInsurance !== undefined ? draft.enableInsurance : true);
+        setEnableUtilities(draft.enableUtilities || false);
+        setEnableMaintenance(draft.enableMaintenance !== undefined ? draft.enableMaintenance : true);
+        setEnablePropertyManagement(draft.enablePropertyManagement || false);
+        setGrossRent(draft.grossRent || "0");
+        setOtherIncome(draft.otherIncome || "0");
+        setVacancyRate(draft.vacancyRate || "5");
+        setPropertyTax(draft.propertyTax || "0");
+        setInsurance(draft.insurance || "0");
+        setUtilities(draft.utilities || "0");
+        setMaintenance(draft.maintenance || "0");
+        setPropertyManagement(draft.propertyManagement || "0");
+        setLoanAmount(draft.loanAmount || "0");
+        setInterestRate(draft.interestRate || "0");
+        setLoanTerm(draft.loanTerm || "30");
+        console.log('✅ Loaded draft from workspace');
+      } catch (e) {
+        console.error('Failed to load draft:', e);
+      }
+    }
+  }, []);
+
+  // Auto-save draft to localStorage
+  useEffect(() => {
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+    }
+
+    const timer = setTimeout(() => {
+      saveDraftToLocalStorage();
+    }, 2000); // Auto-save after 2 seconds of inactivity
+
+    setAutoSaveTimer(timer);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [
+    name, propertyAddress, propertyType, purchasePrice, currentValue,
+    enableIncome, enableExpenses, enableFinancing,
+    enableGrossRent, enableOtherIncome, enableVacancy,
+    enablePropertyTax, enableInsurance, enableUtilities,
+    enableMaintenance, enablePropertyManagement,
+    grossRent, otherIncome, vacancyRate,
+    propertyTax, insurance, utilities, maintenance, propertyManagement,
+    loanAmount, interestRate, loanTerm
+  ]);
 
   // Auto-disable P&L sections for residential properties
   useEffect(() => {
@@ -63,6 +131,28 @@ export default function NewValuationPage() {
       setEnableFinancing(false);
     }
   }, [showPandL]);
+
+  const saveDraftToLocalStorage = () => {
+    const draft = {
+      name, propertyAddress, propertyType, purchasePrice, currentValue,
+      enableIncome, enableExpenses, enableFinancing,
+      enableGrossRent, enableOtherIncome, enableVacancy,
+      enablePropertyTax, enableInsurance, enableUtilities,
+      enableMaintenance, enablePropertyManagement,
+      grossRent, otherIncome, vacancyRate,
+      propertyTax, insurance, utilities, maintenance, propertyManagement,
+      loanAmount, interestRate, loanTerm,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem('valuation_draft', JSON.stringify(draft));
+    setDraftSaved(true);
+    setTimeout(() => setDraftSaved(false), 2000);
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem('valuation_draft');
+    setDraftSaved(false);
+  };
 
   const calculateValuation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +212,8 @@ export default function NewValuationPage() {
 
       const valuation = await valuationResponse.json();
       setResults(valuation);
+      // Clear draft after successful calculation
+      clearDraft();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create valuation');
     } finally {
@@ -475,14 +567,51 @@ export default function NewValuationPage() {
             </>
           )}
 
-          <button
-            type="submit"
-            className="button button--primary"
-            disabled={loading}
-            style={{ width: '100%', marginTop: '1rem' }}
-          >
-            {loading ? 'Calculating...' : '💰 Calculate Valuation'}
-          </button>
+          <div style={{ marginTop: '1.5rem' }}>
+            {draftSaved && (
+              <div style={{
+                padding: '0.5rem',
+                background: '#e8f5e9',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                color: '#2e7d32',
+                marginBottom: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                ✓ Draft saved to workspace
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={clearDraft}
+                className="button button--secondary"
+                style={{ flex: '0 0 auto' }}
+              >
+                Clear Draft
+              </button>
+              <button
+                type="submit"
+                className="button button--primary"
+                disabled={loading}
+                style={{ flex: 1 }}
+              >
+                {loading ? 'Calculating...' : '💰 Calculate Valuation'}
+              </button>
+            </div>
+
+            <p style={{
+              fontSize: '0.75rem',
+              color: 'var(--text-light)',
+              marginTop: '0.5rem',
+              textAlign: 'center'
+            }}>
+              Your work is automatically saved every 2 seconds
+            </p>
+          </div>
         </form>
 
         {results && (
