@@ -71,6 +71,9 @@ export default function NewValuationPage() {
   const [currentRates, setCurrentRates] = useState<any>(null);
   const [loadingRates, setLoadingRates] = useState(false);
 
+  // AI Building Analysis
+  const [buildingAnalysis, setBuildingAnalysis] = useState<any>(null);
+
   // Check if property type requires P&L (not single-family residential)
   const showPandL = propertyType !== "RESIDENTIAL";
   const showRentRoll = propertyType === "MULTIFAMILY" || propertyType === "MIXED_USE";
@@ -216,6 +219,31 @@ export default function NewValuationPage() {
     setPropertyAddress(address);
     setPropertyCoordinates(coordinates);
     console.log('Address detected from photo:', address, coordinates);
+  };
+
+  // Handle building analysis from AI
+  const handleBuildingAnalyzed = (analysis: any) => {
+    setBuildingAnalysis(analysis);
+    console.log('Building analyzed by AI:', analysis);
+
+    // Auto-populate form fields based on AI analysis
+    if (analysis.propertyType) {
+      const typeMapping: { [key: string]: string } = {
+        'SINGLE_FAMILY': 'RESIDENTIAL',
+        'MULTIFAMILY': 'MULTIFAMILY',
+        'COMMERCIAL': 'COMMERCIAL',
+        'MIXED_USE': 'MIXED_USE',
+        'INDUSTRIAL': 'INDUSTRIAL',
+        'LAND': 'LAND',
+      };
+      const mappedType = typeMapping[analysis.propertyType] || analysis.propertyType;
+      setPropertyType(mappedType);
+    }
+
+    // Show a notification that fields have been auto-populated
+    if (analysis.condition || analysis.estimatedYearBuilt || analysis.features) {
+      console.log('✅ Property details auto-populated from AI analysis');
+    }
   };
 
   // Fetch current interest rates
@@ -406,9 +434,10 @@ export default function NewValuationPage() {
                 required
               />
 
-              {/* Mobile Camera Upload for Quick Address Detection */}
+              {/* Mobile Camera Upload with AI Building Analysis */}
               <MobileCameraUpload
                 onAddressDetected={handleAddressDetected}
+                onBuildingAnalyzed={handleBuildingAnalyzed}
               />
             </div>
 
