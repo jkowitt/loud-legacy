@@ -7,6 +7,8 @@ publish = ".next"
 NODE_VERSION = "20"
 NEXT_TELEMETRY_DISABLED = "1"
 NEXT_DISABLE_SWC_WASM = "1"
+# Allow Google Maps API key in client bundle (NEXT_PUBLIC_ vars are meant to be public)
+SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIza"
 
 # Production branch deployment
 [context.production]
