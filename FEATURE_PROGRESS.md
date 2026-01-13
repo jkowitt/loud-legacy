@@ -281,7 +281,7 @@ Suggested enhancements for future iterations:
 - Interest rates are currently mock data (extensible to real APIs like FRED, Bloomberg)
 - Rent roll integrates seamlessly with existing income calculations
 - All toggles and form state preserved across sessions via auto-save
-- Google Maps API key configured: `AIzaSyBWE0jHjvBx49vU4nbnc6VroPwoEklI808`
+- Google Maps API key must be set in Netlify environment variables
 - Camera upload requires HTTPS on mobile devices for camera access
 - CMS and Media APIs ready for database integration
 - Mock geocoding fallback ensures functionality without API limits
