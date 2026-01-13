@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import PropertyMap from "@/components/PropertyMap";
+import MobileCameraUpload from "@/components/MobileCameraUpload";
 
 export default function NewValuationPage() {
   const router = useRouter();
@@ -11,6 +13,7 @@ export default function NewValuationPage() {
   // Form state
   const [name, setName] = useState("");
   const [propertyAddress, setPropertyAddress] = useState("");
+  const [propertyCoordinates, setPropertyCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [propertyType, setPropertyType] = useState("RESIDENTIAL");
   const [purchasePrice, setPurchasePrice] = useState("0");
   const [currentValue, setCurrentValue] = useState("0");
@@ -208,6 +211,13 @@ export default function NewValuationPage() {
     return (vacantUnits / rentRollUnits.length) * 100;
   };
 
+  // Handle address detected from photo
+  const handleAddressDetected = (address: string, coordinates: { lat: number; lng: number }) => {
+    setPropertyAddress(address);
+    setPropertyCoordinates(coordinates);
+    console.log('Address detected from photo:', address, coordinates);
+  };
+
   // Fetch current interest rates
   const fetchInterestRates = async () => {
     if (propertyType === "RESIDENTIAL") {
@@ -394,6 +404,11 @@ export default function NewValuationPage() {
                 onChange={(e) => setPropertyAddress(e.target.value)}
                 placeholder="123 Main St, City, State"
                 required
+              />
+
+              {/* Mobile Camera Upload for Quick Address Detection */}
+              <MobileCameraUpload
+                onAddressDetected={handleAddressDetected}
               />
             </div>
 
@@ -1126,6 +1141,18 @@ export default function NewValuationPage() {
                 </div>
               </div>
             )}
+
+            {/* Property Map */}
+            <div style={{ marginTop: '2rem' }}>
+              <h4>Property Location</h4>
+              <div style={{ marginTop: '1rem' }}>
+                <PropertyMap
+                  address={propertyAddress}
+                  propertyValue={results.currentValue || results.purchasePrice}
+                  comparables={results.comparables}
+                />
+              </div>
+            </div>
 
             <div className="results-actions">
               <button
