@@ -16,6 +16,7 @@
     "db:seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@loud-legacy/shared-analytics": "file:../../packages/shared-analytics",
     "@loud-legacy/shared-auth": "file:../../packages/shared-auth",
     "@loud-legacy/shared-design-system": "file:../../packages/shared-design-system",
