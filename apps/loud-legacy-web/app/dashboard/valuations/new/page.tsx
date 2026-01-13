@@ -49,6 +49,16 @@ export default function NewValuationPage() {
   const [interestRate, setInterestRate] = useState("0");
   const [loanTerm, setLoanTerm] = useState("30");
 
+  // Rent roll data (for multifamily and non-residential)
+  const [enableRentRoll, setEnableRentRoll] = useState(false);
+  const [rentRollUnits, setRentRollUnits] = useState<Array<{
+    id: string;
+    unitNumber: string;
+    squareFeet: string;
+    monthlyRent: string;
+    status: 'occupied' | 'vacant';
+  }>>([]);
+
   // Results
   const [results, setResults] = useState<any>(null);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -56,6 +66,7 @@ export default function NewValuationPage() {
 
   // Check if property type requires P&L (not single-family residential)
   const showPandL = propertyType !== "RESIDENTIAL";
+  const showRentRoll = propertyType === "MULTIFAMILY" || propertyType === "MIXED_USE";
 
   // Load draft from localStorage on mount
   useEffect(() => {
@@ -90,6 +101,8 @@ export default function NewValuationPage() {
         setLoanAmount(draft.loanAmount || "0");
         setInterestRate(draft.interestRate || "0");
         setLoanTerm(draft.loanTerm || "30");
+        setEnableRentRoll(draft.enableRentRoll || false);
+        setRentRollUnits(draft.rentRollUnits || []);
         console.log('✅ Loaded draft from workspace');
       } catch (e) {
         console.error('Failed to load draft:', e);
@@ -120,7 +133,8 @@ export default function NewValuationPage() {
     enableMaintenance, enablePropertyManagement,
     grossRent, otherIncome, vacancyRate,
     propertyTax, insurance, utilities, maintenance, propertyManagement,
-    loanAmount, interestRate, loanTerm
+    loanAmount, interestRate, loanTerm,
+    enableRentRoll, rentRollUnits
   ]);
 
   // Auto-disable P&L sections for residential properties
@@ -142,6 +156,7 @@ export default function NewValuationPage() {
       grossRent, otherIncome, vacancyRate,
       propertyTax, insurance, utilities, maintenance, propertyManagement,
       loanAmount, interestRate, loanTerm,
+      enableRentRoll, rentRollUnits,
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem('valuation_draft', JSON.stringify(draft));
@@ -152,6 +167,41 @@ export default function NewValuationPage() {
   const clearDraft = () => {
     localStorage.removeItem('valuation_draft');
     setDraftSaved(false);
+  };
+
+  // Rent roll management functions
+  const addRentRollUnit = () => {
+    const newUnit = {
+      id: `unit-${Date.now()}`,
+      unitNumber: '',
+      squareFeet: '0',
+      monthlyRent: '0',
+      status: 'occupied' as const,
+    };
+    setRentRollUnits([...rentRollUnits, newUnit]);
+  };
+
+  const removeRentRollUnit = (id: string) => {
+    setRentRollUnits(rentRollUnits.filter(unit => unit.id !== id));
+  };
+
+  const updateRentRollUnit = (id: string, field: string, value: string) => {
+    setRentRollUnits(rentRollUnits.map(unit =>
+      unit.id === id ? { ...unit, [field]: value } : unit
+    ));
+  };
+
+  const calculateTotalRentFromRentRoll = () => {
+    if (!enableRentRoll || rentRollUnits.length === 0) return 0;
+    return rentRollUnits
+      .filter(unit => unit.status === 'occupied')
+      .reduce((sum, unit) => sum + (parseFloat(unit.monthlyRent) || 0), 0) * 12; // Annual rent
+  };
+
+  const calculateVacancyFromRentRoll = () => {
+    if (!enableRentRoll || rentRollUnits.length === 0) return 0;
+    const vacantUnits = rentRollUnits.filter(unit => unit.status === 'vacant').length;
+    return (vacantUnits / rentRollUnits.length) * 100;
   };
 
   const calculateValuation = async (e: React.FormEvent) => {
@@ -187,10 +237,11 @@ export default function NewValuationPage() {
           purchasePrice: parseFloat(purchasePrice) || 0,
           currentValue: parseFloat(currentValue) || parseFloat(purchasePrice) || 0,
           incomeData: enableIncome ? {
-            grossRent: enableGrossRent ? (parseFloat(grossRent) || 0) : 0,
+            grossRent: enableRentRoll ? calculateTotalRentFromRentRoll() : (enableGrossRent ? (parseFloat(grossRent) || 0) : 0),
             otherIncome: enableOtherIncome ? (parseFloat(otherIncome) || 0) : 0,
-            vacancyRate: enableVacancy ? (parseFloat(vacancyRate) || 0) : 0,
+            vacancyRate: enableRentRoll ? calculateVacancyFromRentRoll() : (enableVacancy ? (parseFloat(vacancyRate) || 0) : 0),
           } : null,
+          rentRoll: enableRentRoll ? rentRollUnits : null,
           expenseData: enableExpenses ? {
             propertyTax: enablePropertyTax ? (parseFloat(propertyTax) || 0) : 0,
             insurance: enableInsurance ? (parseFloat(insurance) || 0) : 0,
@@ -435,6 +486,169 @@ export default function NewValuationPage() {
                   </>
                 )}
               </div>
+
+              {showRentRoll && (
+                <div className="form-section">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <h3 style={{ margin: 0 }}>Rent Roll</h3>
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={enableRentRoll}
+                        onChange={(e) => setEnableRentRoll(e.target.checked)}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  {enableRentRoll && (
+                    <>
+                      <div style={{
+                        padding: '0.75rem',
+                        background: '#f0f9ff',
+                        borderRadius: '6px',
+                        fontSize: '0.875rem',
+                        marginBottom: '1rem'
+                      }}>
+                        ℹ️ Rent roll will automatically calculate gross rent and vacancy rate
+                      </div>
+
+                      {rentRollUnits.length === 0 && (
+                        <div style={{
+                          padding: '2rem',
+                          textAlign: 'center',
+                          background: 'var(--bg-tertiary)',
+                          borderRadius: '6px',
+                          marginBottom: '1rem'
+                        }}>
+                          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                            No units added yet
+                          </p>
+                          <button
+                            type="button"
+                            onClick={addRentRollUnit}
+                            className="button button--primary"
+                            style={{ fontSize: '0.875rem' }}
+                          >
+                            + Add First Unit
+                          </button>
+                        </div>
+                      )}
+
+                      {rentRollUnits.length > 0 && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          {rentRollUnits.map((unit) => (
+                            <div key={unit.id} style={{
+                              background: 'var(--bg-tertiary)',
+                              padding: '1rem',
+                              borderRadius: '6px',
+                              marginBottom: '0.75rem'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                                <input
+                                  type="text"
+                                  value={unit.unitNumber}
+                                  onChange={(e) => updateRentRollUnit(unit.id, 'unitNumber', e.target.value)}
+                                  placeholder="Unit #"
+                                  style={{ width: '30%' }}
+                                />
+                                <select
+                                  value={unit.status}
+                                  onChange={(e) => updateRentRollUnit(unit.id, 'status', e.target.value)}
+                                  style={{ width: '30%' }}
+                                >
+                                  <option value="occupied">Occupied</option>
+                                  <option value="vacant">Vacant</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => removeRentRollUnit(unit.id)}
+                                  style={{
+                                    background: '#fee',
+                                    border: '1px solid #fcc',
+                                    borderRadius: '4px',
+                                    padding: '0.5rem 0.75rem',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    color: '#c00'
+                                  }}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                <div style={{ flex: 1 }}>
+                                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
+                                    Square Feet
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={unit.squareFeet}
+                                    onChange={(e) => updateRentRollUnit(unit.id, 'squareFeet', e.target.value)}
+                                    placeholder="0"
+                                  />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
+                                    Monthly Rent
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={unit.monthlyRent}
+                                    onChange={(e) => updateRentRollUnit(unit.id, 'monthlyRent', e.target.value)}
+                                    placeholder="0"
+                                    disabled={unit.status === 'vacant'}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={addRentRollUnit}
+                            className="button button--secondary"
+                            style={{ width: '100%', fontSize: '0.875rem' }}
+                          >
+                            + Add Another Unit
+                          </button>
+
+                          <div style={{
+                            marginTop: '1rem',
+                            padding: '0.75rem',
+                            background: 'white',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border-color)'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Total Units:</span>
+                              <span style={{ fontSize: '0.875rem' }}>{rentRollUnits.length}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Occupied:</span>
+                              <span style={{ fontSize: '0.875rem' }}>
+                                {rentRollUnits.filter(u => u.status === 'occupied').length}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Annual Rent:</span>
+                              <span style={{ fontSize: '0.875rem', fontWeight: '700', color: 'var(--accent-color)' }}>
+                                {formatCurrency(calculateTotalRentFromRentRoll())}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Vacancy Rate:</span>
+                              <span style={{ fontSize: '0.875rem' }}>
+                                {calculateVacancyFromRentRoll().toFixed(1)}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="form-section">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
