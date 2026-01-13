@@ -64,6 +64,10 @@ export default function NewValuationPage() {
   const [draftSaved, setDraftSaved] = useState(false);
   const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
 
+  // Interest rates
+  const [currentRates, setCurrentRates] = useState<any>(null);
+  const [loadingRates, setLoadingRates] = useState(false);
+
   // Check if property type requires P&L (not single-family residential)
   const showPandL = propertyType !== "RESIDENTIAL";
   const showRentRoll = propertyType === "MULTIFAMILY" || propertyType === "MIXED_USE";
@@ -202,6 +206,34 @@ export default function NewValuationPage() {
     if (!enableRentRoll || rentRollUnits.length === 0) return 0;
     const vacantUnits = rentRollUnits.filter(unit => unit.status === 'vacant').length;
     return (vacantUnits / rentRollUnits.length) * 100;
+  };
+
+  // Fetch current interest rates
+  const fetchInterestRates = async () => {
+    if (propertyType === "RESIDENTIAL") {
+      setError("Interest rate API is only available for non-residential properties");
+      return;
+    }
+
+    setLoadingRates(true);
+    try {
+      const response = await fetch(`/api/interest-rates?propertyType=${propertyType}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch interest rates');
+      }
+      const data = await response.json();
+      setCurrentRates(data.rates);
+
+      // Auto-apply typical rate for this property type
+      if (data.rates.typical) {
+        setInterestRate(data.rates.typical.toFixed(3));
+      }
+    } catch (err) {
+      console.error('Error fetching rates:', err);
+      setError('Failed to fetch current interest rates');
+    } finally {
+      setLoadingRates(false);
+    }
   };
 
   const calculateValuation = async (e: React.FormEvent) => {
@@ -797,6 +829,49 @@ export default function NewValuationPage() {
                         placeholder="0"
                       />
                     </div>
+
+                    {propertyType !== "RESIDENTIAL" && (
+                      <div style={{
+                        padding: '0.75rem',
+                        background: '#f0f9ff',
+                        borderRadius: '6px',
+                        marginBottom: '1rem',
+                        border: '1px solid #bfdbfe'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>
+                            📊 Current Market Rates
+                          </span>
+                          <button
+                            type="button"
+                            onClick={fetchInterestRates}
+                            disabled={loadingRates}
+                            className="button button--primary"
+                            style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}
+                          >
+                            {loadingRates ? 'Loading...' : 'Get Live Rates'}
+                          </button>
+                        </div>
+                        {currentRates && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            <div style={{ marginBottom: '0.25rem' }}>
+                              <strong>{currentRates.type}:</strong>
+                            </div>
+                            {Object.entries(currentRates.rates).map(([key, value]: [string, any]) => (
+                              <div key={key} style={{ paddingLeft: '0.5rem', marginBottom: '0.125rem' }}>
+                                • {key.replace(/([A-Z])/g, ' $1').trim()}: <strong>{value.toFixed(3)}%</strong>
+                              </div>
+                            ))}
+                            <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #bfdbfe' }}>
+                              Typical Rate: <strong style={{ color: 'var(--accent-color)' }}>{currentRates.typical.toFixed(3)}%</strong>
+                              <br />
+                              Range: {currentRates.range.min.toFixed(2)}% - {currentRates.range.max.toFixed(2)}%
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="form-row">
                       <div className="form-group">
                         <label>Interest Rate (%)</label>
