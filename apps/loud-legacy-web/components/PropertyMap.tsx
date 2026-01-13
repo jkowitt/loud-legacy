@@ -1,3 +1,4 @@
+/// <reference types="@types/google.maps" />
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
@@ -65,6 +66,12 @@ export default function PropertyMap({ address, propertyValue, comparables }: Pro
 
     const initMap = async () => {
       try {
+        // Guard against google not being available
+        if (typeof window === 'undefined' || !window.google || !window.google.maps) {
+          setError('Google Maps is not loaded');
+          return;
+        }
+
         const location = await geocodeAddress(address);
         setGeocodedLocation(location);
 

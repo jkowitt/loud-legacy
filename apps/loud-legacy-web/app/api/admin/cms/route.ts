@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Group by section
-    const grouped = content.reduce((acc: any, item) => {
+    const grouped = content.reduce((acc: any, item: { section: string | null; key: string; value: string; type: string }) => {
       const sectionName = item.section || 'general';
       if (!acc[sectionName]) {
         acc[sectionName] = [];

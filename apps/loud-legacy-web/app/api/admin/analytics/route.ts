@@ -157,8 +157,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch user details for most active users
     const userIds = mostActiveUsers
-      .map((u) => u.userId)
-      .filter((id): id is string => id !== null);
+      .map((u: { userId: string | null }) => u.userId)
+      .filter((id: string | null): id is string => id !== null);
 
     const userDetails = await prisma.user.findMany({
       where: {
@@ -174,9 +174,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const mostActiveUsersWithDetails = mostActiveUsers.map((activity) => ({
+    const mostActiveUsersWithDetails = mostActiveUsers.map((activity: { userId: string | null; _count: { id: number } }) => ({
       ...activity,
-      user: userDetails.find((u) => u.id === activity.userId),
+      user: userDetails.find((u: { id: string; name: string | null; email: string; role: string }) => u.id === activity.userId),
     }));
 
     // Popular actions
@@ -210,23 +210,23 @@ export async function GET(request: NextRequest) {
         activeUsers,
       },
       distribution: {
-        usersByRole: usersByRole.map((r) => ({
+        usersByRole: usersByRole.map((r: { role: string; _count: { id: number } }) => ({
           role: r.role,
           count: r._count.id,
         })),
-        organizationsByPlan: organizationsByPlan.map((p) => ({
+        organizationsByPlan: organizationsByPlan.map((p: { planType: string; _count: { id: number } }) => ({
           plan: p.planType,
           count: p._count.id,
         })),
       },
       trends: {
-        activity: activityTrends.map((a) => ({
+        activity: activityTrends.map((a: { createdAt: Date; _count: { id: number } }) => ({
           date: a.createdAt,
           count: a._count.id,
         })),
       },
       topUsers: mostActiveUsersWithDetails,
-      popularActions: popularActions.map((a) => ({
+      popularActions: popularActions.map((a: { action: string; _count: { id: number } }) => ({
         action: a.action,
         count: a._count.id,
       })),
