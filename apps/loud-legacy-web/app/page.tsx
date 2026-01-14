@@ -11,12 +11,12 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="hero">
         <div className="container">
-          <div className="badge">Systems-Driven Business Ecosystem</div>
-          <h1>Operational Excellence<br/>Through Intelligent Systems</h1>
+          <div className="badge">A family of products that actually work together</div>
+          <h1>Software for people<br/>who run things</h1>
           <p className="tagline">
-            Loud Legacy builds software that solves real operational problems.
-            From real estate intelligence to relationship management, our products deliver
-            structure, clarity, and long-term leverage.
+            We build tools for operators, founders, and anyone tired of duct-taping
+            ten different apps together. Real estate, CRM, home improvement, business ops —
+            all under one roof.
           </p>
           <div className="hero-actions">
             <Link href="#products" className="button button--primary">
@@ -35,24 +35,24 @@ export default function HomePage() {
       {/* Philosophy Section */}
       <section id="philosophy" className="philosophy-section">
         <div className="container">
-          <h2>Built on Systems, Not Shortcuts</h2>
+          <h2>Why we build this way</h2>
           <p className="philosophy-intro">
-            Each product is intentionally designed to solve a specific operational problem,
-            serve a clear user, and create long-term leverage. They stand on their own,
-            but work together through shared philosophy: structure beats chaos, consistency beats intensity.
+            We got tired of bloated software that tries to do everything and ends up doing nothing well.
+            Each product here solves one problem really well. They share logins and play nice together,
+            but you can use just the one you need.
           </p>
           <div className="philosophy-grid">
             <div className="philosophy-card">
-              <h3>Problem-Focused</h3>
-              <p>We build for real operational pain, not hypothetical features.</p>
+              <h3>Scratch our own itch</h3>
+              <p>Everything here started because we needed it ourselves.</p>
             </div>
             <div className="philosophy-card">
-              <h3>User-Specific</h3>
-              <p>Each product serves a clear user with defined needs.</p>
+              <h3>Simple beats clever</h3>
+              <p>No fancy tricks. Just tools that do what they say.</p>
             </div>
             <div className="philosophy-card">
-              <h3>Long-Term Leverage</h3>
-              <p>Our systems compound value over time through consistent execution.</p>
+              <h3>Built to last</h3>
+              <p>We're not chasing trends. These products get better over time.</p>
             </div>
           </div>
         </div>
