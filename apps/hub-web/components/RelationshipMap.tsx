@@ -2,7 +2,8 @@ const relationships = [
   { from: "Hub", to: "VALORA", label: "Shared identity" },
   { from: "Hub", to: "VenueVR", label: "Unified analytics" },
   { from: "Hub", to: "Business Now", label: "Billing & SSO" },
-  { from: "Hub", to: "DIY Mr Fix It", label: "Content syndication" }
+  { from: "Hub", to: "Sportify", label: "Event coordination" },
+  { from: "Hub", to: "Legacy CRM", label: "Cross-platform CRM" }
 ];
 
 export function RelationshipMap() {

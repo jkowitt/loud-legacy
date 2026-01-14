@@ -228,6 +228,9 @@ export default function LegacyCrmHome() {
   return (
     <main className="crm-layout">
       <aside className="crm-sidebar">
+        <div className="crm-bundled-banner">
+          Included free with VALORA, Business Now, and Sportify subscriptions
+        </div>
         <div className="crm-sidebar__logo">
           <span>Legacy CRM</span>
           <h1>Unified relationship command center</h1>

@@ -42,17 +42,27 @@ export const brands: BrandDefinition[] = [
     description:
       "Courses, templates, and coaching that turn small business hustle into repeatable growth systems.",
     primaryCta: { label: "View Courses", href: "/brands/business-now" },
-    status: "roadmap"
+    status: "live"
   },
   {
-    key: "diy-mr-fix-it",
-    name: "DIY Mr Fix It",
-    slug: "diy-mr-fix-it",
-    tagline: "Project confidence for every room in the house",
+    key: "sportify",
+    name: "Sportify",
+    slug: "sportify",
+    tagline: "Live event execution without the chaos",
     description:
-      "Step-by-step projects, calculators, and pro tips that keep DIY on time, on budget, and stress free.",
-    primaryCta: { label: "Start building", href: "https://diymrfixit.com" },
-    secondaryCta: { label: "Tools & calculators", href: "/brands/diy" },
+      "Plan run of shows, track sponsor activations, and execute game day moments from one operational record.",
+    primaryCta: { label: "Explore Sportify", href: "/sportify" },
+    secondaryCta: { label: "Request access", href: "mailto:hello@loud-legacy.com" },
+    status: "beta"
+  },
+  {
+    key: "legacy-crm",
+    name: "Legacy CRM",
+    slug: "legacy-crm",
+    tagline: "Relationship management built for operators",
+    description:
+      "Track contacts, companies, and deals across all your ventures. Included free with any Loud Legacy subscription.",
+    primaryCta: { label: "Open CRM", href: "/crm" },
     status: "live"
   }
 ];

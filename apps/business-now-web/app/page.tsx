@@ -101,11 +101,12 @@ const modules = [
   {
     title: "Community Forum",
     role: "Peer network",
-    summary: "Operators swap playbooks, leads, and wins with curated accountability circles.",
+    summary: "Share case studies, swap best practices, and celebrate wins with operators who get it.",
     features: [
-      "Topic-based channels for industries and growth stages",
-      "Weekly standups fueled by template prompts",
-      "Spotlight feed for partner offers and success stories"
+      "Post case studies with real numbers and lessons learned",
+      "Contribute best practices and get feedback from the community",
+      "Ask questions and get answers from operators who've been there",
+      "Celebrate wins and milestones with people who understand the grind"
     ]
   }
 ];

@@ -44,8 +44,8 @@ export const BulkToolsPage = () => {
         </div>
       </header>
 
-      <div className="rounded-2xl border border-brand-800 bg-surface/60 shadow-hard">
-        <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-brand-800 bg-surface/60 shadow-hard">
+        <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="font-mono text-[11px] uppercase tracking-[0.35em] text-neutral-500">
             <tr className="border-b border-brand-800/60">
               <th className="px-6 py-4">Job ID</th>

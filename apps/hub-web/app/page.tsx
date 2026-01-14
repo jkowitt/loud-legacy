@@ -12,7 +12,7 @@ export default function HomePage() {
       <section className="section">
         <div className="container hero">
           <div className="badge">Unified product family</div>
-          <h1>Build louder with VALORA, VenueVR, Business Now, and DIY Mr Fix It</h1>
+          <h1>Build louder with VALORA, VenueVR, Business Now, Sportify, and Legacy CRM</h1>
           <p>
             Loud Legacy is the umbrella that pulls every product line together so operators, creators, and
             fans can work from one playbook. Single sign on, brand-native experiences, and a shared design
@@ -58,7 +58,7 @@ export default function HomePage() {
               <h3>Billing across brands</h3>
               <p style={{ color: "var(--color-text-secondary)" }}>
                 Stripe subscriptions live at the organization level. Assign seats and add-ons across VALORA,
-                VenueVR, Business Now, and DIY.
+                VenueVR, Business Now, Sportify, and Legacy CRM.
               </p>
             </div>
             <div className="card">

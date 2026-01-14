@@ -46,13 +46,14 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        // Check if user has access to Legacy CRM platform
-        const hasAccess = user.platformAccess.some(
-          (access) => access.platform === 'LEGACY_CRM' && access.enabled
+        // CRM is included with any platform subscription
+        // Users get CRM access automatically when they sign up for VALORA, BUSINESS_NOW, or SPORTIFY
+        const hasAnyPlatformAccess = user.platformAccess.some(
+          (access) => access.enabled && ['LEGACY_CRM', 'VALORA', 'BUSINESS_NOW', 'HUB', 'VENUEVR'].includes(access.platform)
         );
 
-        if (!hasAccess) {
-          throw new Error("No access to Legacy CRM platform");
+        if (!hasAnyPlatformAccess) {
+          throw new Error("No active platform subscription. Sign up for any Loud Legacy product to get CRM access.");
         }
 
         const isCorrectPassword = await bcrypt.compare(

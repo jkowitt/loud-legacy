@@ -1,4 +1,4 @@
-export type BrandKey = "valora" | "venuevr" | "business-now" | "diy-mr-fix-it" | "hub";
+export type BrandKey = "valora" | "venuevr" | "business-now" | "sportify" | "legacy-crm" | "hub";
 
 export type AnalyticsEventName =
   | "page_viewed"
