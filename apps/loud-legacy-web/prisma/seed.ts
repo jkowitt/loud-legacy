@@ -26,6 +26,33 @@ async function main() {
   console.log('   Password: demo123');
   console.log('   Role: SUPER_ADMIN (full CMS & site editing capabilities)');
 
+  // Grant access to ALL platforms
+  const platforms = ['VALORA', 'BUSINESS_NOW', 'LEGACY_CRM', 'HUB', 'VENUEVR'];
+
+  for (const platform of platforms) {
+    await prisma.platformAccess.upsert({
+      where: {
+        userId_platform: {
+          userId: testUser.id,
+          platform: platform as any,
+        },
+      },
+      update: { enabled: true },
+      create: {
+        userId: testUser.id,
+        platform: platform as any,
+        enabled: true,
+      },
+    });
+  }
+
+  console.log('✅ Granted access to all platforms:');
+  console.log('   - VALORA (Real Estate Valuation)');
+  console.log('   - BUSINESS_NOW (Business Management)');
+  console.log('   - LEGACY_CRM (Customer Relationship Management)');
+  console.log('   - HUB (Central Dashboard)');
+  console.log('   - VENUEVR (VR Venue Tours)');
+
   // Create demo organization
   const demoOrg = await prisma.organization.upsert({
     where: { slug: 'demo-org' },

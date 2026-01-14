@@ -23,12 +23,19 @@ model User {
   image         String?
   role          UserRole  @default(USER)
 
+  // Platform Access (shared across all LOUD platforms)
+  platformAccess PlatformAccess[]
+
   // Relations
-  accounts      Account[]
-  sessions      Session[]
-  organizations OrganizationMember[]
-  valuations    Valuation[]
-  activities    ActivityLog[]
+  accounts         Account[]
+  sessions         Session[]
+  organizations    OrganizationMember[]
+  valuations       Valuation[]
+  activities       ActivityLog[]
+  subscriptions    Subscription[]
+  businessProjects BusinessProject[]
+  crmLeads         CRMLead[]
+  crmDeals         CRMDeal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -474,4 +481,385 @@ model SystemConfig {
   value String @db.Text
 
   updatedAt DateTime @updatedAt
+}
+
+// ==========================================
+// MULTI-PLATFORM SUPPORT
+// ==========================================
+
+// Platform Access Control - which platforms a user can access
+model PlatformAccess {
+  id         String   @id @default(cuid())
+  userId     String
+  platform   Platform
+  enabled    Boolean  @default(true)
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, platform])
+  @@index([userId])
+  @@index([platform])
+}
+
+enum Platform {
+  VALORA        // Real estate valuation (loud-legacy-web)
+  BUSINESS_NOW  // Business management
+  LEGACY_CRM    // Customer relationship management
+  HUB           // Central dashboard/hub
+  VENUEVR       // VR venue tours
+}
+
+// ==========================================
+// SUBSCRIPTION & PAYMENTS (Shared across platforms)
+// ==========================================
+
+model Subscription {
+  id             String             @id @default(cuid())
+  userId         String
+  platform       Platform           // Which platform this subscription is for
+
+  // Subscription Details
+  status         SubscriptionStatus @default(ACTIVE)
+  planType       SubscriptionPlan
+  billingCycle   BillingCycle       @default(MONTHLY)
+
+  // Pricing
+  amount         Float              // Amount in cents
+  currency       String             @default("USD")
+
+  // Payment Provider (Stripe)
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
+  stripePaymentMethodId  String?
+  stripePriceId          String?
+
+  // Subscription Period
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+  canceledAt         DateTime?
+
+  // Trial
+  trialStart    DateTime?
+  trialEnd      DateTime?
+
+  // Relations
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, platform])
+  @@index([userId])
+  @@index([platform])
+  @@index([status])
+  @@index([stripeSubscriptionId])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  UNPAID
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  subscriptionId   String
+
+  // Payment Details
+  amount           Float         // Amount in cents
+  currency         String        @default("USD")
+  status           PaymentStatus
+
+  // Stripe
+  stripePaymentIntentId String?  @unique
+  stripeChargeId        String?  @unique
+
+  // Payment Method
+  paymentMethod    String?       // card, bank_transfer, etc.
+  last4            String?       // Last 4 digits of card
+  brand            String?       // visa, mastercard, etc.
+
+  // Invoice
+  invoiceUrl       String?
+  receiptUrl       String?
+
+  // Error handling
+  failureCode      String?
+  failureMessage   String?
+
+  subscription     Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+// ==========================================
+// BUSINESS NOW PLATFORM
+// ==========================================
+
+model BusinessProject {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?  @db.Text
+  status      ProjectStatus @default(PLANNING)
+
+  // Business Plan
+  executiveSummary String? @db.Text
+  marketAnalysis   String? @db.Text
+  financialPlan    Json?   // Revenue projections, expenses, etc.
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       BusinessTask[]
+  milestones  BusinessMilestone[]
+
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+model BusinessTask {
+  id          String   @id @default(cuid())
+  projectId   String
+  title       String
+  description String?  @db.Text
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+
+  dueDate     DateTime?
+  completedAt DateTime?
+
+  project     BusinessProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model BusinessMilestone {
+  id          String   @id @default(cuid())
+  projectId   String
+  title       String
+  description String?  @db.Text
+  targetDate  DateTime
+  achieved    Boolean  @default(false)
+  achievedAt  DateTime?
+
+  project     BusinessProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([projectId])
+}
+
+// ==========================================
+// LEGACY CRM PLATFORM
+// ==========================================
+
+model CRMLead {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Contact Info
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  company     String?
+  title       String?
+
+  // Lead Details
+  status      LeadStatus @default(NEW)
+  source      LeadSource @default(OTHER)
+  score       Int?       // Lead score 0-100
+
+  // Address
+  address     String?
+  city        String?
+  state       String?
+  zip         String?
+  country     String?    @default("USA")
+
+  // Relations
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deals       CRMDeal[]
+  activities  CRMActivity[]
+  notes       CRMNote[]
+
+  convertedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([email])
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  EMAIL_CAMPAIGN
+  SOCIAL_MEDIA
+  COLD_CALL
+  EVENT
+  OTHER
+}
+
+model CRMDeal {
+  id          String   @id @default(cuid())
+  userId      String
+  leadId      String?
+
+  // Deal Info
+  title       String
+  description String?  @db.Text
+  value       Float    // Deal value
+  currency    String   @default("USD")
+
+  stage       DealStage @default(PROSPECTING)
+  probability Int?      // Win probability 0-100
+
+  // Dates
+  expectedCloseDate DateTime?
+  actualCloseDate   DateTime?
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead        CRMLead?    @relation(fields: [leadId], references: [id])
+  activities  CRMActivity[]
+  notes       CRMNote[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([leadId])
+  @@index([stage])
+}
+
+enum DealStage {
+  PROSPECTING
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+model CRMActivity {
+  id          String   @id @default(cuid())
+  leadId      String?
+  dealId      String?
+
+  type        ActivityType
+  subject     String
+  description String?  @db.Text
+
+  scheduledAt DateTime?
+  completedAt DateTime?
+
+  lead        CRMLead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  deal        CRMDeal? @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([leadId])
+  @@index([dealId])
+  @@index([type])
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  NOTE
+}
+
+model CRMNote {
+  id        String   @id @default(cuid())
+  leadId    String?
+  dealId    String?
+
+  content   String   @db.Text
+  isPinned  Boolean  @default(false)
+
+  lead      CRMLead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  deal      CRMDeal? @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leadId])
+  @@index([dealId])
 }
