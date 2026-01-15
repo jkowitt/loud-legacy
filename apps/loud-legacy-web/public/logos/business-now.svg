@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 60" fill="none">
-  <rect width="180" height="60" fill="#f5f5f5"/>
-  <!-- Arrow icon -->
-  <g transform="translate(8, 12)">
-    <path d="M0 36 L0 20 L16 20 L16 8 L36 24 L16 40 L16 28 L8 28 L8 36 Z" fill="#2563eb"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 70" fill="none">
+  <rect width="200" height="70" fill="#f5f5f5"/>
+  <!-- Blue arrow pointing up-right -->
+  <g transform="translate(10, 12)">
+    <path d="M0 46 L0 26 L20 26 L20 10 L46 32 L20 54 L20 38 L8 38 L8 46 Z" fill="#2563eb"/>
   </g>
-  <!-- Text -->
-  <text x="52" y="28" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111111">Business</text>
-  <text x="52" y="48" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111111">Now</text>
+  <!-- Business Now text -->
+  <text x="62" y="32" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#111111">Business</text>
+  <text x="62" y="56" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#111111">Now</text>
 </svg>
