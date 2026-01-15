@@ -4,41 +4,75 @@ import Footer from "@/components/Footer";
 
 export const metadata = {
   title: "About Us - Loud Legacy",
-  description: "Built by operators, for operators. Learn about the team behind VALORA, Sportify, Business Now, and Legacy CRM.",
+  description: "Loud Legacy exists to help people show up with confidence, clarity, and presence. Built by operators who believe impact is created when people stop shrinking and start using their voice with intention.",
 };
 
 const team = [
   {
-    name: "Jason Kowitt",
-    role: "Founder & CEO",
-    bio: "15+ years in real estate, sports operations, and building software. Started Loud Legacy after seeing how many tools operators were forced to juggle.",
-    background: "Former D1 athletic operations, real estate investor, bootstrapped founder."
+    name: "Founder & Vision",
+    description: "Sets the philosophy, direction, and long-term mission. Ensures everything stays aligned with purpose, impact, and legacy."
+  },
+  {
+    name: "Strategy & Content",
+    description: "Builds frameworks, messaging, and educational content designed to help people think clearly and act boldly."
+  },
+  {
+    name: "Community & Experiences",
+    description: "Creates environments, workshops, and conversations where people practice using their voice in real-world situations."
+  },
+  {
+    name: "Creative & Brand",
+    description: "Brings the Loud Legacy identity to life through design, storytelling, and experience-driven execution."
   }
 ];
 
 const timeline = [
-  { year: "2023", event: "VALORA beta launched for real estate underwriting" },
-  { year: "2024", event: "Business Now and Legacy CRM added to the ecosystem" },
-  { year: "2025", event: "Sportify launched with 12 athletic departments in beta" },
-  { year: "2026", event: "Unified platform launch with single sign-on across all products" },
+  {
+    phase: "The Spark",
+    description: "An idea formed through lived experience and repeated conversations about confidence and communication."
+  },
+  {
+    phase: "The Foundation",
+    description: "Core beliefs and the Loud Legacy framework were defined, setting the tone for everything that followed."
+  },
+  {
+    phase: "The Build",
+    description: "Content, coaching, and tools began rolling out as the brand found its voice and audience."
+  },
+  {
+    phase: "The Expansion",
+    description: "Loud Legacy grew into a platform with programs, partnerships, and community-driven experiences."
+  },
+  {
+    phase: "The Legacy Phase",
+    description: "An ongoing evolution into an enduring ecosystem focused on long-term impact, leadership, and generational influence."
+  },
 ];
 
 const values = [
   {
-    title: "Operators first",
-    description: "We build for people who run things. Not for feature checklists or analyst reports."
+    title: "Clarity",
+    description: "We value clear thinking, honest communication, and intentional action."
   },
   {
-    title: "Simple over clever",
-    description: "We'd rather ship something that works than something that impresses engineers."
+    title: "Courage",
+    description: "Growth requires speaking before comfort arrives. We choose action over hesitation."
   },
   {
-    title: "Long-term thinking",
-    description: "We're building a company that lasts, not one that exits. Our incentives align with yours."
+    title: "Authenticity",
+    description: "We do not teach performance. We help people show up as themselves with confidence."
   },
   {
-    title: "Honest pricing",
-    description: "No hidden fees, no gotchas, no 'call for pricing' games. You know what you're paying."
+    title: "Consistency",
+    description: "Legacy is built through daily choices, not single moments."
+  },
+  {
+    title: "Impact",
+    description: "Everything we create should leave people stronger, more confident, and more capable."
+  },
+  {
+    title: "Responsibility",
+    description: "Using your voice carries weight. Influence should be used to build, uplift, and lead with integrity."
   }
 ];
 
@@ -50,31 +84,58 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="about-hero">
         <div className="container">
-          <h1>Built by operators, for operators</h1>
+          <h1>Live loud. Create impact. Build a legacy.</h1>
           <p className="hero-subtitle">
-            We got tired of duct-taping our businesses together with tools that didn't talk to each other.
-            So we built something better.
+            Loud Legacy exists to help people show up with confidence, clarity, and presence.
+            We believe impact is created when people stop shrinking and start using their voice with intention.
           </p>
         </div>
       </section>
 
-      {/* Story */}
+      {/* Who We Are */}
       <section className="about-story">
         <div className="container">
           <div className="story-content">
-            <h2>Our story</h2>
+            <h2>Who we are</h2>
             <p>
-              Loud Legacy started with a simple frustration: why do operators need 10 different apps
-              to run their businesses? One for CRM, one for project management, one for analytics,
-              one for event planning—the list goes on.
+              This is not about being louder than everyone else.
             </p>
             <p>
-              We weren't looking to build "the next Salesforce" or compete with enterprise giants.
-              We just wanted tools that work the way we work. Simple. Connected. Built to last.
+              It is about being clear, grounded, and impossible to ignore.
             </p>
             <p>
-              Today, Loud Legacy is a family of five products that share a single account, a single
-              design language, and a single philosophy: solve real problems for people who run things.
+              We build tools and experiences that help operators, founders, and leaders
+              communicate with confidence and run their businesses with intention. VALORA,
+              Sportify, Business Now, and Legacy CRM are how we put this philosophy into action—software
+              built for people who refuse to shrink.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Founder Story */}
+      <section className="about-founder">
+        <div className="container">
+          <h2>Founder story</h2>
+          <div className="founder-content">
+            <p>
+              Loud Legacy was born from a repeated pattern seen across leadership rooms,
+              creative spaces, and everyday conversations.
+            </p>
+            <p className="founder-highlight">
+              Capable people staying quiet when their voice mattered most.
+            </p>
+            <p>
+              Not because they lacked talent or ideas. Because they doubted themselves.
+            </p>
+            <p>
+              The founder watched confidence outperform competence again and again.
+              The loudest voice was rarely the strongest. The clearest voice was.
+            </p>
+            <p>
+              Loud Legacy was created to close that gap. It exists to help people develop
+              confidence through action, sharpen their communication, and build something
+              meaningful that lasts. A legacy shaped by intention, not volume.
             </p>
           </div>
         </div>
@@ -83,22 +144,21 @@ export default function AboutPage() {
       {/* Team */}
       <section className="about-team">
         <div className="container">
-          <h2>The team</h2>
+          <h2>Our team</h2>
+          <p className="team-intro">
+            Loud Legacy is powered by a focused group of builders, strategists, and creatives
+            who believe communication changes outcomes.
+          </p>
           <div className="team-grid">
             {team.map((member) => (
               <div key={member.name} className="team-card">
-                <div className="team-avatar">
-                  {member.name.split(" ").map(n => n[0]).join("")}
-                </div>
                 <h3>{member.name}</h3>
-                <span className="team-role">{member.role}</span>
-                <p className="team-bio">{member.bio}</p>
-                <p className="team-background">{member.background}</p>
+                <p>{member.description}</p>
               </div>
             ))}
           </div>
           <p className="hiring-note">
-            We're a small, focused team. If you're interested in joining, <Link href="/contact">reach out</Link>.
+            The team grows intentionally. Every contributor is here for one reason: to help others show up fully.
           </p>
         </div>
       </section>
@@ -108,10 +168,13 @@ export default function AboutPage() {
         <div className="container">
           <h2>Our journey</h2>
           <div className="timeline">
-            {timeline.map((item) => (
-              <div key={item.year} className="timeline-item">
-                <span className="timeline-year">{item.year}</span>
-                <span className="timeline-event">{item.event}</span>
+            {timeline.map((item, index) => (
+              <div key={item.phase} className="timeline-item">
+                <span className="timeline-number">{index + 1}</span>
+                <div className="timeline-content">
+                  <span className="timeline-phase">{item.phase}</span>
+                  <p className="timeline-description">{item.description}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -136,11 +199,11 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="about-cta">
         <div className="container">
-          <h2>Ready to simplify your stack?</h2>
-          <p>Join operators who've consolidated their tools with Loud Legacy.</p>
+          <h2>Ready to show up fully?</h2>
+          <p>Join operators who've stopped shrinking and started building their legacy.</p>
           <div className="cta-actions">
             <Link href="/contact" className="button button--primary">
-              Request a Demo
+              Get Started
             </Link>
             <Link href="/pricing" className="button button--secondary">
               View Pricing
