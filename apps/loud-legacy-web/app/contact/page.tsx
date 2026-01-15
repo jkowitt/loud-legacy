@@ -32,12 +32,33 @@ export default function ContactPage() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In production, this would submit to an API
-    console.log("Form submitted:", formData);
-    setSubmitted(true);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -154,8 +175,19 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  <button type="submit" className="button button--primary button--large">
-                    Send Message
+                  {error && (
+                    <div className="form-error" role="alert">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="button button--primary button--large"
+                    disabled={isLoading}
+                    aria-busy={isLoading}
+                  >
+                    {isLoading ? "Sending..." : "Send Message"}
                   </button>
                 </form>
               )}
