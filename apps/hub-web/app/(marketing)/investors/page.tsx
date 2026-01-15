@@ -7,7 +7,7 @@ export const metadata = {
 
 const stats = [
   { label: "Annual recurring revenue", value: "$4.2M", hint: "FY24 exit run rate" },
-  { label: "Brands", value: "4", hint: "VALORA, VenueVR, Business Now, DIY Mr Fix It" },
+  { label: "Brands", value: "5", hint: "VALORA, VenueVR, Business Now, Sportify, Legacy CRM" },
   { label: "Net revenue retention", value: "128%", hint: "Rolling 12 months" }
 ];
 
@@ -37,7 +37,8 @@ export default function InvestorsPage() {
               <li>VALORA private beta 2 launched with portfolio management features.</li>
               <li>VenueVR completed first venue ingest with 8K cameras and volumetric depth.</li>
               <li>Business Now released Builder Accelerator curriculum (cohort #3).</li>
-              <li>DIY Mr Fix It crossed 250k monthly active households.</li>
+              <li>Sportify beta launched with 12 sports organizations onboarded.</li>
+              <li>Legacy CRM now included free with all platform subscriptions.</li>
             </ul>
           </div>
         </div>

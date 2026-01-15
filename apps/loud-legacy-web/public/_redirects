@@ -6,5 +6,5 @@
 /venuevr/* /venuevr/:splat 200
 /business-now/* /business-now/:splat 200
 /crm/* /crm/:splat 200
-/diy/* /diy/index.html 200
+/sportify/* /sportify/:splat 200
 /* /index.html 200

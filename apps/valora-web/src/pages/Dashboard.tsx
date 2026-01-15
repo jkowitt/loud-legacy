@@ -50,7 +50,7 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Valuations"
           value="312"
@@ -81,7 +81,7 @@ export const DashboardPage = () => {
         />
       </div>
 
-      <div className="grid gap-8 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
         <DataPanel title="Live Alerts" subtitle="systems" toolbar={<span className="text-xs text-accent/70">Auto-resolve ON</span>}>
           <div className="space-y-4">
             {mockAlerts.map((alert) => (
@@ -132,7 +132,7 @@ export const DashboardPage = () => {
         </DataPanel>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[2fr_3fr]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[2fr_3fr]">
         <DataPanel title="Market pulse" subtitle="rates">
           <div className="grid gap-3 text-sm text-neutral-300">
             <div className="flex items-center justify-between">

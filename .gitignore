@@ -39,7 +39,7 @@ package-lock.json
 apps/loud-legacy-web/public/valora/
 apps/loud-legacy-web/public/venuevr/
 apps/loud-legacy-web/public/business-now/
-apps/loud-legacy-web/public/diy/
+apps/loud-legacy-web/public/sportify/
 
 # Python virtual environments and caches
 .venv/

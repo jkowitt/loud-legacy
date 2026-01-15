@@ -13,7 +13,7 @@ const usageRows = [
 export const UsagePage = () => {
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           title="Quota"
           value="63%"
@@ -37,8 +37,8 @@ export const UsagePage = () => {
         />
       </div>
 
-      <div className="rounded-2xl border border-brand-800 bg-surface/70 shadow-hard">
-        <table className="w-full text-left text-sm text-neutral-300">
+      <div className="overflow-x-auto rounded-2xl border border-brand-800 bg-surface/70 shadow-hard">
+        <table className="w-full min-w-[540px] text-left text-sm text-neutral-300">
           <thead className="font-mono text-[11px] uppercase tracking-[0.35em] text-neutral-500">
             <tr className="border-b border-brand-800/60">
               <th className="px-6 py-4">Feature</th>

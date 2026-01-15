@@ -15,7 +15,7 @@ export default function HomePage() {
           <h1>Software for people<br/>who run things</h1>
           <p className="tagline">
             We build tools for operators, founders, and anyone tired of duct-taping
-            ten different apps together. Real estate, CRM, home improvement, business ops —
+            ten different apps together. Real estate, CRM, live events, business ops —
             all under one roof.
           </p>
           <div className="hero-actions">

@@ -1,4 +1,5 @@
 import type { ReactNode, CSSProperties } from "react";
+import { useState, useEffect } from "react";
 
 export type AppShellNavItem = {
   label: string;
@@ -23,9 +24,19 @@ export type AppShellProps = {
   onSignOut?: () => void;
 };
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 const baseContainer: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "260px 1fr",
   minHeight: "100vh",
   backgroundColor: "var(--color-surface-base)",
   color: "var(--color-text-primary)",
@@ -114,6 +125,35 @@ const contentStyle: CSSProperties = {
   background: "var(--color-surface-base)"
 };
 
+const menuIconStyle: CSSProperties = {
+  background: "transparent",
+  border: "none",
+  color: "var(--color-text-primary)",
+  cursor: "pointer",
+  padding: "var(--space-2)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center"
+};
+
+const overlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,0.5)",
+  zIndex: 40
+};
+
+const mobileSidebarStyle: CSSProperties = {
+  ...sidebarStyle,
+  position: "fixed",
+  top: 0,
+  left: 0,
+  bottom: 0,
+  width: "280px",
+  zIndex: 50,
+  transform: "translateX(0)"
+};
+
 export function AppShell({
   brandName,
   navItems,
@@ -123,11 +163,18 @@ export function AppShell({
   sidebarFooter,
   onSignOut
 }: AppShellProps) {
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const renderNavItem = (item: AppShellNavItem) => {
     const commonProps = {
       style: {
         ...navButtonStyle,
         ...(item.active ? navButtonActive : null)
+      },
+      onClick: () => {
+        if (isMobile) setSidebarOpen(false);
+        item.onSelect?.();
       }
     } as const;
 
@@ -161,37 +208,70 @@ export function AppShell({
     }
 
     return (
-      <button key={item.label} type="button" onClick={item.onSelect} {...commonProps}>
+      <button key={item.label} type="button" {...commonProps}>
         {content}
       </button>
     );
   };
 
+  const sidebarContent = (
+    <>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <strong style={{ fontSize: "1.1rem", letterSpacing: "0.04em" }}>{brandName}</strong>
+        {isMobile && (
+          <button type="button" onClick={() => setSidebarOpen(false)} style={menuIconStyle} aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+      <nav aria-label="Primary navigation" style={navListStyle}>
+        {navItems.map(renderNavItem)}
+      </nav>
+      <div style={{ marginTop: "auto", display: "grid", gap: "var(--space-4)" }}>
+        {sidebarFooter}
+      </div>
+    </>
+  );
+
   return (
-    <div style={baseContainer}>
-      <aside style={sidebarStyle}>
-        <div>
-          <strong style={{ fontSize: "1.1rem", letterSpacing: "0.04em" }}>{brandName}</strong>
-        </div>
-        <nav aria-label="Primary navigation" style={navListStyle}>
-          {navItems.map(renderNavItem)}
-        </nav>
-        <div style={{ marginTop: "auto", display: "grid", gap: "var(--space-4)" }}>
-          {sidebarFooter}
-        </div>
-      </aside>
+    <div style={{ ...baseContainer, gridTemplateColumns: isMobile ? "1fr" : "260px 1fr" }}>
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div style={overlayStyle} onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar - fixed on mobile, static on desktop */}
+      {isMobile ? (
+        sidebarOpen && <aside style={mobileSidebarStyle}>{sidebarContent}</aside>
+      ) : (
+        <aside style={sidebarStyle}>{sidebarContent}</aside>
+      )}
+
       <div style={mainStyle}>
         <header style={topBarStyle}>
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>{topActions}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+            {isMobile && (
+              <button type="button" onClick={() => setSidebarOpen(true)} style={menuIconStyle} aria-label="Open menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 12h18M3 6h18M3 18h18" />
+                </svg>
+              </button>
+            )}
+            {topActions}
+          </div>
           {user ? (
             <div style={userChipStyle}>
               <div style={avatarStyle}>{user.avatarUrl ? <img src={user.avatarUrl} alt={user.name} style={{ width: "100%", height: "100%", borderRadius: "50%" }} /> : user.name.slice(0, 2).toUpperCase()}</div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontWeight: 600 }}>{user.name}</span>
-                {user.email ? (
-                  <span style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}>{user.email}</span>
-                ) : null}
-              </div>
+              {!isMobile && (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontWeight: 600 }}>{user.name}</span>
+                  {user.email ? (
+                    <span style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}>{user.email}</span>
+                  ) : null}
+                </div>
+              )}
               {onSignOut ? (
                 <button
                   type="button"
@@ -210,7 +290,7 @@ export function AppShell({
             </div>
           ) : null}
         </header>
-        <main style={contentStyle}>{children}</main>
+        <main style={{ ...contentStyle, padding: isMobile ? "var(--space-4)" : "var(--space-8)" }}>{children}</main>
       </div>
     </div>
   );
