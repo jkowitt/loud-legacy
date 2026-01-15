@@ -31,13 +31,10 @@ export async function GET(request: NextRequest) {
     }
 
     const activeSubscription = user.subscriptions[0];
-    const platformAccess = user.platformAccess.reduce(
-      (acc, access) => ({
-        ...acc,
-        [access.platform]: access.enabled,
-      }),
-      {} as Record<string, boolean>
-    );
+    const platformAccess: Record<string, boolean> = {};
+    for (const access of user.platformAccess) {
+      platformAccess[access.platform] = access.enabled;
+    }
 
     return NextResponse.json({
       subscription: activeSubscription
