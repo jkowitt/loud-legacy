@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -14,8 +15,16 @@ export default function LegacyCRMPage() {
 
       <section className="product-hero" style={{ background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)" }}>
         <div className="container">
+          <Link href="/legacy-crm" className="product-hero-logo" aria-label="Legacy CRM Home">
+            <Image
+              src="/logos/legacy-crm.svg"
+              alt="Legacy CRM"
+              width={200}
+              height={60}
+              priority
+            />
+          </Link>
           <div className="product-badge">Relationship Discipline</div>
-          <h1>Legacy CRM</h1>
           <p className="product-tagline">
             Relationship and opportunity management system focused on discipline, not volume.
             Designed for people whose success depends on follow-up, trust, and long-term relationships.

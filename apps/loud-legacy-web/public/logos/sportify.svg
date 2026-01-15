@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
+  <defs>
+    <linearGradient id="sportifyGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff"/>
+      <stop offset="25%" style="stop-color:#00ff88"/>
+      <stop offset="50%" style="stop-color:#ffdd00"/>
+      <stop offset="75%" style="stop-color:#ff6644"/>
+      <stop offset="100%" style="stop-color:#ff4466"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="80" fill="white"/>
+  <!-- Stylized S with swirl -->
+  <g transform="translate(50, 5)">
+    <!-- Outer swirl -->
+    <path d="M50 10 C70 10 85 20 85 35 C85 45 75 52 60 52 C45 52 35 45 35 35 C35 28 42 22 52 22"
+          stroke="url(#sportifyGrad1)" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <!-- Play triangle hint -->
+    <path d="M45 30 L55 35 L45 40 Z" fill="#1e3a5f"/>
+    <!-- Sparkle -->
+    <path d="M75 8 L77 12 L81 14 L77 16 L75 20 L73 16 L69 14 L73 12 Z" fill="#00d4ff"/>
+  </g>
+  <!-- Text -->
+  <text x="100" y="72" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#1e3a5f" text-anchor="middle" letter-spacing="2">SPORTIFY</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 60" fill="none">
+  <rect width="180" height="60" fill="#f5f5f5"/>
+  <!-- Arrow icon -->
+  <g transform="translate(8, 12)">
+    <path d="M0 36 L0 20 L16 20 L16 8 L36 24 L16 40 L16 28 L8 28 L8 36 Z" fill="#2563eb"/>
+  </g>
+  <!-- Text -->
+  <text x="52" y="28" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111111">Business</text>
+  <text x="52" y="48" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111111">Now</text>
+</svg>

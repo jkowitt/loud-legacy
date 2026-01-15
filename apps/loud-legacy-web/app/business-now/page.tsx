@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -14,8 +15,16 @@ export default function BusinessNowPage() {
 
       <section className="product-hero" style={{ background: "linear-gradient(135deg, #10B981 0%, #059669 100%)" }}>
         <div className="container">
+          <Link href="/business-now" className="product-hero-logo" aria-label="Business Now Home">
+            <Image
+              src="/logos/business-now.svg"
+              alt="Business Now"
+              width={180}
+              height={60}
+              priority
+            />
+          </Link>
           <div className="product-badge">Structured Execution</div>
-          <h1>Business Now</h1>
           <p className="product-tagline">
             Practical business operating toolkit that helps individuals and small businesses
             move from reaction to intention. Not education for education's sake—structure for execution.
