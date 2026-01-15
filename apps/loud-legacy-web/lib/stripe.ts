@@ -1,13 +1,14 @@
 import Stripe from "stripe";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
-}
+// Create Stripe instance only if key is available (prevents build errors)
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
-  typescript: true,
-});
+export const stripe = stripeSecretKey
+  ? new Stripe(stripeSecretKey, {
+      apiVersion: "2023-10-16",
+      typescript: true,
+    })
+  : (null as unknown as Stripe); // Type assertion for build time
 
 // Pricing plans configuration
 export const PLANS = {
