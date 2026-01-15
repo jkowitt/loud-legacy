@@ -64,9 +64,9 @@ export async function POST(request: NextRequest) {
         name,
         email,
         company: company || null,
-        source: `contact_form_${inquiryType}`,
+        source: "WEBSITE",
         status: "NEW",
-        notes: `Product Interest: ${product}\n\nMessage:\n${message}`,
+        notes: `Inquiry Type: ${inquiryType}\nProduct Interest: ${product}\n\nMessage:\n${message}`,
       },
     });
 

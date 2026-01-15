@@ -22,16 +22,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = onboardingSchema.parse(body);
 
-    // Update user with onboarding data
-    await prisma.user.update({
-      where: { email: session.user.email },
-      data: {
-        // Store onboarding data in user metadata or a separate table
-        // For now, we'll log it and could store in a JSON field
-      },
-    });
-
-    // Log the onboarding completion
+    // Get the user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });

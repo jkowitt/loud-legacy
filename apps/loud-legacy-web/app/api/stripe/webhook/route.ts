@@ -7,6 +7,11 @@ import { prisma } from "@/lib/prisma";
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: NextRequest) {
+  if (!stripe) {
+    console.error("Stripe not configured");
+    return NextResponse.json({ error: "Payment system not configured" }, { status: 503 });
+  }
+
   if (!webhookSecret) {
     console.error("Missing STRIPE_WEBHOOK_SECRET");
     return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
@@ -137,17 +142,26 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
   };
 
-  // Upsert subscription
-  await prisma.subscription.upsert({
+  // Find existing subscription or create new
+  const existingSubscription = await prisma.subscription.findFirst({
     where: { stripeSubscriptionId: subscription.id },
-    update: data,
-    create: {
-      ...data,
-      userId: userId || "",
-      platform: "HUB",
-      currency: "USD",
-    },
   });
+
+  if (existingSubscription) {
+    await prisma.subscription.update({
+      where: { id: existingSubscription.id },
+      data,
+    });
+  } else if (userId) {
+    await prisma.subscription.create({
+      data: {
+        ...data,
+        userId,
+        platform: "HUB",
+        currency: "USD",
+      },
+    });
+  }
 
   // Grant platform access based on plan
   if (userId && subscription.status === "active") {
