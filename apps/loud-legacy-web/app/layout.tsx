@@ -4,17 +4,27 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Loud Legacy - Systems-Driven Business Software",
+  title: "Loud Legacy - Software for People Who Run Things",
   description:
-    "Loud Legacy builds intelligent operational systems. VALORA for real estate intelligence, Sportify for live event execution, Business Now for structured operations, and Legacy CRM for relationship discipline.",
-  keywords: "real estate valuation, event management, business operations, CRM, underwriting, sports events, relationship management, operational systems",
+    "One account, five connected tools. VALORA for real estate deals. Sportify for game days. Business Now for operations. Legacy CRM for relationships. Built by operators, for operators.",
+  keywords: "real estate underwriting, sports event management, business operations software, CRM, deal analysis, athletic department software, consulting tools",
   icons: {
     icon: "/favicon.ico"
   },
   openGraph: {
-    title: "Loud Legacy - Operational Excellence Through Intelligent Systems",
-    description: "Four products solving real operational problems. Built for professionals who value structure, discipline, and long-term leverage.",
+    title: "Loud Legacy - Your Business Runs on Too Many Apps",
+    description: "Stop duct-taping your business together. VALORA, Sportify, Business Now, and Legacy CRM—all connected, all yours.",
     type: "website",
+    siteName: "Loud Legacy",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Loud Legacy - Software for Operators",
+    description: "One account, five connected tools. Built by operators, for operators.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
