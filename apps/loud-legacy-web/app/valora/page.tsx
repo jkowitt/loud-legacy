@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -15,8 +16,16 @@ export default function ValoraPage() {
 
       <section className="product-hero" style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)" }}>
         <div className="container">
+          <Link href="/valora" className="product-hero-logo" aria-label="VALORA Home">
+            <Image
+              src="/logos/valora.svg"
+              alt="VALORA"
+              width={200}
+              height={70}
+              priority
+            />
+          </Link>
           <div className="badge">Enterprise Intelligence</div>
-          <h1>VALORA</h1>
           <p className="tagline">
             AI-powered real estate intelligence platform combining computer vision,
             sophisticated underwriting, and portfolio management in one comprehensive system.

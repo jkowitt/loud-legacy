@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -14,8 +15,16 @@ export default function SportifyPage() {
 
       <section className="product-hero" style={{ background: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)" }}>
         <div className="container">
+          <Link href="/sportify" className="product-hero-logo" aria-label="Sportify Home">
+            <Image
+              src="/logos/sportify.svg"
+              alt="Sportify"
+              width={200}
+              height={80}
+              priority
+            />
+          </Link>
           <div className="product-badge">Operational Excellence</div>
-          <h1>Sportify</h1>
           <p className="product-tagline">
             Live event planning and execution built specifically for sports and live entertainment environments.
           </p>
