@@ -58,48 +58,33 @@ export async function POST(request: NextRequest) {
 
     const { name, email, company, inquiryType, product, message } = validationResult.data;
 
-    // Store in database as a lead
-    const lead = await prisma.cRMLead.create({
-      data: {
-        name,
-        email,
-        company: company || null,
-        source: "WEBSITE",
-        status: "NEW",
-        notes: `Inquiry Type: ${inquiryType}\nProduct Interest: ${product}\n\nMessage:\n${message}`,
-      },
-    });
-
-    // Log the activity
-    await prisma.activityLog.create({
+    // Log the contact form submission
+    // Note: CRMLead requires an authenticated user, so we store in ActivityLog
+    const activity = await prisma.activityLog.create({
       data: {
         action: "CONTACT_FORM_SUBMISSION",
-        entityType: "CRMLead",
-        entityId: lead.id,
+        entityType: "ContactForm",
+        entityId: `contact_${Date.now()}`,
         details: {
+          name,
+          email,
+          company: company || null,
           inquiryType,
           product,
+          message,
           submittedAt: new Date().toISOString(),
+          source: "WEBSITE",
         },
       },
     });
 
     // In production, send email notification here
-    // For now, we'll just log it
     console.log(`New contact form submission from ${name} (${email})`);
-
-    // TODO: Integrate with email service (SendGrid, Resend, etc.)
-    // await sendEmail({
-    //   to: process.env.CONTACT_EMAIL || "hello@loud-legacy.com",
-    //   subject: `New ${inquiryType} inquiry from ${name}`,
-    //   template: "contact-notification",
-    //   data: { name, email, company, inquiryType, product, message }
-    // });
 
     return NextResponse.json({
       success: true,
       message: "Thank you for reaching out! We'll get back to you within one business day.",
-      leadId: lead.id,
+      submissionId: activity.id,
     });
 
   } catch (error) {
