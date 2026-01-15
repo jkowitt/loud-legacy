@@ -4,6 +4,16 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if database is configured
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        {
+          error: 'Database not configured. Please contact support or try again later.',
+        },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { name, email, password } = body;
 
@@ -69,10 +79,28 @@ export async function POST(request: NextRequest) {
       { user },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating user:', error);
+
+    // Handle specific database errors
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    if (errorMessage.includes('DATABASE_URL')) {
+      return NextResponse.json(
+        { error: 'Database not configured. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
+    if (errorMessage.includes('Connection') || errorMessage.includes('connect')) {
+      return NextResponse.json(
+        { error: 'Unable to connect to the database. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to create account. Please try again.' },
       { status: 500 }
     );
   }
