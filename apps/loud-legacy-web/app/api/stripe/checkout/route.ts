@@ -38,10 +38,12 @@ export async function POST(request: NextRequest) {
     }
 
     const selectedPlan = PLANS[plan];
-    const priceId = selectedPlan.prices[interval]?.priceId;
+    const planPrice = selectedPlan.prices[interval];
+    const priceId = planPrice?.priceId;
+    const amount = planPrice?.amount;
 
     // Enterprise plans require contact
-    if (!priceId || selectedPlan.prices[interval].amount === null) {
+    if (!priceId || amount === null || amount === undefined) {
       return NextResponse.json(
         { error: "Please contact sales for Enterprise pricing", redirect: "/contact" },
         { status: 400 }
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
     const lineItems: Array<{ price: string; quantity: number }> = [];
 
     // Add main plan (if not free)
-    if (selectedPlan.prices[interval].amount > 0) {
+    if (amount > 0) {
       lineItems.push({ price: priceId, quantity: 1 });
     }
 
