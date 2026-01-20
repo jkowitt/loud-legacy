@@ -267,6 +267,59 @@ export default function BusinessNowPage() {
         </div>
       </section>
 
+      {/* Resources Section */}
+      <section className="bn-resources-preview">
+        <div className="container">
+          <div className="bn-section-header">
+            <span className="bn-section-label">Free Resources</span>
+            <h2>Download the tools to get started</h2>
+            <p>How-to guides and Excel templates to implement Business Now in your operations.</p>
+          </div>
+          <div className="bn-resources-preview-grid">
+            <div className="bn-resource-preview-card">
+              <div className="bn-resource-preview-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </div>
+              <h4>6 How-To Guides</h4>
+              <p>Step-by-step frameworks for business planning, goal setting, and financial management.</p>
+            </div>
+            <div className="bn-resource-preview-card">
+              <div className="bn-resource-preview-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="3" y1="15" x2="21" y2="15"/>
+                  <line x1="9" y1="3" x2="9" y2="21"/>
+                </svg>
+              </div>
+              <h4>8 Excel Templates</h4>
+              <p>Ready-to-use spreadsheets for tracking income, expenses, goals, KPIs, and cash flow.</p>
+            </div>
+            <div className="bn-resource-preview-card">
+              <div className="bn-resource-preview-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="7,10 12,15 17,10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </div>
+              <h4>Free Downloads</h4>
+              <p>Start with our free Business Overview Framework and Income Tracker—no signup required.</p>
+            </div>
+          </div>
+          <div className="bn-resources-preview-cta">
+            <Link href="/business-now/resources" className="button bn-button-primary">
+              Browse All Resources
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="bn-cta">
         <div className="container">
@@ -277,8 +330,8 @@ export default function BusinessNowPage() {
               <Link href="/contact" className="button bn-button-primary bn-button-large">
                 Get Started
               </Link>
-              <Link href="/" className="button bn-button-ghost">
-                Explore All Products
+              <Link href="/business-now/resources" className="button bn-button-ghost">
+                Download Resources
               </Link>
             </div>
           </div>

@@ -4012,3 +4012,556 @@ textarea:focus-visible {
     text-align: center;
   }
 }
+
+/* ===========================
+   BUSINESS NOW RESOURCES PAGE
+   =========================== */
+
+.bn-resources-hero {
+  background: linear-gradient(135deg, var(--bn-primary) 0%, #0F2440 100%);
+  padding: 8rem 0 4rem;
+}
+
+.bn-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 2rem;
+  transition: color 0.2s ease;
+}
+
+.bn-back-link:hover {
+  color: #ffffff;
+}
+
+.bn-resources-header {
+  max-width: 700px;
+}
+
+.bn-resources-header h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  letter-spacing: -1px;
+}
+
+.bn-resources-header p {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.7;
+}
+
+/* Filter Tabs */
+.bn-resources-filters {
+  background: #ffffff;
+  border-bottom: 1px solid #E2E8F0;
+  position: sticky;
+  top: 72px;
+  z-index: 100;
+}
+
+.bn-filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  overflow-x: auto;
+}
+
+.bn-filter-tab {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: 1px solid #E2E8F0;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bn-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.bn-filter-tab:hover {
+  border-color: var(--bn-blue);
+  color: var(--bn-blue);
+}
+
+.bn-filter-tab.active {
+  background: var(--bn-blue);
+  border-color: var(--bn-blue);
+  color: #ffffff;
+}
+
+/* Resources Grid */
+.bn-resources-grid-section {
+  padding: 4rem 0;
+  background: var(--bn-bg);
+}
+
+.bn-resources-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.bn-resource-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 1.75rem;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.bn-resource-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(27, 54, 93, 0.1);
+  border-color: var(--bn-blue);
+}
+
+.bn-resource-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.bn-resource-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--bn-blue-light);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bn-resource-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--bn-blue);
+}
+
+.bn-resource-badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.bn-format-badge {
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bn-format-badge.pdf {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.bn-format-badge.excel {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+.bn-free-badge {
+  padding: 0.25rem 0.625rem;
+  background: var(--bn-blue-light);
+  color: var(--bn-blue);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.bn-premium-badge {
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  color: #92400E;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.bn-resource-card h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--bn-primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.bn-resource-card > p {
+  font-size: 0.9rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.6;
+  flex-grow: 1;
+  margin-bottom: 1.25rem;
+}
+
+.bn-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--bn-blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bn-download-btn:hover {
+  background: var(--bn-blue-dark);
+}
+
+.bn-download-btn.locked {
+  background: #F1F5F9;
+  color: var(--bn-text-secondary);
+}
+
+.bn-download-btn.locked:hover {
+  background: #E2E8F0;
+}
+
+/* Subscription CTA */
+.bn-subscription-cta {
+  padding: 4rem 0;
+  background: #ffffff;
+}
+
+.bn-subscription-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4rem;
+  align-items: center;
+  background: linear-gradient(135deg, var(--bn-primary) 0%, #0F2440 100%);
+  border-radius: 24px;
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.bn-subscription-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at 80% 20%, rgba(45, 156, 219, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.bn-subscription-content {
+  position: relative;
+}
+
+.bn-subscription-content h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.bn-subscription-content > p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  max-width: 500px;
+}
+
+.bn-subscription-benefits {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.bn-subscription-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+}
+
+.bn-subscription-benefits svg {
+  color: #4ADE80;
+  flex-shrink: 0;
+}
+
+.bn-subscription-pricing {
+  position: relative;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  min-width: 260px;
+}
+
+.bn-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.bn-price-amount {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.bn-price-period {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bn-price-note {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 1.5rem;
+}
+
+.bn-subscription-pricing .bn-button-primary {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.bn-guarantee {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Modal */
+.bn-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.bn-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bn-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--bn-text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.bn-modal-close:hover {
+  color: var(--bn-primary);
+}
+
+.bn-modal-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--bn-blue-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.bn-modal-icon svg {
+  width: 32px;
+  height: 32px;
+  color: var(--bn-blue);
+}
+
+.bn-modal h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bn-primary);
+  margin-bottom: 0.75rem;
+}
+
+.bn-modal > p {
+  font-size: 1rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.bn-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bn-modal-actions .button {
+  width: 100%;
+}
+
+/* Resources Responsive */
+@media (max-width: 1024px) {
+  .bn-resources-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bn-subscription-card {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .bn-subscription-content > p {
+    max-width: none;
+  }
+
+  .bn-subscription-benefits {
+    justify-content: center;
+  }
+
+  .bn-subscription-pricing {
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .bn-resources-hero {
+    padding: 6rem 0 3rem;
+  }
+
+  .bn-resources-header h1 {
+    font-size: 2.25rem;
+  }
+
+  .bn-resources-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bn-subscription-benefits {
+    grid-template-columns: 1fr;
+  }
+
+  .bn-subscription-card {
+    padding: 2rem;
+  }
+}
+
+/* Resources Preview Section (on main BN page) */
+.bn-resources-preview {
+  padding: 6rem 0;
+  background: var(--bn-bg);
+}
+
+.bn-resources-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.bn-resource-preview-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.bn-resource-preview-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(27, 54, 93, 0.1);
+  border-color: var(--bn-blue);
+}
+
+.bn-resource-preview-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--bn-blue-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.bn-resource-preview-icon svg {
+  width: 28px;
+  height: 28px;
+  color: var(--bn-blue);
+}
+
+.bn-resource-preview-card h4 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--bn-primary);
+  margin-bottom: 0.5rem;
+}
+
+.bn-resource-preview-card p {
+  font-size: 0.95rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.6;
+}
+
+.bn-resources-preview-cta {
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .bn-resources-preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
