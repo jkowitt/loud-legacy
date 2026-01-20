@@ -57,6 +57,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          subscriptionStatus: (user as any).subscriptionStatus || "inactive",
         };
       },
     }),
@@ -65,14 +66,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
+        token.role = user.role;
+        token.subscriptionStatus = user.subscriptionStatus || "inactive";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.subscriptionStatus = token.subscriptionStatus;
       }
       return session;
     },
