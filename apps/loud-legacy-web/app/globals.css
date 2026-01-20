@@ -3434,3 +3434,581 @@ textarea:focus-visible {
 .toast-close:hover {
   color: var(--text-primary);
 }
+
+/* ===========================
+   BUSINESS NOW PAGE
+   =========================== */
+
+/* Design System Variables */
+.business-now-page {
+  --bn-primary: #1B365D;
+  --bn-accent: #C9A227;
+  --bn-blue: #2D9CDB;
+  --bn-blue-light: #E8F4FC;
+  --bn-blue-dark: #1A7AB8;
+  --bn-text: #1B365D;
+  --bn-text-secondary: #4A5568;
+  --bn-bg: #FAFBFC;
+}
+
+.business-now-page {
+  background: var(--bn-bg);
+}
+
+/* Business Now Hero */
+.bn-hero {
+  position: relative;
+  padding: 10rem 0 8rem;
+  text-align: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--bn-primary) 0%, #0F2440 100%);
+}
+
+.bn-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(45, 156, 219, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(201, 162, 39, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.bn-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.bn-logo-link {
+  display: inline-block;
+  margin-bottom: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.bn-logo-link:hover {
+  transform: scale(1.03);
+}
+
+.bn-hero-logo {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.bn-badge {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  background: rgba(45, 156, 219, 0.2);
+  border: 1px solid rgba(45, 156, 219, 0.4);
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #7DD3FC;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.bn-hero h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  letter-spacing: -1px;
+}
+
+.bn-tagline {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 700px;
+  margin: 0 auto 3rem;
+  line-height: 1.7;
+}
+
+.bn-hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Business Now Buttons */
+.bn-button-primary {
+  background: linear-gradient(135deg, var(--bn-blue) 0%, var(--bn-blue-dark) 100%);
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(45, 156, 219, 0.4);
+  transition: all 0.3s ease;
+}
+
+.bn-button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(45, 156, 219, 0.5);
+}
+
+.bn-button-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.bn-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.bn-button-ghost {
+  background: transparent;
+  color: var(--bn-primary);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 2px solid var(--bn-primary);
+  transition: all 0.3s ease;
+}
+
+.bn-button-ghost:hover {
+  background: var(--bn-primary);
+  color: #ffffff;
+}
+
+.bn-button-large {
+  padding: 1.25rem 2.5rem;
+  font-size: 1.1rem;
+}
+
+/* Section Styling */
+.bn-section-label {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--bn-blue);
+  margin-bottom: 1rem;
+}
+
+.bn-section-header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 4rem;
+}
+
+.bn-section-header h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--bn-primary);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.bn-section-header p {
+  font-size: 1.125rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.7;
+}
+
+/* Philosophy Section */
+.bn-philosophy {
+  padding: 6rem 0;
+  background: #ffffff;
+}
+
+.bn-philosophy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.bn-philosophy-content h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--bn-primary);
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.5px;
+}
+
+.bn-philosophy-content p {
+  font-size: 1.125rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.bn-philosophy-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.bn-stat-card {
+  background: linear-gradient(135deg, var(--bn-blue-light) 0%, #ffffff 100%);
+  border: 1px solid rgba(45, 156, 219, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.bn-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(45, 156, 219, 0.15);
+}
+
+.bn-stat-number {
+  display: block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--bn-blue);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.bn-stat-label {
+  font-size: 1rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.5;
+}
+
+/* Features Section */
+.bn-features {
+  padding: 6rem 0;
+  background: var(--bn-bg);
+}
+
+.bn-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.bn-feature-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.bn-feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgba(27, 54, 93, 0.1);
+  border-color: var(--bn-blue);
+}
+
+.bn-feature-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--bn-blue-light) 0%, #ffffff 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.bn-feature-icon svg {
+  width: 28px;
+  height: 28px;
+  color: var(--bn-blue);
+}
+
+.bn-feature-card h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--bn-primary);
+  margin-bottom: 0.75rem;
+}
+
+.bn-feature-card p {
+  font-size: 0.95rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.7;
+}
+
+/* Audience Section */
+.bn-audience {
+  padding: 6rem 0;
+  background: linear-gradient(180deg, #ffffff 0%, var(--bn-bg) 100%);
+}
+
+.bn-audience-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+.bn-audience-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 1.75rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.bn-audience-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(27, 54, 93, 0.08);
+  border-color: var(--bn-blue);
+}
+
+.bn-audience-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--bn-blue-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.bn-audience-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--bn-blue);
+}
+
+.bn-audience-card h4 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--bn-primary);
+  margin-bottom: 0.5rem;
+}
+
+.bn-audience-card p {
+  font-size: 0.875rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.6;
+}
+
+/* Problems Section */
+.bn-problems {
+  padding: 6rem 0;
+  background: #ffffff;
+}
+
+.bn-problems-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.bn-problem-card {
+  background: var(--bn-bg);
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.bn-problem-card:hover {
+  border-color: var(--bn-blue);
+  box-shadow: 0 8px 24px rgba(27, 54, 93, 0.08);
+}
+
+.bn-problem-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bn-problem-icon {
+  width: 32px;
+  height: 32px;
+  background: #FEE2E2;
+  color: #DC2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.bn-problem-header h4 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--bn-primary);
+}
+
+.bn-problem-desc {
+  font-size: 0.95rem;
+  color: var(--bn-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+
+.bn-solution {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 8px;
+  border-left: 3px solid var(--bn-blue);
+}
+
+.bn-solution-arrow {
+  color: var(--bn-blue);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.bn-solution span:last-child {
+  font-size: 0.9rem;
+  color: var(--bn-primary);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* CTA Section */
+.bn-cta {
+  padding: 6rem 0;
+  background: linear-gradient(135deg, var(--bn-primary) 0%, #0F2440 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.bn-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(45, 156, 219, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.bn-cta-content {
+  position: relative;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.bn-cta h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.bn-cta p {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+}
+
+.bn-cta-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.bn-cta .bn-button-ghost {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.bn-cta .bn-button-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .bn-features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bn-audience-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .bn-hero {
+    padding: 6rem 0 5rem;
+  }
+
+  .bn-hero h1 {
+    font-size: 2.25rem;
+  }
+
+  .bn-tagline {
+    font-size: 1.1rem;
+  }
+
+  .bn-philosophy-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .bn-section-header h2,
+  .bn-philosophy-content h2 {
+    font-size: 2rem;
+  }
+
+  .bn-features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bn-audience-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bn-problems-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bn-cta h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .bn-audience-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bn-hero-actions,
+  .bn-cta-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bn-button-primary,
+  .bn-button-secondary,
+  .bn-button-ghost {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+}
