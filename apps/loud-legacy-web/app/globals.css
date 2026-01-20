@@ -4785,3 +4785,645 @@ textarea:focus-visible {
     max-width: none;
   }
 }
+
+/* ===========================
+   LEGACY CRM PAGE
+   =========================== */
+
+/* Design System Variables */
+.legacy-crm-page {
+  --lcrm-primary: #1B365D;
+  --lcrm-accent: #C9A227;
+  --lcrm-green: #27AE60;
+  --lcrm-green-light: #E8F8EF;
+  --lcrm-green-dark: #1E8449;
+  --lcrm-text: #1B365D;
+  --lcrm-text-secondary: #4A5568;
+  --lcrm-bg: #FAFBFC;
+}
+
+.legacy-crm-page {
+  background: var(--lcrm-bg);
+}
+
+/* Legacy CRM Hero */
+.lcrm-hero {
+  position: relative;
+  padding: 10rem 0 8rem;
+  text-align: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--lcrm-primary) 0%, #0F2440 100%);
+}
+
+.lcrm-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(39, 174, 96, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(201, 162, 39, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.lcrm-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.lcrm-logo-link {
+  display: inline-block;
+  margin-bottom: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.lcrm-logo-link:hover {
+  transform: scale(1.03);
+}
+
+.lcrm-hero-logo {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.lcrm-badge {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  background: rgba(39, 174, 96, 0.2);
+  border: 1px solid rgba(39, 174, 96, 0.4);
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6EE7A0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.lcrm-hero h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  letter-spacing: -1px;
+}
+
+.lcrm-tagline {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 700px;
+  margin: 0 auto 3rem;
+  line-height: 1.7;
+}
+
+.lcrm-hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Legacy CRM Buttons */
+.lcrm-button-primary {
+  background: linear-gradient(135deg, var(--lcrm-green) 0%, var(--lcrm-green-dark) 100%);
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(39, 174, 96, 0.4);
+  transition: all 0.3s ease;
+}
+
+.lcrm-button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.5);
+}
+
+.lcrm-button-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.lcrm-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.lcrm-button-ghost {
+  background: transparent;
+  color: var(--lcrm-primary);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 2px solid var(--lcrm-primary);
+  transition: all 0.3s ease;
+}
+
+.lcrm-button-ghost:hover {
+  background: var(--lcrm-primary);
+  color: #ffffff;
+}
+
+.lcrm-button-large {
+  padding: 1.25rem 2.5rem;
+  font-size: 1.1rem;
+}
+
+/* Section Styling */
+.lcrm-section-label {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--lcrm-green);
+  margin-bottom: 1rem;
+}
+
+.lcrm-section-header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 4rem;
+}
+
+.lcrm-section-header h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--lcrm-primary);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.lcrm-section-header p {
+  font-size: 1.125rem;
+  color: var(--lcrm-text-secondary);
+  line-height: 1.7;
+}
+
+/* Philosophy Section */
+.lcrm-philosophy {
+  padding: 6rem 0;
+  background: #ffffff;
+}
+
+.lcrm-philosophy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.lcrm-philosophy-content h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--lcrm-primary);
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.5px;
+}
+
+.lcrm-philosophy-content p {
+  font-size: 1.125rem;
+  color: var(--lcrm-text-secondary);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.lcrm-philosophy-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.lcrm-stat-card {
+  background: linear-gradient(135deg, var(--lcrm-green-light) 0%, #ffffff 100%);
+  border: 1px solid rgba(39, 174, 96, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.lcrm-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(39, 174, 96, 0.15);
+}
+
+.lcrm-stat-number {
+  display: block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--lcrm-green);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.lcrm-stat-label {
+  font-size: 1rem;
+  color: var(--lcrm-text-secondary);
+  line-height: 1.5;
+}
+
+/* Features Section */
+.lcrm-features {
+  padding: 6rem 0;
+  background: var(--lcrm-bg);
+}
+
+.lcrm-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.lcrm-feature-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.lcrm-feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgba(27, 54, 93, 0.1);
+  border-color: var(--lcrm-green);
+}
+
+.lcrm-feature-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--lcrm-green-light) 0%, #ffffff 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.lcrm-feature-icon svg {
+  width: 28px;
+  height: 28px;
+  color: var(--lcrm-green);
+}
+
+.lcrm-feature-card h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--lcrm-primary);
+  margin-bottom: 0.75rem;
+}
+
+.lcrm-feature-card p {
+  font-size: 0.95rem;
+  color: var(--lcrm-text-secondary);
+  line-height: 1.7;
+}
+
+/* Audience Section */
+.lcrm-audience {
+  padding: 6rem 0;
+  background: linear-gradient(180deg, #ffffff 0%, var(--lcrm-bg) 100%);
+}
+
+.lcrm-audience-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+.lcrm-audience-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 1.75rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.lcrm-audience-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(27, 54, 93, 0.08);
+  border-color: var(--lcrm-green);
+}
+
+.lcrm-audience-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--lcrm-green-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.lcrm-audience-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--lcrm-green);
+}
+
+.lcrm-audience-card h4 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--lcrm-primary);
+  margin-bottom: 0.5rem;
+}
+
+.lcrm-audience-card p {
+  font-size: 0.875rem;
+  color: var(--lcrm-text-secondary);
+  line-height: 1.6;
+}
+
+/* Problems Section */
+.lcrm-problems {
+  padding: 6rem 0;
+  background: #ffffff;
+}
+
+.lcrm-problems-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.lcrm-problem-card {
+  background: var(--lcrm-bg);
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.lcrm-problem-card:hover {
+  border-color: var(--lcrm-green);
+  box-shadow: 0 8px 24px rgba(27, 54, 93, 0.08);
+}
+
+.lcrm-problem-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.lcrm-problem-icon {
+  width: 32px;
+  height: 32px;
+  background: #FEE2E2;
+  color: #DC2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.lcrm-problem-header h4 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--lcrm-primary);
+}
+
+.lcrm-problem-desc {
+  font-size: 0.95rem;
+  color: var(--lcrm-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+
+.lcrm-solution {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 8px;
+  border-left: 3px solid var(--lcrm-green);
+}
+
+.lcrm-solution-arrow {
+  color: var(--lcrm-green);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.lcrm-solution span:last-child {
+  font-size: 0.9rem;
+  color: var(--lcrm-primary);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Integration Section */
+.lcrm-integration {
+  padding: 6rem 0;
+  background: var(--lcrm-bg);
+}
+
+.lcrm-integration-content {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.lcrm-integration-content h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--lcrm-primary);
+  margin-bottom: 1rem;
+}
+
+.lcrm-integration-content > p {
+  font-size: 1.125rem;
+  color: var(--lcrm-text-secondary);
+  margin-bottom: 3rem;
+}
+
+.lcrm-integration-features {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.lcrm-integration-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+}
+
+.lcrm-integration-item:hover {
+  border-color: var(--lcrm-green);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.15);
+}
+
+.lcrm-integration-item svg {
+  color: var(--lcrm-green);
+}
+
+.lcrm-integration-item span {
+  font-weight: 600;
+  color: var(--lcrm-primary);
+}
+
+/* CTA Section */
+.lcrm-cta {
+  padding: 6rem 0;
+  background: linear-gradient(135deg, var(--lcrm-primary) 0%, #0F2440 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.lcrm-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(39, 174, 96, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.lcrm-cta-content {
+  position: relative;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.lcrm-cta h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.lcrm-cta p {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+}
+
+.lcrm-cta-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.lcrm-cta .lcrm-button-ghost {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.lcrm-cta .lcrm-button-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .lcrm-features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .lcrm-audience-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .lcrm-hero {
+    padding: 6rem 0 5rem;
+  }
+
+  .lcrm-hero h1 {
+    font-size: 2.25rem;
+  }
+
+  .lcrm-tagline {
+    font-size: 1.1rem;
+  }
+
+  .lcrm-philosophy-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .lcrm-section-header h2,
+  .lcrm-philosophy-content h2,
+  .lcrm-integration-content h2 {
+    font-size: 2rem;
+  }
+
+  .lcrm-features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lcrm-audience-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .lcrm-problems-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lcrm-cta h2 {
+    font-size: 2rem;
+  }
+
+  .lcrm-integration-features {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .lcrm-audience-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lcrm-hero-actions,
+  .lcrm-cta-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lcrm-button-primary,
+  .lcrm-button-secondary,
+  .lcrm-button-ghost {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+}
