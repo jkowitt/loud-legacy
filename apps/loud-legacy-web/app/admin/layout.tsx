@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
 import "./admin.css";
 
 const navItems = [
@@ -55,7 +56,69 @@ const icons: Record<string, JSX.Element> = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Allow login page without auth
+  const isLoginPage = pathname === "/admin/login";
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session && !isLoginPage) {
+      router.push("/admin/login");
+    }
+
+    // Check if user has admin role
+    if (session && !isLoginPage) {
+      const userRole = (session.user as any)?.role;
+      if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
+        router.push("/admin/login");
+      }
+    }
+  }, [session, status, router, isLoginPage]);
+
+  // Show login page without layout
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  // Show loading state
+  if (status === "loading") {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#F1F5F9",
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            width: "40px",
+            height: "40px",
+            border: "3px solid #E2E8F0",
+            borderTopColor: "#3B82F6",
+            borderRadius: "50%",
+            animation: "spin 1s linear infinite",
+            margin: "0 auto 1rem",
+          }} />
+          <p style={{ color: "#64748B" }}>Loading...</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Don't render admin UI if not authenticated
+  if (!session) {
+    return null;
+  }
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/admin/login" });
+  };
 
   return (
     <div className={`admin-layout ${sidebarCollapsed ? "collapsed" : ""}`}>
@@ -121,9 +184,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </svg>
             </button>
             <div className="admin-user">
-              <span className="admin-user-avatar">A</span>
-              <span className="admin-user-name">Admin</span>
+              <span className="admin-user-avatar">
+                {session.user?.name?.charAt(0).toUpperCase() || "A"}
+              </span>
+              <span className="admin-user-name">{session.user?.name || "Admin"}</span>
             </div>
+            <button
+              onClick={handleSignOut}
+              className="admin-header-btn"
+              title="Sign out"
+              style={{ marginLeft: "0.5rem" }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16,17 21,12 16,7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
           </div>
         </header>
 
