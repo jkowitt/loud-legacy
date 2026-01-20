@@ -1,14 +1,52 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
-export const metadata = {
-  title: "Legacy CRM - Relationship Discipline | Loud Legacy Ventures",
-  description: "Relationship management focused on discipline, not volume. Built for professionals whose success depends on follow-up, trust, and long-term relationships.",
-};
-
 export default function LegacyCRMPage() {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [company, setCompany] = useState("");
+  const [interest, setInterest] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
+  const [error, setError] = useState("");
+
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/legacy-crm/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, company, interest }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(true);
+        setWaitlistPosition(data.data.position);
+        setEmail("");
+        setName("");
+        setCompany("");
+        setInterest("");
+      } else {
+        setError(data.error || "Failed to join waitlist");
+      }
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="legacy-crm-page">
       <Header />
@@ -34,11 +72,11 @@ export default function LegacyCRMPage() {
             on follow-up, trust, and long-term connection. Not another contact dump—a discipline system.
           </p>
           <div className="lcrm-hero-actions">
-            <Link href="#features" className="button lcrm-button-primary">
-              Explore Features
+            <Link href="#waitlist" className="button lcrm-button-primary">
+              Join the Waitlist
             </Link>
-            <Link href="#audience" className="button lcrm-button-secondary">
-              Who It's For
+            <Link href="/legacy-crm/demo" className="button lcrm-button-secondary">
+              Try the Demo
             </Link>
           </div>
         </div>
@@ -320,20 +358,161 @@ export default function LegacyCRMPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="lcrm-cta">
+      {/* Waitlist Section */}
+      <section id="waitlist" className="lcrm-waitlist">
         <div className="container">
-          <div className="lcrm-cta-content">
-            <h2>Build success through relationships</h2>
-            <p>Legacy CRM helps you manage the relationships that matter with discipline and intention. Start building trust that compounds.</p>
-            <div className="lcrm-cta-actions">
-              <Link href="/contact" className="button lcrm-button-primary lcrm-button-large">
-                Request Early Access
-              </Link>
-              <Link href="/business-now" className="button lcrm-button-ghost">
-                Explore Business Now
-              </Link>
+          <div className="lcrm-waitlist-content">
+            <div className="lcrm-waitlist-info">
+              <span className="lcrm-section-label">Early Access</span>
+              <h2>Join the waitlist</h2>
+              <p>
+                Legacy CRM is launching soon. Join the waitlist for early access and be the first to
+                experience relationship management with discipline.
+              </p>
+              <div className="lcrm-waitlist-benefits">
+                <div className="lcrm-benefit-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                  <span>Priority access when we launch</span>
+                </div>
+                <div className="lcrm-benefit-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                  <span>Exclusive founding member pricing</span>
+                </div>
+                <div className="lcrm-benefit-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                  <span>Shape product development with your feedback</span>
+                </div>
+                <div className="lcrm-benefit-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                  <span>Free access to our relationship-building guides</span>
+                </div>
+              </div>
             </div>
+
+            <div className="lcrm-waitlist-form-container">
+              {success ? (
+                <div className="lcrm-waitlist-success">
+                  <div className="lcrm-success-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="48" height="48">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="16,8 10,14 8,12"/>
+                    </svg>
+                  </div>
+                  <h3>You're on the list!</h3>
+                  <p>You're #{waitlistPosition} on the waitlist. We'll notify you when Legacy CRM is ready for you.</p>
+                  <Link href="/legacy-crm/demo" className="button lcrm-button-primary">
+                    Try the Demo Now
+                  </Link>
+                </div>
+              ) : (
+                <form onSubmit={handleWaitlistSubmit} className="lcrm-waitlist-form">
+                  <h3>Request Early Access</h3>
+
+                  {error && (
+                    <div className="lcrm-form-error">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                      </svg>
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="lcrm-form-group">
+                    <label htmlFor="waitlist-name">Full Name *</label>
+                    <input
+                      type="text"
+                      id="waitlist-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
+
+                  <div className="lcrm-form-group">
+                    <label htmlFor="waitlist-email">Email *</label>
+                    <input
+                      type="email"
+                      id="waitlist-email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
+
+                  <div className="lcrm-form-group">
+                    <label htmlFor="waitlist-company">Company</label>
+                    <input
+                      type="text"
+                      id="waitlist-company"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      placeholder="Your company (optional)"
+                    />
+                  </div>
+
+                  <div className="lcrm-form-group">
+                    <label htmlFor="waitlist-interest">What interests you most about Legacy CRM?</label>
+                    <select
+                      id="waitlist-interest"
+                      value={interest}
+                      onChange={(e) => setInterest(e.target.value)}
+                    >
+                      <option value="">Select an option</option>
+                      <option value="follow-up">Follow-up discipline</option>
+                      <option value="pipeline">Pipeline management</option>
+                      <option value="context">Relationship context</option>
+                      <option value="all">All features</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="button lcrm-button-primary lcrm-button-full"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="lcrm-spinner"></span>
+                        Joining...
+                      </>
+                    ) : (
+                      "Join the Waitlist"
+                    )}
+                  </button>
+
+                  <p className="lcrm-form-note">
+                    No spam, ever. We'll only contact you about Legacy CRM.
+                  </p>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Demo CTA */}
+      <section className="lcrm-demo-cta-section">
+        <div className="container">
+          <div className="lcrm-demo-cta-box">
+            <div className="lcrm-demo-cta-content">
+              <h3>Want to see it in action?</h3>
+              <p>Explore the interactive demo with sample data—no signup required.</p>
+            </div>
+            <Link href="/legacy-crm/demo" className="button lcrm-button-secondary lcrm-button-large">
+              Try the Demo
+            </Link>
           </div>
         </div>
       </section>
