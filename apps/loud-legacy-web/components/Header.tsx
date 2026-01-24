@@ -39,6 +39,9 @@ export function Header() {
         </Link>
 
         <nav className={`nav ${isOpen ? 'open' : ''}`}>
+          <a href="https://loud-legacy.com" className="nav-link nav-link--home">
+            Home
+          </a>
           <div className="nav-group">
             <span className="nav-label">Products</span>
             <div className="nav-dropdown nav-dropdown--logos">

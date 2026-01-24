@@ -6,6 +6,7 @@ type LayoutProps = {
 };
 
 const navLinks = [
+  { href: "https://loud-legacy.com", label: "Loud Legacy Home", external: true },
   { href: "/", label: "Home" },
   { href: "/events", label: "Events" },
   { href: "/sponsors", label: "Sponsor Zones" },
@@ -25,9 +26,15 @@ export function Layout({ children }: LayoutProps) {
           <ul className={styles.navItems}>
             {navLinks.map((link) => (
               <li key={link.href} className={styles.navItem}>
-                <Link href={link.href} className={styles.navLink}>
-                  {link.label}
-                </Link>
+                {(link as any).external ? (
+                  <a href={link.href} className={styles.navLink}>
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link href={link.href} className={styles.navLink}>
+                    {link.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

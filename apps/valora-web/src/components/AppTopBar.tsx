@@ -4,6 +4,12 @@ export const AppTopBar = () => {
   return (
     <div className="flex w-full flex-wrap items-center gap-4">
       <div className="flex items-center gap-4">
+        <a
+          href="https://loud-legacy.com"
+          className="flex h-11 items-center justify-center rounded-lg border border-brand-800 bg-brand-900/30 px-4 text-sm text-neutral-300 transition hover:text-accent hover:border-accent"
+        >
+          Home
+        </a>
         <ValoraLogo compact />
         <div className="hidden items-center gap-3 rounded-lg border border-brand-800 bg-brand-900/40 px-4 py-2 shadow-hard md:flex">
           <span className="font-mono text-xs uppercase tracking-[0.38em] text-neutral-400">Realtime Ops</span>
