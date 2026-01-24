@@ -37,6 +37,10 @@ model User {
   crmLeads         CRMLead[]
   crmDeals         CRMDeal[]
 
+  // Loud Works relations
+  talentProfile     TalentProfile?
+  worksOrgMemberships WorksOrgMember[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -509,6 +513,7 @@ enum Platform {
   LEGACY_CRM    // Customer relationship management
   HUB           // Central dashboard/hub
   VENUEVR       // VR venue tours
+  LOUD_WORKS    // Workforce & applied learning platform
 }
 
 // ==========================================
@@ -862,4 +867,406 @@ model CRMNote {
 
   @@index([leadId])
   @@index([dealId])
+}
+
+// ==========================================
+// LOUD WORKS PLATFORM
+// ==========================================
+
+// Organization types for Loud Works
+model WorksOrganization {
+  id            String               @id @default(cuid())
+  type          WorksOrgType
+  name          String
+  description   String?              @db.Text
+  industry      String?
+  location      String?
+  website       String?
+  logo          String?
+  billingStatus WorksBillingStatus   @default(PENDING)
+
+  // Relations
+  members       WorksOrgMember[]
+  projects      WorksProject[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([billingStatus])
+}
+
+enum WorksOrgType {
+  EMPLOYER
+  SPONSOR
+  UNIVERSITY
+  NONPROFIT
+}
+
+enum WorksBillingStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+model WorksOrgMember {
+  id             String             @id @default(cuid())
+  userId         String
+  organizationId String
+  roleInOrg      WorksOrgRole       @default(MEMBER)
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization WorksOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+enum WorksOrgRole {
+  OWNER
+  MANAGER
+  VIEWER
+  MEMBER
+}
+
+// Talent Profile for Loud Works
+model TalentProfile {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  headline              String?
+  bio                   String?  @db.Text
+  location              String?
+  availabilityHoursWeek Int?
+  preferredCategories   String[] // Array of category names
+  links                 Json?    // Array of {title, url}
+  verificationStatus    TalentVerificationStatus @default(PENDING)
+
+  // Relations
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills       TalentSkill[]
+  proofItems   ProofItem[]
+  applications WorksApplication[]
+  engagements  WorksEngagement[]  @relation("TalentEngagements")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([verificationStatus])
+}
+
+enum TalentVerificationStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+}
+
+model WorksSkill {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  category    String
+  description String?
+
+  // Relations
+  talentSkills TalentSkill[]
+
+  createdAt DateTime @default(now())
+}
+
+model TalentSkill {
+  id              String @id @default(cuid())
+  talentProfileId String
+  skillId         String
+  proficiency     SkillProficiency @default(INTERMEDIATE)
+
+  talentProfile TalentProfile @relation(fields: [talentProfileId], references: [id], onDelete: Cascade)
+  skill         WorksSkill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([talentProfileId, skillId])
+  @@index([talentProfileId])
+  @@index([skillId])
+}
+
+enum SkillProficiency {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model ProofItem {
+  id              String    @id @default(cuid())
+  talentProfileId String
+  type            ProofType
+  title           String
+  description     String?   @db.Text
+  url             String?
+  fileKey         String?
+  tags            String[]
+
+  talentProfile TalentProfile @relation(fields: [talentProfileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([talentProfileId])
+}
+
+enum ProofType {
+  LINK
+  FILE
+  TEXT
+  PROJECT
+  CERTIFICATE
+}
+
+// Projects for Loud Works
+model WorksProject {
+  id              String               @id @default(cuid())
+  organizationId  String
+  title           String
+  description     String               @db.Text
+  category        String
+  locationType    WorksLocationType
+  locationDetails String?
+  timeframeStart  DateTime?
+  timeframeEnd    DateTime?
+  estimatedHours  Int?
+  payType         WorksPayType
+  payAmount       Float
+  requirements    Json?                // Array of required skill IDs
+  status          WorksProjectStatus   @default(DRAFT)
+  visibilityRules Json?                // Rules for who can see the project
+  createdByUserId String
+  approvedByUserId String?
+  approvedAt      DateTime?
+
+  // Relations
+  organization WorksOrganization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  applications WorksApplication[]
+  engagements  WorksEngagement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([category])
+}
+
+enum WorksLocationType {
+  REMOTE
+  ONSITE
+  HYBRID
+}
+
+enum WorksPayType {
+  FIXED
+  HOURLY
+}
+
+enum WorksProjectStatus {
+  DRAFT
+  PENDING_APPROVAL
+  LIVE
+  PAUSED
+  FILLED
+  CLOSED
+  REJECTED
+}
+
+// Applications for projects
+model WorksApplication {
+  id             String                   @id @default(cuid())
+  projectId      String
+  talentUserId   String
+  note           String?                  @db.Text
+  aiMatchScore   Float?
+  aiMatchReasons Json?                    // Array of reasons
+  status         WorksApplicationStatus   @default(SUBMITTED)
+
+  // Relations
+  project       WorksProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  talentProfile TalentProfile @relation(fields: [talentUserId], references: [userId], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, talentUserId])
+  @@index([projectId])
+  @@index([talentUserId])
+  @@index([status])
+}
+
+enum WorksApplicationStatus {
+  SUBMITTED
+  SHORTLISTED
+  OFFERED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+// Engagement (active project assignment)
+model WorksEngagement {
+  id             String                 @id @default(cuid())
+  projectId      String
+  talentUserId   String
+  partnerUserId  String
+  status         WorksEngagementStatus  @default(ACTIVE)
+  agreedPayType  WorksPayType
+  agreedPayAmount Float
+  startAt        DateTime               @default(now())
+  endAt          DateTime?
+
+  // Relations
+  project       WorksProject       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  talentProfile TalentProfile      @relation("TalentEngagements", fields: [talentUserId], references: [userId], onDelete: Cascade)
+  milestones    WorksMilestone[]
+  outcomeLogs   WorksOutcomeLog[]
+  feedback      WorksFeedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([talentUserId])
+  @@index([status])
+}
+
+enum WorksEngagementStatus {
+  ACTIVE
+  COMPLETED
+  CANCELED
+  DISPUTED
+}
+
+model WorksMilestone {
+  id           String                @id @default(cuid())
+  engagementId String
+  title        String
+  description  String?               @db.Text
+  dueAt        DateTime?
+  status       WorksMilestoneStatus  @default(NOT_STARTED)
+
+  // Relations
+  engagement  WorksEngagement    @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  submissions WorksSubmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([engagementId])
+  @@index([status])
+}
+
+enum WorksMilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  NEEDS_REVISION
+  APPROVED
+}
+
+model WorksSubmission {
+  id              String                   @id @default(cuid())
+  milestoneId     String
+  submittedByUserId String
+  type            WorksSubmissionType
+  contentRef      String                   @db.Text // URL, file key, or text content
+  reviewStatus    WorksReviewStatus        @default(PENDING)
+  reviewNotes     String?                  @db.Text
+  reviewedByUserId String?
+  reviewedAt      DateTime?
+
+  // Relations
+  milestone WorksMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  submittedAt DateTime @default(now())
+
+  @@index([milestoneId])
+  @@index([reviewStatus])
+}
+
+enum WorksSubmissionType {
+  FILE
+  LINK
+  TEXT
+}
+
+enum WorksReviewStatus {
+  PENDING
+  NEEDS_REVISION
+  APPROVED
+  REJECTED
+}
+
+model WorksOutcomeLog {
+  id            String @id @default(cuid())
+  engagementId  String
+  hoursLogged   Float?
+  skillsUsed    String[]
+  skillsGained  String[]
+  outcomeMetrics Json?
+
+  // Relations
+  engagement WorksEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([engagementId])
+}
+
+model WorksFeedback {
+  id           String @id @default(cuid())
+  engagementId String
+  fromUserId   String
+  toUserId     String
+  rating       Int    // 1-5
+  notes        String? @db.Text
+  isPublic     Boolean @default(true)
+
+  // Relations
+  engagement WorksEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([engagementId])
+  @@index([fromUserId])
+  @@index([toUserId])
+}
+
+model WorksReport {
+  id           String           @id @default(cuid())
+  scope        WorksReportScope
+  scopeId      String           // ID of engagement, organization, etc.
+  templateId   String?
+  title        String
+  contentMarkdown String         @db.Text
+  exportStatus WorksExportStatus @default(DRAFT)
+  exportedAt   DateTime?
+  exportUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scope, scopeId])
+}
+
+enum WorksReportScope {
+  ENGAGEMENT
+  ORGANIZATION
+  UNIVERSITY
+  SPONSOR
+}
+
+enum WorksExportStatus {
+  DRAFT
+  EXPORTED
+  ARCHIVED
 }
