@@ -1,15 +1,17 @@
 /**
- * Netlify Function to create test account
+ * Netlify Function to create demo account
  *
  * Deploy and visit: https://your-site.netlify.app/.netlify/functions/create-test-account
  *
- * This will create the demo@valora.com test account in your database.
+ * This will create the demo@valora.com demo account with access to all platforms.
  */
 
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
+
+const PLATFORMS = ['VALORA', 'BUSINESS_NOW', 'LEGACY_CRM', 'HUB', 'VENUEVR'];
 
 exports.handler = async (event, context) => {
   // Only allow POST or GET requests
@@ -21,44 +23,54 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    console.log('🔍 Checking for test account...');
+    console.log('🔍 Checking for demo account...');
 
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: 'demo@valora.com' },
+      include: { platformAccess: true },
     });
 
-    if (existingUser) {
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
+    let userCreated = false;
+
+    if (!user) {
+      console.log('📝 Creating demo account...');
+
+      // Create demo admin account
+      const hashedPassword = await bcrypt.hash('demo123', 10);
+
+      user = await prisma.user.create({
+        data: {
+          email: 'demo@valora.com',
+          name: 'Demo Admin',
+          password: hashedPassword,
+          role: 'SUPER_ADMIN',
+          emailVerified: new Date(),
         },
-        body: JSON.stringify({
-          success: true,
-          message: 'Test account already exists',
-          account: {
-            email: 'demo@valora.com',
-            password: 'demo123',
-            role: existingUser.role,
-          },
-        }),
-      };
+        include: { platformAccess: true },
+      });
+      userCreated = true;
     }
 
-    console.log('📝 Creating test account...');
+    // Check and create platform access for all platforms
+    const existingPlatforms = user.platformAccess.map((pa) => pa.platform);
+    const missingPlatforms = PLATFORMS.filter((p) => !existingPlatforms.includes(p));
 
-    // Create test admin account
-    const hashedPassword = await bcrypt.hash('demo123', 10);
+    const platformsGranted = [];
+    for (const platform of missingPlatforms) {
+      await prisma.platformAccess.create({
+        data: {
+          userId: user.id,
+          platform: platform,
+          enabled: true,
+        },
+      });
+      platformsGranted.push(platform);
+    }
 
-    const testUser = await prisma.user.create({
-      data: {
-        email: 'demo@valora.com',
-        name: 'Demo Admin',
-        password: hashedPassword,
-        role: 'SUPER_ADMIN',
-        emailVerified: new Date(),
-      },
+    // Get final platform access status
+    const finalAccess = await prisma.platformAccess.findMany({
+      where: { userId: user.id },
     });
 
     return {
@@ -68,13 +80,20 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         success: true,
-        message: 'Test account created successfully!',
+        message: userCreated
+          ? 'Demo account created successfully!'
+          : 'Demo account already exists',
         account: {
           email: 'demo@valora.com',
           password: 'demo123',
-          role: testUser.role,
-          id: testUser.id,
+          role: user.role,
+          id: user.id,
         },
+        platformAccess: finalAccess.map((pa) => ({
+          platform: pa.platform,
+          enabled: pa.enabled,
+        })),
+        platformsGranted: platformsGranted,
         nextSteps: [
           'Login at /auth/signin',
           'Email: demo@valora.com',
