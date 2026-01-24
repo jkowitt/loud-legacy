@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AskBusinessNow } from "../components/AskBusinessNow";
 
 const navLinks = [
+  { label: "Loud Legacy Home", href: "https://loud-legacy.com" },
   { label: "Overview", href: "#overview" },
   { label: "Modules", href: "#modules" },
   { label: "AI Advisor", href: "#ai" },

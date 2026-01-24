@@ -36,6 +36,15 @@ export default function DashboardLayout({
         </div>
 
         <nav className="sidebar-nav">
+          <a
+            href="https://loud-legacy.com"
+            className="nav-item"
+            title="Back to Loud Legacy"
+          >
+            <span className="nav-icon">🏠</span>
+            {!isCollapsed && <span className="nav-text">Home</span>}
+          </a>
+
           <Link
             href="/dashboard"
             className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}

@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import "./admin.css";
 
 const navItems = [
+  { href: "https://loud-legacy.com", label: "Home", icon: "home", external: true },
   { href: "/admin", label: "Dashboard", icon: "dashboard" },
   { href: "/admin/pages", label: "Pages", icon: "pages" },
   { href: "/admin/media", label: "Media Library", icon: "media" },
@@ -16,6 +17,12 @@ const navItems = [
 ];
 
 const icons: Record<string, JSX.Element> = {
+  home: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      <polyline points="9,22 9,12 15,12 15,22" />
+    </svg>
+  ),
   dashboard: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="3" width="7" height="7" />
@@ -152,14 +159,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <nav className="admin-nav">
           {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`admin-nav-item ${pathname === item.href ? "active" : ""}`}
-            >
-              <span className="admin-nav-icon">{icons[item.icon]}</span>
-              {!sidebarCollapsed && <span className="admin-nav-label">{item.label}</span>}
-            </Link>
+            (item as any).external ? (
+              <a
+                key={item.href}
+                href={item.href}
+                className="admin-nav-item"
+              >
+                <span className="admin-nav-icon">{icons[item.icon]}</span>
+                {!sidebarCollapsed && <span className="admin-nav-label">{item.label}</span>}
+              </a>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`admin-nav-item ${pathname === item.href ? "active" : ""}`}
+              >
+                <span className="admin-nav-icon">{icons[item.icon]}</span>
+                {!sidebarCollapsed && <span className="admin-nav-label">{item.label}</span>}
+              </Link>
+            )
           ))}
         </nav>
 

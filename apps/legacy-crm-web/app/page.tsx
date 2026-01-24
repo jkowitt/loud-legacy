@@ -2,6 +2,7 @@ import { ProspectPlanner } from "../components/ProspectPlanner";
 import { ProspectSuggester } from "../components/ProspectSuggester";
 
 const navLinks = [
+  { label: "Loud Legacy Home", href: "https://loud-legacy.com" },
   { label: "Overview", href: "#overview" },
   { label: "Core Records", href: "#records" },
   { label: "Pipeline", href: "#pipeline" },

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { brands } from "../lib/brands";
 
 const navLinks = [
+  { label: "Home", href: "https://loud-legacy.com", external: true },
   { label: "Ecosystem", href: "#ecosystem" },
   { label: "Brands", href: "#brands" },
   { label: "Story", href: "/story" },
@@ -19,9 +20,15 @@ export function Header() {
         </Link>
         <nav className="navbar__links" aria-label="Primary">
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="text-sm">
-              {link.label}
-            </Link>
+            (link as any).external ? (
+              <a key={link.href} href={link.href} className="text-sm">
+                {link.label}
+              </a>
+            ) : (
+              <Link key={link.href} href={link.href} className="text-sm">
+                {link.label}
+              </Link>
+            )
           ))}
         </nav>
         <Link href={`/${brands[0].slug}`} className="button button--primary">
