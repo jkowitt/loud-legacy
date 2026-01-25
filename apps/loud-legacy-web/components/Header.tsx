@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 const productLogos = [
   { href: "/valora", src: "/logos/valora.svg", name: "VALORA", alt: "VALORA - Real Estate Intelligence" },
   { href: "/sportify", src: "/logos/sportify.svg", name: "Sportify", alt: "Sportify - Event Management" },
+  { href: "/loud-works", src: "/logos/loud-works.svg", name: "Loud Works", alt: "Loud Works - Workforce Intelligence" },
   { href: "/business-now", src: "/logos/business-now.svg", name: "Business Now", alt: "Business Now - Operations" },
   { href: "/legacy-crm", src: "/logos/legacy-crm.svg", name: "Legacy CRM", alt: "Legacy CRM - Relationship Management" },
 ];

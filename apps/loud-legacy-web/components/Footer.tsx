@@ -17,6 +17,7 @@ const Footer = () => {
             <ul className="footer-links">
               <li><Link href="/valora">VALORA</Link></li>
               <li><Link href="/sportify">Sportify</Link></li>
+              <li><Link href="/loud-works">Loud Works</Link></li>
               <li><Link href="/business-now">Business Now</Link></li>
               <li><Link href="/legacy-crm">Legacy CRM</Link></li>
             </ul>

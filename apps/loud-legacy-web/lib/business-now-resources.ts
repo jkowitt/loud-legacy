@@ -6,7 +6,7 @@ export interface Resource {
   title: string;
   description: string;
   type: "guide" | "template";
-  format: "PDF" | "Excel" | "CSV";
+  format: "PDF" | "HTML" | "Excel" | "CSV";
   fileName: string;
   filePath: string;
   isFree: boolean;
@@ -22,8 +22,8 @@ export const guides: Resource[] = [
     title: "Business Overview Framework",
     description: "Define what your business is, who it serves, and how it makes money. A foundational document every operator needs.",
     type: "guide",
-    format: "PDF",
-    fileName: "business-overview-framework.pdf",
+    format: "HTML",
+    fileName: "business-overview-framework.html",
     filePath: "/downloads/business-now/guides/business-overview-framework.html",
     isFree: true,
     category: "Planning",
@@ -35,8 +35,8 @@ export const guides: Resource[] = [
     title: "Goal Setting & Priority Framework",
     description: "Learn how to set meaningful goals and prioritize ruthlessly. Stop chasing everything and start finishing what matters.",
     type: "guide",
-    format: "PDF",
-    fileName: "goal-setting-framework.pdf",
+    format: "HTML",
+    fileName: "goal-setting-framework.html",
     filePath: "/downloads/business-now/guides/goal-setting-framework.html",
     isFree: false,
     category: "Planning",
@@ -48,8 +48,8 @@ export const guides: Resource[] = [
     title: "Weekly Planning System Guide",
     description: "The complete system for planning your week with intention. Includes the exact process we use to maintain consistency.",
     type: "guide",
-    format: "PDF",
-    fileName: "weekly-planning-system.pdf",
+    format: "HTML",
+    fileName: "weekly-planning-system.html",
     filePath: "/downloads/business-now/guides/weekly-planning-system.html",
     isFree: false,
     category: "Planning",
@@ -61,8 +61,8 @@ export const guides: Resource[] = [
     title: "Cash Flow Management Guide",
     description: "Understand your numbers without being an accountant. Simple frameworks for tracking money in and money out.",
     type: "guide",
-    format: "PDF",
-    fileName: "cash-flow-management.pdf",
+    format: "HTML",
+    fileName: "cash-flow-management.html",
     filePath: "/downloads/business-now/guides/cash-flow-management.html",
     isFree: false,
     category: "Finance",
@@ -74,8 +74,8 @@ export const guides: Resource[] = [
     title: "KPI Selection Guide",
     description: "How to choose the 3-5 metrics that actually matter for your business. Avoid vanity metrics and focus on drivers.",
     type: "guide",
-    format: "PDF",
-    fileName: "kpi-selection-guide.pdf",
+    format: "HTML",
+    fileName: "kpi-selection-guide.html",
     filePath: "/downloads/business-now/guides/kpi-selection-guide.html",
     isFree: false,
     category: "Metrics",
@@ -87,8 +87,8 @@ export const guides: Resource[] = [
     title: "Execution Discipline Playbook",
     description: "Build systems for consistent action. This playbook covers habits, routines, and accountability structures.",
     type: "guide",
-    format: "PDF",
-    fileName: "execution-discipline-playbook.pdf",
+    format: "HTML",
+    fileName: "execution-discipline-playbook.html",
     filePath: "/downloads/business-now/guides/execution-discipline-playbook.html",
     isFree: false,
     category: "Execution",
