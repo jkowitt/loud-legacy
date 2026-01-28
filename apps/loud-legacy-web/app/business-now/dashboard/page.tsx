@@ -32,10 +32,53 @@ const tasks = [
 ];
 
 const quickTools = [
-  { name: "Invoice Generator", icon: "📄", description: "Create professional invoices", href: "/business-now/invoices" },
-  { name: "Expense Tracker", icon: "💰", description: "Track and categorize expenses", href: "/business-now/expenses" },
-  { name: "Financial Reports", icon: "📊", description: "Generate detailed reports", href: "/business-now/reports" },
-  { name: "Tax Calculator", icon: "🧮", description: "Estimate tax obligations", href: "/business-now/reports" },
+  {
+    name: "Invoice Generator",
+    description: "Create professional invoices",
+    href: "/business-now/invoices",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14,2 14,8 20,8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    )
+  },
+  {
+    name: "Expense Tracker",
+    description: "Track and categorize expenses",
+    href: "/business-now/expenses",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+      </svg>
+    )
+  },
+  {
+    name: "Financial Reports",
+    description: "Generate detailed reports",
+    href: "/business-now/reports",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M18 20V10M12 20V4M6 20v-6" />
+      </svg>
+    )
+  },
+  {
+    name: "Tax Calculator",
+    description: "Estimate tax obligations",
+    href: "/business-now/reports",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="4" y="2" width="16" height="20" rx="2" />
+        <line x1="8" y1="6" x2="16" y2="6" />
+        <line x1="8" y1="10" x2="16" y2="10" />
+        <line x1="8" y1="14" x2="12" y2="14" />
+        <line x1="8" y1="18" x2="14" y2="18" />
+      </svg>
+    )
+  },
 ];
 
 export default function BusinessNowDashboard() {
@@ -293,7 +336,7 @@ export default function BusinessNowDashboard() {
               <div className="bn-tools-grid">
                 {quickTools.map((tool, index) => (
                   <Link key={index} href={tool.href} className="bn-tool-card">
-                    <span className="bn-tool-icon">{tool.icon}</span>
+                    <div className="bn-tool-icon">{tool.icon}</div>
                     <span className="bn-tool-name">{tool.name}</span>
                     <span className="bn-tool-desc">{tool.description}</span>
                   </Link>

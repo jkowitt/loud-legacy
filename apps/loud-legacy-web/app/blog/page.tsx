@@ -1,11 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
-
-export const metadata = {
-  title: "Blog - Loud Legacy",
-  description: "Insights for operators. Guides, case studies, and thoughts on building better businesses.",
-};
 
 const featuredPost = {
   slug: "why-we-built-loud-legacy",
@@ -16,7 +14,7 @@ const featuredPost = {
   readTime: "5 min read",
 };
 
-const posts = [
+const allPosts = [
   {
     slug: "game-day-operations-checklist",
     title: "The complete game day operations checklist",
@@ -65,11 +63,25 @@ const posts = [
     date: "December 28, 2025",
     readTime: "10 min read",
   },
+  {
+    slug: "workforce-scheduling-tips",
+    title: "5 workforce scheduling strategies that actually work",
+    excerpt: "How top operators balance employee preferences with business needs.",
+    category: "Loud Works",
+    date: "December 22, 2025",
+    readTime: "7 min read",
+  },
 ];
 
-const categories = ["All", "Company", "VALORA", "Sportify", "Business Now", "Legacy CRM"];
+const categories = ["All", "Company", "VALORA", "Sportify", "Business Now", "Legacy CRM", "Loud Works"];
 
 export default function BlogPage() {
+  const [activeCategory, setActiveCategory] = useState("All");
+
+  const filteredPosts = activeCategory === "All"
+    ? allPosts
+    : allPosts.filter(post => post.category === activeCategory);
+
   return (
     <main>
       <Header />
@@ -108,7 +120,8 @@ export default function BlogPage() {
             {categories.map((category) => (
               <button
                 key={category}
-                className={`category-button ${category === "All" ? "category-button--active" : ""}`}
+                className={`category-button ${category === activeCategory ? "category-button--active" : ""}`}
+                onClick={() => setActiveCategory(category)}
               >
                 {category}
               </button>
@@ -120,20 +133,32 @@ export default function BlogPage() {
       {/* Posts Grid */}
       <section className="blog-posts">
         <div className="container">
-          <div className="posts-grid">
-            {posts.map((post) => (
-              <Link key={post.slug} href={`/blog/${post.slug}`} className="post-card">
-                <span className="post-category">{post.category}</span>
-                <h3>{post.title}</h3>
-                <p>{post.excerpt}</p>
-                <div className="post-meta">
-                  <span>{post.date}</span>
-                  <span>•</span>
-                  <span>{post.readTime}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {filteredPosts.length === 0 ? (
+            <div className="blog-no-results">
+              <p>No posts found in this category yet. Check back soon!</p>
+              <button
+                className="button button--secondary"
+                onClick={() => setActiveCategory("All")}
+              >
+                View All Posts
+              </button>
+            </div>
+          ) : (
+            <div className="posts-grid">
+              {filteredPosts.map((post) => (
+                <Link key={post.slug} href={`/blog/${post.slug}`} className="post-card">
+                  <span className="post-category">{post.category}</span>
+                  <h3>{post.title}</h3>
+                  <p>{post.excerpt}</p>
+                  <div className="post-meta">
+                    <span>{post.date}</span>
+                    <span>•</span>
+                    <span>{post.readTime}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
