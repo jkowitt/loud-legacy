@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-const PLATFORMS = ["VALORA", "BUSINESS_NOW", "LEGACY_CRM", "HUB", "VENUEVR"];
-const DEMO_EMAIL = "demo@valora.com";
+const PLATFORMS = ["VALORA", "BUSINESS_NOW", "LEGACY_CRM", "HUB", "VENUEVR", "LOUD_WORKS", "SPORTIFY"];
+const DEMO_EMAIL = "demo@loud-legacy.com";
 const DEMO_PASSWORD = "demo123";
 
 // GET - Create or verify demo account
@@ -35,7 +35,7 @@ export async function GET() {
     }
 
     // Check and create platform access for all platforms
-    const existingPlatforms = user.platformAccess.map((pa) => pa.platform);
+    const existingPlatforms = user.platformAccess.map((pa: any) => pa.platform);
     const missingPlatforms = PLATFORMS.filter(
       (p) => !existingPlatforms.includes(p as any)
     );
@@ -68,7 +68,7 @@ export async function GET() {
         role: user.role,
         id: user.id,
       },
-      platformAccess: finalAccess.map((pa) => ({
+      platformAccess: finalAccess.map((pa: any) => ({
         platform: pa.platform,
         enabled: pa.enabled,
       })),

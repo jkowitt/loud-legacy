@@ -26,9 +26,19 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-title">Company</h4>
             <ul className="footer-links">
-              <li><Link href="/#philosophy">Philosophy</Link></li>
-              <li><Link href="/#products">Our Products</Link></li>
-              <li><Link href="mailto:hello@loud-legacy.com">Contact</Link></li>
+              <li><Link href="/about">About</Link></li>
+              <li><Link href="/pricing">Pricing</Link></li>
+              <li><Link href="/blog">Blog</Link></li>
+              <li><Link href="/contact">Contact</Link></li>
+            </ul>
+          </div>
+
+          <div className="footer-section">
+            <h4 className="footer-title">Legal</h4>
+            <ul className="footer-links">
+              <li><Link href="/privacy">Privacy Policy</Link></li>
+              <li><Link href="/terms">Terms of Service</Link></li>
+              <li><Link href="/payments">Payments & Billing</Link></li>
             </ul>
           </div>
         </div>
@@ -37,9 +47,11 @@ const Footer = () => {
           <p className="footer-copyright">
             &copy; {new Date().getFullYear()} Loud Legacy. All rights reserved.
           </p>
-          <p className="footer-built">
-            Built on systems, not shortcuts.
-          </p>
+          <div className="footer-bottom-links">
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/payments">Billing</Link>
+          </div>
         </div>
       </div>
     </footer>
