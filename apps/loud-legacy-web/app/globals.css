@@ -548,6 +548,30 @@ main {
   border-color: var(--accent-color);
 }
 
+.philosophy-card:hover .philosophy-icon {
+  background: var(--accent-color);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.philosophy-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: var(--accent-color);
+  transition: all 0.3s ease;
+}
+
+.philosophy-icon svg {
+  width: 36px;
+  height: 36px;
+}
+
 .philosophy-card h3 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
@@ -6585,8 +6609,27 @@ textarea:focus-visible {
 }
 
 .bn-tool-icon {
-  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bn-primary);
   margin-bottom: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.bn-tool-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.bn-tool-card:hover .bn-tool-icon {
+  background: var(--bn-primary);
+  color: #fff;
+  transform: scale(1.05);
 }
 
 .bn-tool-name {
@@ -7394,7 +7437,20 @@ textarea:focus-visible {
 }
 
 .sp-event-sport {
-  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sp-primary);
+  flex-shrink: 0;
+}
+
+.sp-sport-svg {
+  width: 22px;
+  height: 22px;
 }
 
 .sp-event-name {
@@ -7710,7 +7766,27 @@ textarea:focus-visible {
   transform: translateY(-2px);
 }
 
-.sp-qa-icon { font-size: 1.5rem; }
+.sp-qa-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sp-primary);
+  transition: all 0.2s ease;
+}
+
+.sp-qa-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.sp-quick-action:hover .sp-qa-icon {
+  background: var(--sp-primary);
+  color: #fff;
+}
 
 .sp-quick-action span:last-child {
   font-size: 0.875rem;
@@ -7990,7 +8066,20 @@ textarea:focus-visible {
 }
 
 .val-property-icon {
-  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #EBF5FF 0%, #DBEAFE 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--val-primary);
+  flex-shrink: 0;
+}
+
+.val-type-svg {
+  width: 22px;
+  height: 22px;
 }
 
 .val-property-name {
@@ -8294,7 +8383,26 @@ textarea:focus-visible {
 }
 
 .val-tool-icon {
-  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #EBF5FF 0%, #DBEAFE 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--val-primary);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.val-tool-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.val-quick-tool:hover .val-tool-icon {
+  background: var(--val-primary);
+  color: #fff;
 }
 
 .val-tool-text {
@@ -12779,6 +12887,21 @@ textarea:focus-visible {
   line-height: 1;
 }
 
+.hub-platform-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hub-platform-icon-wrapper .platform-icon-svg {
+  width: 28px;
+  height: 28px;
+}
+
 .hub-platform-header h3 {
   font-size: 1.25rem;
   font-weight: 700;
@@ -12836,6 +12959,7 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
   padding: 0.875rem 1.5rem;
   border-radius: 10px;
   font-weight: 600;
@@ -12852,6 +12976,14 @@ textarea:focus-visible {
 .hub-platform-btn.primary:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
+}
+
+.hub-platform-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.hub-platform-btn:hover svg {
+  transform: translateX(3px);
 }
 
 .hub-quick-links {
@@ -12920,6 +13052,12 @@ textarea:focus-visible {
   background: var(--bg-secondary);
   border-radius: 12px;
   flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.hub-activity-icon svg {
+  width: 22px;
+  height: 22px;
 }
 
 .hub-activity-content {
@@ -12998,6 +13136,43 @@ textarea:focus-visible {
 
 .hub-quick-start-link span {
   font-size: 1.25rem;
+}
+
+.hub-quick-start-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.hub-quick-start-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.hub-quick-start-link:hover .hub-quick-start-icon {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.hub-help-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  margin-bottom: 1rem;
+}
+
+.hub-help-icon svg {
+  color: #fff;
 }
 
 .hub-help-card {

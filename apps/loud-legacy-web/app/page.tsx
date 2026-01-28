@@ -51,16 +51,34 @@ export default function HomePage() {
           </p>
           <div className="philosophy-grid">
             <div className="philosophy-card">
+              <div className="philosophy-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M9.663 17h4.673M12 3v1M6.343 7.75L5.64 7.05M17.658 7.75l.702-.701M4 12H3M21 12h-1" />
+                  <path d="M12 6a6 6 0 016 6c0 2.22-1.21 4.16-3 5.197V19a1 1 0 01-1 1h-4a1 1 0 01-1-1v-1.803A5.985 5.985 0 016 12a6 6 0 016-6z" />
+                </svg>
+              </div>
               <h3>Scratch our own itch</h3>
               <p>Everything here started because we needed it ourselves.</p>
             </div>
             <div className="philosophy-card">
+              <div className="philosophy-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+              </div>
               <h3>Simple beats clever</h3>
               <p>No fancy tricks. Just tools that do what they say.</p>
             </div>
             <div className="philosophy-card">
+              <div className="philosophy-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
               <h3>Built to last</h3>
-              <p>We're not chasing trends. These products get better over time.</p>
+              <p>We&apos;re not chasing trends. These products get better over time.</p>
             </div>
           </div>
         </div>

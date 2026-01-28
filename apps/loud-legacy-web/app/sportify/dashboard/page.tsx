@@ -49,13 +49,59 @@ export default function SportifyDashboard() {
 
   const getSportIcon = (sport: string) => {
     switch (sport.toLowerCase()) {
-      case "basketball": return "🏀";
-      case "football": return "🏈";
-      case "soccer": return "⚽";
-      case "baseball": return "⚾";
-      case "hockey": return "🏒";
-      case "track & field": return "🏃";
-      default: return "🏆";
+      case "basketball":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sp-sport-svg">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a15 15 0 014 10 15 15 0 01-4 10 15 15 0 01-4-10 15 15 0 014-10z" />
+            <path d="M2 12h20" />
+          </svg>
+        );
+      case "football":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sp-sport-svg">
+            <ellipse cx="12" cy="12" rx="10" ry="6" transform="rotate(45 12 12)" />
+            <path d="M7 12l10 0M9.5 9.5l5 5M14.5 9.5l-5 5" />
+          </svg>
+        );
+      case "soccer":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sp-sport-svg">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2l3 5h-6l3-5M12 22l-3-5h6l-3 5M2 12l5 3v-6l-5 3M22 12l-5-3v6l5-3" />
+          </svg>
+        );
+      case "baseball":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sp-sport-svg">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2c-1.5 2.5-1.5 7-1.5 10s0 7.5 1.5 10M12 2c1.5 2.5 1.5 7 1.5 10s0 7.5-1.5 10" />
+          </svg>
+        );
+      case "hockey":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sp-sport-svg">
+            <path d="M4 20h4v-6a4 4 0 014-4 4 4 0 014 4v6h4" />
+            <circle cx="12" cy="5" r="3" />
+          </svg>
+        );
+      case "track & field":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sp-sport-svg">
+            <circle cx="12" cy="5" r="3" />
+            <path d="M6.5 22l3.5-5 4.5 1.5 3-3.5" />
+            <path d="M14 14l-2-2-4.5 5" />
+            <path d="M7 8l5 3 4-3" />
+          </svg>
+        );
+      default:
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="sp-sport-svg">
+            <path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 7 7 7 7M18 9h1.5a2.5 2.5 0 000-5C17 4 17 7 17 7" />
+            <path d="M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 20M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 20" />
+            <path d="M18 2H6v7a6 6 0 1012 0V2z" />
+          </svg>
+        );
     }
   };
 
@@ -185,7 +231,7 @@ export default function SportifyDashboard() {
                 {upcomingEvents.map((event) => (
                   <div key={event.id} className="sp-event-row">
                     <div className="sp-event-info">
-                      <span className="sp-event-sport">{getSportIcon(event.sport)}</span>
+                      <div className="sp-event-sport">{getSportIcon(event.sport)}</div>
                       <div>
                         <span className="sp-event-name">{event.name}</span>
                         <span className="sp-event-type">{event.sport}</span>
@@ -319,19 +365,39 @@ export default function SportifyDashboard() {
               </div>
               <div className="sp-quick-actions">
                 <button className="sp-quick-action">
-                  <span className="sp-qa-icon">🎫</span>
+                  <div className="sp-qa-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="2" y="6" width="20" height="12" rx="2" />
+                      <path d="M2 10h20" />
+                      <circle cx="17" cy="14" r="2" />
+                    </svg>
+                  </div>
                   <span>Sell Tickets</span>
                 </button>
                 <button className="sp-quick-action">
-                  <span className="sp-qa-icon">📊</span>
+                  <div className="sp-qa-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M18 20V10M12 20V4M6 20v-6" />
+                    </svg>
+                  </div>
                   <span>View Reports</span>
                 </button>
                 <button className="sp-quick-action">
-                  <span className="sp-qa-icon">📢</span>
+                  <div className="sp-qa-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M19 10v4M12 3v18M5 10v4" />
+                      <circle cx="12" cy="12" r="9" />
+                    </svg>
+                  </div>
                   <span>Send Alert</span>
                 </button>
                 <button className="sp-quick-action">
-                  <span className="sp-qa-icon">🏟️</span>
+                  <div className="sp-qa-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M3 21h18M5 21V7l7-4 7 4v14" />
+                      <path d="M9 21v-8h6v8" />
+                    </svg>
+                  </div>
                   <span>Venue Setup</span>
                 </button>
               </div>

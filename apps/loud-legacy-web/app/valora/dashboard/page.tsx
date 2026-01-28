@@ -49,11 +49,41 @@ export default function ValoraDashboard() {
 
   const getTypeIcon = (type: string) => {
     switch (type.toLowerCase()) {
-      case "commercial": return "🏢";
-      case "multifamily": return "🏠";
-      case "retail": return "🛒";
-      case "industrial": return "🏭";
-      default: return "📍";
+      case "commercial":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
+            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" />
+          </svg>
+        );
+      case "multifamily":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
+            <path d="M3 21h18M9 21V8l6-4v17M3 21V10l6-2" />
+            <path d="M13 10h.01M13 14h.01M13 18h.01M5 14h.01M5 18h.01" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        );
+      case "retail":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
+            <path d="M3 9h18v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <path d="M3 9l2.45-4.9A2 2 0 017.24 3h9.52a2 2 0 011.8 1.1L21 9" />
+            <path d="M12 3v6" />
+          </svg>
+        );
+      case "industrial":
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
+            <path d="M2 20h20M4 20V8l5 4V8l5 4V4h6v16" />
+            <path d="M17 10h.01M17 14h.01M17 18h.01" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        );
+      default:
+        return (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        );
     }
   };
 
@@ -203,7 +233,7 @@ export default function ValoraDashboard() {
                 {filteredProperties.map((property) => (
                   <div key={property.id} className="val-property-row">
                     <div className="val-property-info">
-                      <span className="val-property-icon">{getTypeIcon(property.type)}</span>
+                      <div className="val-property-icon">{getTypeIcon(property.type)}</div>
                       <div>
                         <span className="val-property-name">{property.name}</span>
                         <span className="val-property-address">{property.address}</span>
@@ -321,28 +351,48 @@ export default function ValoraDashboard() {
               </div>
               <div className="val-quick-tools">
                 <button className="val-quick-tool">
-                  <span className="val-tool-icon">📊</span>
+                  <div className="val-tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M18 20V10M12 20V4M6 20v-6" />
+                    </svg>
+                  </div>
                   <div className="val-tool-text">
                     <span className="val-tool-name">Valuation Model</span>
                     <span className="val-tool-desc">Run DCF analysis</span>
                   </div>
                 </button>
                 <button className="val-quick-tool">
-                  <span className="val-tool-icon">📈</span>
+                  <div className="val-tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
+                    </svg>
+                  </div>
                   <div className="val-tool-text">
                     <span className="val-tool-name">Comp Analysis</span>
                     <span className="val-tool-desc">Find comparables</span>
                   </div>
                 </button>
                 <button className="val-quick-tool">
-                  <span className="val-tool-icon">🗺️</span>
+                  <div className="val-tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="12" cy="10" r="3" />
+                      <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z" />
+                    </svg>
+                  </div>
                   <div className="val-tool-text">
                     <span className="val-tool-name">Market Map</span>
                     <span className="val-tool-desc">Location insights</span>
                   </div>
                 </button>
                 <button className="val-quick-tool">
-                  <span className="val-tool-icon">📑</span>
+                  <div className="val-tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                      <polyline points="14,2 14,8 20,8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                  </div>
                   <div className="val-tool-text">
                     <span className="val-tool-name">Report Builder</span>
                     <span className="val-tool-desc">Generate reports</span>
