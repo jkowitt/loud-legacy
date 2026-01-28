@@ -1,9 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
+
+// AI Asset Analysis Types
+interface AssetItem {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl?: string;
+  category: string;
+  estimatedValue: number;
+}
+
+interface AIAssetRecommendation {
+  assetId: string;
+  assetName: string;
+  priority: number;
+  optimalTiming: string;
+  reasoning: string;
+  projectedROI: number;
+  riskLevel: "low" | "medium" | "high";
+}
+
+interface AIAssetAnalysis {
+  recommendations: AIAssetRecommendation[];
+  overallStrategy: string;
+  marketConditions: string[];
+  timePeriodInsights: string;
+  projectedTotalROI: number;
+  confidence: number;
+}
 
 // Sample data
 const upcomingEvents = [
@@ -37,6 +66,130 @@ const staffMembers = [
 
 export default function SportifyDashboard() {
   const [selectedSport, setSelectedSport] = useState("all");
+
+  // AI Asset Optimizer State
+  const [showAIOptimizer, setShowAIOptimizer] = useState(false);
+  const [assets, setAssets] = useState<AssetItem[]>([]);
+  const [newAssetName, setNewAssetName] = useState("");
+  const [newAssetDescription, setNewAssetDescription] = useState("");
+  const [newAssetCategory, setNewAssetCategory] = useState("merchandise");
+  const [newAssetValue, setNewAssetValue] = useState("");
+  const [timePeriod, setTimePeriod] = useState<"week" | "month" | "quarter" | "season">("month");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AIAssetAnalysis | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [assetImagePreview, setAssetImagePreview] = useState<string | null>(null);
+
+  const handleAssetImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAssetImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const addAsset = () => {
+    if (!newAssetName.trim() || !newAssetDescription.trim()) return;
+
+    const newAsset: AssetItem = {
+      id: `asset-${Date.now()}`,
+      name: newAssetName,
+      description: newAssetDescription,
+      category: newAssetCategory,
+      estimatedValue: parseFloat(newAssetValue) || 0,
+      imageUrl: assetImagePreview || undefined,
+    };
+
+    setAssets([...assets, newAsset]);
+    setNewAssetName("");
+    setNewAssetDescription("");
+    setNewAssetValue("");
+    setAssetImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeAsset = (id: string) => {
+    setAssets(assets.filter(a => a.id !== id));
+    if (analysisResult) setAnalysisResult(null);
+  };
+
+  const runAIAssetAnalysis = async () => {
+    if (assets.length < 2) return;
+
+    setIsAnalyzing(true);
+
+    // Simulate AI analysis
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    const timePeriodLabels = {
+      week: "This Week",
+      month: "This Month",
+      quarter: "This Quarter",
+      season: "This Season"
+    };
+
+    const recommendations: AIAssetRecommendation[] = assets
+      .map((asset, index) => ({
+        assetId: asset.id,
+        assetName: asset.name,
+        priority: index + 1,
+        optimalTiming: getOptimalTiming(index, timePeriod),
+        reasoning: generateReasoning(asset, index, timePeriod),
+        projectedROI: Math.round(15 + Math.random() * 35),
+        riskLevel: (["low", "medium", "high"] as const)[Math.floor(Math.random() * 3)],
+      }))
+      .sort((a, b) => b.projectedROI - a.projectedROI)
+      .map((rec, idx) => ({ ...rec, priority: idx + 1 }));
+
+    const result: AIAssetAnalysis = {
+      recommendations,
+      overallStrategy: `Based on current market conditions and ${timePeriodLabels[timePeriod].toLowerCase()} projections, we recommend prioritizing high-ROI merchandise and promotional items early in the period, followed by equipment investments that support upcoming events.`,
+      marketConditions: [
+        "Sports merchandise demand is up 12% YoY",
+        "Fan engagement peaks during championship season",
+        "Equipment costs stabilizing after supply chain improvements",
+        "Digital asset opportunities expanding in sports sector"
+      ],
+      timePeriodInsights: `${timePeriodLabels[timePeriod]} shows optimal conditions for asset deployment with ${recommendations.length} items analyzed. Peak engagement expected during mid-period events.`,
+      projectedTotalROI: recommendations.reduce((sum, r) => sum + r.projectedROI, 0) / recommendations.length,
+      confidence: 78 + Math.floor(Math.random() * 15),
+    };
+
+    setAnalysisResult(result);
+    setIsAnalyzing(false);
+  };
+
+  const getOptimalTiming = (index: number, period: string) => {
+    const timings: Record<string, string[]> = {
+      week: ["Monday-Tuesday", "Wednesday", "Thursday-Friday", "Weekend"],
+      month: ["Week 1", "Week 2", "Week 3", "Week 4"],
+      quarter: ["Month 1", "Month 2", "Month 3", "End of Quarter"],
+      season: ["Pre-season", "Early Season", "Mid-season", "Playoffs"],
+    };
+    return timings[period][index % timings[period].length];
+  };
+
+  const generateReasoning = (asset: AssetItem, index: number, period: string) => {
+    const reasonings = [
+      `High demand patterns align with ${asset.category} investments during this ${period}. Early deployment maximizes fan engagement opportunities.`,
+      `Market analysis shows ${asset.category} performs best with strategic timing. Current conditions favor immediate action.`,
+      `Historical data suggests ${asset.category} assets yield optimal returns when positioned mid-${period}. Recommend careful monitoring.`,
+      `AI models indicate strong potential for ${asset.category} with moderate timing flexibility. Best deployed after initial high-priority items.`,
+    ];
+    return reasonings[index % reasonings.length];
+  };
+
+  const getRiskColor = (risk: string) => {
+    switch (risk) {
+      case "low": return "#22C55E";
+      case "medium": return "#F59E0B";
+      case "high": return "#EF4444";
+      default: return "#64748B";
+    }
+  };
 
   const totalTicketsSold = upcomingEvents.reduce((sum, e) => sum + e.ticketsSold, 0);
   const totalCapacity = upcomingEvents.reduce((sum, e) => sum + e.capacity, 0);
@@ -403,6 +556,313 @@ export default function SportifyDashboard() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* AI Asset Optimizer Section */}
+      <section className="sp-ai-section">
+        <div className="container">
+          <div className="sp-ai-toggle-card" onClick={() => setShowAIOptimizer(!showAIOptimizer)}>
+            <div className="sp-ai-toggle-left">
+              <div className="sp-ai-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div>
+                <h3>AI Asset Optimizer</h3>
+                <p>Upload assets and let AI determine optimal ordering for your time period</p>
+              </div>
+            </div>
+            <div className={`sp-ai-chevron ${showAIOptimizer ? "open" : ""}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          </div>
+
+          {showAIOptimizer && (
+            <div className="sp-ai-panel">
+              <div className="sp-ai-grid">
+                {/* Add Asset Form */}
+                <div className="sp-ai-form-section">
+                  <h4>Add Assets</h4>
+                  <div className="sp-ai-form">
+                    <div className="sp-ai-form-row">
+                      <div className="sp-ai-input-group">
+                        <label>Asset Name</label>
+                        <input
+                          type="text"
+                          value={newAssetName}
+                          onChange={(e) => setNewAssetName(e.target.value)}
+                          placeholder="e.g., Championship Merchandise"
+                        />
+                      </div>
+                      <div className="sp-ai-input-group">
+                        <label>Category</label>
+                        <select
+                          value={newAssetCategory}
+                          onChange={(e) => setNewAssetCategory(e.target.value)}
+                        >
+                          <option value="merchandise">Merchandise</option>
+                          <option value="equipment">Equipment</option>
+                          <option value="sponsorship">Sponsorship</option>
+                          <option value="media">Media Rights</option>
+                          <option value="facilities">Facilities</option>
+                          <option value="digital">Digital Assets</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="sp-ai-input-group full">
+                      <label>Description</label>
+                      <textarea
+                        value={newAssetDescription}
+                        onChange={(e) => setNewAssetDescription(e.target.value)}
+                        placeholder="Describe the asset, its purpose, and any relevant details for AI analysis..."
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="sp-ai-form-row">
+                      <div className="sp-ai-input-group">
+                        <label>Estimated Value ($)</label>
+                        <input
+                          type="number"
+                          value={newAssetValue}
+                          onChange={(e) => setNewAssetValue(e.target.value)}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="sp-ai-input-group">
+                        <label>Asset Image (Optional)</label>
+                        <div className="sp-ai-file-upload" onClick={() => fileInputRef.current?.click()}>
+                          {assetImagePreview ? (
+                            <img src={assetImagePreview} alt="Preview" className="sp-ai-preview-thumb" />
+                          ) : (
+                            <>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                              </svg>
+                              <span>Upload</span>
+                            </>
+                          )}
+                        </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAssetImageUpload}
+                          style={{ display: "none" }}
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      className="sp-ai-add-btn"
+                      onClick={addAsset}
+                      disabled={!newAssetName.trim() || !newAssetDescription.trim()}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      Add Asset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Asset List */}
+                <div className="sp-ai-assets-section">
+                  <h4>Assets ({assets.length})</h4>
+                  {assets.length === 0 ? (
+                    <div className="sp-ai-empty">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="40" height="40">
+                        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                        <line x1="12" y1="22.08" x2="12" y2="12" />
+                      </svg>
+                      <p>No assets added yet</p>
+                      <span>Add at least 2 assets to run AI optimization</span>
+                    </div>
+                  ) : (
+                    <div className="sp-ai-asset-list">
+                      {assets.map((asset) => (
+                        <div key={asset.id} className="sp-ai-asset-item">
+                          {asset.imageUrl && (
+                            <img src={asset.imageUrl} alt={asset.name} className="sp-ai-asset-thumb" />
+                          )}
+                          <div className="sp-ai-asset-info">
+                            <span className="sp-ai-asset-name">{asset.name}</span>
+                            <span className="sp-ai-asset-category">{asset.category}</span>
+                            <span className="sp-ai-asset-desc">{asset.description.substring(0, 60)}...</span>
+                          </div>
+                          {asset.estimatedValue > 0 && (
+                            <span className="sp-ai-asset-value">
+                              ${asset.estimatedValue.toLocaleString()}
+                            </span>
+                          )}
+                          <button
+                            className="sp-ai-remove-btn"
+                            onClick={() => removeAsset(asset.id)}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Time Period & Analyze */}
+              <div className="sp-ai-analyze-section">
+                <div className="sp-ai-time-period">
+                  <label>Optimization Time Period</label>
+                  <div className="sp-ai-period-options">
+                    {(["week", "month", "quarter", "season"] as const).map((period) => (
+                      <button
+                        key={period}
+                        className={`sp-ai-period-btn ${timePeriod === period ? "active" : ""}`}
+                        onClick={() => setTimePeriod(period)}
+                      >
+                        {period.charAt(0).toUpperCase() + period.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  className="sp-ai-analyze-btn"
+                  onClick={runAIAssetAnalysis}
+                  disabled={assets.length < 2 || isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <span className="sp-ai-spinner" />
+                      Analyzing Assets...
+                    </>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                      </svg>
+                      Optimize Asset Order
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* AI Results */}
+              {analysisResult && (
+                <div className="sp-ai-results">
+                  <div className="sp-ai-results-header">
+                    <h4>AI Optimization Results</h4>
+                    <div className="sp-ai-confidence">
+                      <span>Confidence</span>
+                      <div className="sp-ai-confidence-bar">
+                        <div
+                          className="sp-ai-confidence-fill"
+                          style={{ width: `${analysisResult.confidence}%` }}
+                        />
+                      </div>
+                      <span className="sp-ai-confidence-value">{analysisResult.confidence}%</span>
+                    </div>
+                  </div>
+
+                  <div className="sp-ai-strategy-card">
+                    <h5>Overall Strategy</h5>
+                    <p>{analysisResult.overallStrategy}</p>
+                    <div className="sp-ai-roi-badge">
+                      <span>Projected Avg ROI</span>
+                      <strong>{analysisResult.projectedTotalROI.toFixed(1)}%</strong>
+                    </div>
+                  </div>
+
+                  <div className="sp-ai-recommendations">
+                    <h5>Recommended Asset Order</h5>
+                    <div className="sp-ai-rec-list">
+                      {analysisResult.recommendations.map((rec) => (
+                        <div key={rec.assetId} className="sp-ai-rec-item">
+                          <div className="sp-ai-rec-priority">
+                            <span className="sp-ai-priority-num">{rec.priority}</span>
+                          </div>
+                          <div className="sp-ai-rec-content">
+                            <div className="sp-ai-rec-header">
+                              <span className="sp-ai-rec-name">{rec.assetName}</span>
+                              <span className="sp-ai-rec-timing">{rec.optimalTiming}</span>
+                            </div>
+                            <p className="sp-ai-rec-reasoning">{rec.reasoning}</p>
+                            <div className="sp-ai-rec-meta">
+                              <span className="sp-ai-rec-roi">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                                  <polyline points="17 6 23 6 23 12" />
+                                </svg>
+                                {rec.projectedROI}% ROI
+                              </span>
+                              <span
+                                className="sp-ai-rec-risk"
+                                style={{ color: getRiskColor(rec.riskLevel) }}
+                              >
+                                {rec.riskLevel.charAt(0).toUpperCase() + rec.riskLevel.slice(1)} Risk
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="sp-ai-market-grid">
+                    <div className="sp-ai-market-card">
+                      <h5>Market Conditions</h5>
+                      <ul>
+                        {analysisResult.marketConditions.map((condition, idx) => (
+                          <li key={idx}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" width="16" height="16">
+                              <path d="M5 13l4 4L19 7" />
+                            </svg>
+                            {condition}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="sp-ai-insights-card">
+                      <h5>Time Period Insights</h5>
+                      <p>{analysisResult.timePeriodInsights}</p>
+                    </div>
+                  </div>
+
+                  <div className="sp-ai-actions">
+                    <button className="sp-ai-action-btn secondary">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Export Report
+                    </button>
+                    <button className="sp-ai-action-btn primary">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83" />
+                        <circle cx="12" cy="12" r="4" />
+                      </svg>
+                      Apply Recommendations
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
