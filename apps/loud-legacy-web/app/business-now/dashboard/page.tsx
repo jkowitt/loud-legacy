@@ -32,10 +32,10 @@ const tasks = [
 ];
 
 const quickTools = [
-  { name: "Invoice Generator", icon: "📄", description: "Create professional invoices", href: "/business-now/tools/invoice" },
-  { name: "Expense Tracker", icon: "💰", description: "Track and categorize expenses", href: "/business-now/tools/expenses" },
-  { name: "Financial Reports", icon: "📊", description: "Generate detailed reports", href: "/business-now/tools/reports" },
-  { name: "Tax Calculator", icon: "🧮", description: "Estimate tax obligations", href: "/business-now/tools/tax" },
+  { name: "Invoice Generator", icon: "📄", description: "Create professional invoices", href: "/business-now/invoices" },
+  { name: "Expense Tracker", icon: "💰", description: "Track and categorize expenses", href: "/business-now/expenses" },
+  { name: "Financial Reports", icon: "📊", description: "Generate detailed reports", href: "/business-now/reports" },
+  { name: "Tax Calculator", icon: "🧮", description: "Estimate tax obligations", href: "/business-now/reports" },
 ];
 
 export default function BusinessNowDashboard() {
@@ -217,7 +217,7 @@ export default function BusinessNowDashboard() {
             <div className="bn-card">
               <div className="bn-card-header">
                 <h3>Recent Transactions</h3>
-                <Link href="/business-now/transactions" className="bn-link">View All</Link>
+                <Link href="/business-now/expenses" className="bn-link">View All</Link>
               </div>
               <div className="bn-transactions">
                 {recentTransactions.map((tx) => (

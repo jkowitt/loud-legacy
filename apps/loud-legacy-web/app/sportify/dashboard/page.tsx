@@ -263,7 +263,7 @@ export default function SportifyDashboard() {
             <div className="sp-dash-card">
               <div className="sp-dash-card-header">
                 <h3>Recent Results</h3>
-                <Link href="/sportify/results" className="sp-dash-link">View All</Link>
+                <Link href="/sportify/events" className="sp-dash-link">View All</Link>
               </div>
               <div className="sp-results-list">
                 {recentResults.map((result) => (

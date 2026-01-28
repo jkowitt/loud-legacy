@@ -35,7 +35,7 @@ const tasks = [
   { id: 4, title: "Site visit - Industrial Park", property: "Industrial Park West", due: "Jan 28", priority: "low" },
 ];
 
-export default function ValoraDisboard() {
+export default function ValoraDashboard() {
   const [propertyFilter, setPropertyFilter] = useState("all");
 
   const totalPortfolioValue = properties.reduce((sum, p) => sum + p.value, 0);

@@ -255,7 +255,7 @@ export default function LegacyCRMDashboard() {
             <div className="lcrm-dash-card">
               <div className="lcrm-dash-card-header">
                 <h3>Recent Activity</h3>
-                <Link href="/legacy-crm/activity" className="lcrm-dash-link">View All</Link>
+                <Link href="/legacy-crm/activities" className="lcrm-dash-link">View All</Link>
               </div>
               <div className="lcrm-activity-feed">
                 {activities.map((activity) => (
