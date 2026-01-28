@@ -19,6 +19,7 @@ const products = [
   { value: "sportify", label: "Sportify" },
   { value: "business-now", label: "Business Now" },
   { value: "legacy-crm", label: "Legacy CRM" },
+  { value: "loud-works", label: "Loud Works" },
   { value: "all", label: "All products / Platform" },
 ];
 

@@ -9,6 +9,59 @@ export const metadata = {
   description: "Complete real estate valuation and underwriting platform with AI image recognition, sophisticated financial modeling, and portfolio management. Built for brokers, investors, lenders, and property owners.",
 };
 
+// Property Type Icons
+const PropertyTypeIcons = {
+  commercial: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
+      <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" />
+      <path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  ),
+  residential: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
+      <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+  ),
+  multifamily: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
+      <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+  ),
+  industrial: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
+      <path d="M3 21h18M9 21V12l-6 3V8l6-3v4l6-3v4l6-3v14" />
+    </svg>
+  ),
+};
+
+// User Type Icons
+const UserTypeIcons = {
+  brokers: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+      <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" />
+      <path d="M12 11v2M9 11h6" strokeLinecap="round" />
+    </svg>
+  ),
+  owners: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+      <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      <path d="M12 9v2" strokeLinecap="round" />
+    </svg>
+  ),
+  investors: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+      <rect x="2" y="7" width="20" height="14" rx="2" />
+      <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+      <path d="M12 11v4M10 13h4" strokeLinecap="round" />
+    </svg>
+  ),
+  lenders: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+      <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3" />
+    </svg>
+  ),
+};
+
 export default function ValoraPage() {
   return (
     <main className="product-page">
@@ -48,11 +101,11 @@ export default function ValoraPage() {
             <h3 style={{ fontSize: '1.5rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
               Supporting All Property Types
             </h3>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 500 }}>🏢 Commercial</span>
-              <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 500 }}>🏠 Residential</span>
-              <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 500 }}>🏘️ Multifamily</span>
-              <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 500 }}>🏭 Industrial</span>
+            <div className="valora-property-types">
+              <span className="valora-property-type">{PropertyTypeIcons.commercial} Commercial</span>
+              <span className="valora-property-type">{PropertyTypeIcons.residential} Residential</span>
+              <span className="valora-property-type">{PropertyTypeIcons.multifamily} Multifamily</span>
+              <span className="valora-property-type">{PropertyTypeIcons.industrial} Industrial</span>
             </div>
           </div>
         </div>
@@ -210,23 +263,23 @@ export default function ValoraPage() {
         <div className="container">
           <h2 style={{ textAlign: 'center', marginBottom: '3rem' }}>Built For Real Estate Professionals</h2>
           <div className="features-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-            <div className="feature-card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
+            <div className="feature-card valora-user-card">
+              <div className="valora-user-icon">{UserTypeIcons.brokers}</div>
               <h3>Brokers</h3>
               <p>Create professional valuations for client pitches, support pricing recommendations, and win more listings.</p>
             </div>
-            <div className="feature-card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏠</div>
+            <div className="feature-card valora-user-card">
+              <div className="valora-user-icon">{UserTypeIcons.owners}</div>
               <h3>Property Owners</h3>
               <p>Track property performance, understand market value changes, and make data-driven decisions about your assets.</p>
             </div>
-            <div className="feature-card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💼</div>
+            <div className="feature-card valora-user-card">
+              <div className="valora-user-icon">{UserTypeIcons.investors}</div>
               <h3>Investors</h3>
               <p>Underwrite deals faster, model multiple scenarios, and identify the best opportunities in your pipeline.</p>
             </div>
-            <div className="feature-card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏦</div>
+            <div className="feature-card valora-user-card">
+              <div className="valora-user-icon">{UserTypeIcons.lenders}</div>
               <h3>Lenders</h3>
               <p>Standardize underwriting, assess borrower assumptions, and make confident lending decisions backed by data.</p>
             </div>

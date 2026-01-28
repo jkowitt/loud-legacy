@@ -5,6 +5,32 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
+// AI Account Research Types
+interface AIAccountResearch {
+  contactId: number;
+  companyOverview: string;
+  industry: string;
+  employeeCount: string;
+  founded: string;
+  headquarters: string;
+  recentNews: {
+    title: string;
+    date: string;
+    sentiment: "positive" | "neutral" | "negative";
+  }[];
+  socialActivity: {
+    platform: string;
+    followers: string;
+    engagement: string;
+  }[];
+  talkingPoints: string[];
+  relationshipSuggestions: string[];
+  riskFactors: string[];
+  opportunityScore: number;
+  buyingSignals: string[];
+  competitorInfo: string;
+}
+
 // Sample data
 const contacts = [
   { id: 1, name: "Sarah Mitchell", company: "TechVentures Inc", email: "sarah@techventures.com", phone: "(555) 123-4567", status: "hot", lastContact: "2024-01-18", value: 125000, avatar: "SM" },
@@ -40,6 +66,83 @@ const upcomingTasks = [
 export default function LegacyCRMDashboard() {
   const [contactFilter, setContactFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // AI Account Research State
+  const [showAIResearch, setShowAIResearch] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<typeof contacts[0] | null>(null);
+  const [isResearching, setIsResearching] = useState(false);
+  const [researchResult, setResearchResult] = useState<AIAccountResearch | null>(null);
+
+  const runAIResearch = async (contact: typeof contacts[0]) => {
+    setSelectedContact(contact);
+    setShowAIResearch(true);
+    setIsResearching(true);
+    setResearchResult(null);
+
+    // Simulate AI research
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const research: AIAccountResearch = {
+      contactId: contact.id,
+      companyOverview: `${contact.company} is a dynamic organization in the technology sector, known for innovative solutions and strong market presence. They have shown consistent growth over the past 3 years with a focus on digital transformation initiatives.`,
+      industry: "Technology / Enterprise Software",
+      employeeCount: "250-500",
+      founded: "2015",
+      headquarters: "San Francisco, CA",
+      recentNews: [
+        { title: `${contact.company} announces Q4 expansion plans`, date: "Jan 15, 2024", sentiment: "positive" },
+        { title: "New partnership with major cloud provider", date: "Jan 10, 2024", sentiment: "positive" },
+        { title: "Industry award for innovation", date: "Dec 28, 2023", sentiment: "positive" }
+      ],
+      socialActivity: [
+        { platform: "LinkedIn", followers: "12.5K", engagement: "High" },
+        { platform: "Twitter", followers: "8.2K", engagement: "Medium" },
+        { platform: "Facebook", followers: "5.1K", engagement: "Low" }
+      ],
+      talkingPoints: [
+        `Congratulate on recent ${contact.company} expansion announcement`,
+        "Discuss how your solution aligns with their digital transformation goals",
+        "Reference their recent industry award as proof of innovation culture",
+        "Ask about challenges in scaling their current infrastructure"
+      ],
+      relationshipSuggestions: [
+        "Schedule a quarterly business review to strengthen relationship",
+        "Connect with their VP of Engineering who recently joined",
+        "Invite to upcoming industry webinar as a speaker opportunity",
+        "Share relevant case study from similar company in their sector"
+      ],
+      riskFactors: [
+        "Competitor actively targeting this account",
+        "Budget decisions typically made in Q1 - timing sensitive",
+        "Key stakeholder may be transitioning roles"
+      ],
+      opportunityScore: 78,
+      buyingSignals: [
+        "Recently posted job listings for technical roles",
+        "Increased activity on your product pages",
+        "Engaged with 3 marketing emails in past month",
+        "Requested pricing information last week"
+      ],
+      competitorInfo: "Currently evaluating 2 competitors. Main competitor is offering aggressive discounts. Key differentiator needed on integration capabilities."
+    };
+
+    setResearchResult(research);
+    setIsResearching(false);
+  };
+
+  const closeResearchPanel = () => {
+    setShowAIResearch(false);
+    setSelectedContact(null);
+    setResearchResult(null);
+  };
+
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment) {
+      case "positive": return "#22C55E";
+      case "negative": return "#EF4444";
+      default: return "#64748B";
+    }
+  };
 
   const totalPipelineValue = pipeline.reduce((sum, p) => sum + p.value, 0);
   const totalContacts = contacts.length;
@@ -243,6 +346,16 @@ export default function LegacyCRMDashboard() {
                       <span className="lcrm-contact-value">${(contact.value / 1000).toFixed(0)}K</span>
                       <span className={`lcrm-contact-status ${contact.status}`}>{contact.status}</span>
                     </div>
+                    <button
+                      className="lcrm-ai-research-btn"
+                      onClick={() => runAIResearch(contact)}
+                      title="AI Account Research"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                      </svg>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -325,6 +438,214 @@ export default function LegacyCRMDashboard() {
           </div>
         </div>
       </section>
+
+      {/* AI Research Panel */}
+      {showAIResearch && (
+        <div className="lcrm-ai-overlay" onClick={closeResearchPanel}>
+          <div className="lcrm-ai-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="lcrm-ai-panel-header">
+              <div className="lcrm-ai-panel-title">
+                <div className="lcrm-ai-panel-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                </div>
+                <div>
+                  <h3>AI Account Research</h3>
+                  {selectedContact && (
+                    <p>{selectedContact.name} - {selectedContact.company}</p>
+                  )}
+                </div>
+              </div>
+              <button className="lcrm-ai-close" onClick={closeResearchPanel}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="lcrm-ai-panel-body">
+              {isResearching ? (
+                <div className="lcrm-ai-loading">
+                  <div className="lcrm-ai-loading-spinner" />
+                  <h4>Researching account...</h4>
+                  <p>Gathering company intelligence, news, and insights</p>
+                </div>
+              ) : researchResult ? (
+                <div className="lcrm-ai-results">
+                  {/* Opportunity Score */}
+                  <div className="lcrm-ai-score-banner">
+                    <div className="lcrm-ai-score-ring">
+                      <svg viewBox="0 0 100 100" width="80" height="80">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="8" />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          fill="none"
+                          stroke="url(#scoreGradient)"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray={`${(researchResult.opportunityScore / 100) * 283} 283`}
+                          transform="rotate(-90 50 50)"
+                        />
+                        <defs>
+                          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#8B5CF6" />
+                            <stop offset="100%" stopColor="#A78BFA" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      <span className="lcrm-ai-score-value">{researchResult.opportunityScore}</span>
+                    </div>
+                    <div className="lcrm-ai-score-info">
+                      <h4>Opportunity Score</h4>
+                      <p>Based on engagement signals, company health, and buying indicators</p>
+                    </div>
+                  </div>
+
+                  {/* Company Overview */}
+                  <div className="lcrm-ai-section">
+                    <h4>Company Overview</h4>
+                    <p className="lcrm-ai-overview">{researchResult.companyOverview}</p>
+                    <div className="lcrm-ai-company-meta">
+                      <span><strong>Industry:</strong> {researchResult.industry}</span>
+                      <span><strong>Employees:</strong> {researchResult.employeeCount}</span>
+                      <span><strong>Founded:</strong> {researchResult.founded}</span>
+                      <span><strong>HQ:</strong> {researchResult.headquarters}</span>
+                    </div>
+                  </div>
+
+                  {/* Buying Signals */}
+                  <div className="lcrm-ai-section">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" width="18" height="18">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      Buying Signals
+                    </h4>
+                    <ul className="lcrm-ai-signals">
+                      {researchResult.buyingSignals.map((signal, idx) => (
+                        <li key={idx}>{signal}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Recent News */}
+                  <div className="lcrm-ai-section">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" width="18" height="18">
+                        <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2" />
+                      </svg>
+                      Recent News
+                    </h4>
+                    <div className="lcrm-ai-news-list">
+                      {researchResult.recentNews.map((news, idx) => (
+                        <div key={idx} className="lcrm-ai-news-item">
+                          <span className="lcrm-ai-news-title">{news.title}</span>
+                          <div className="lcrm-ai-news-meta">
+                            <span className="lcrm-ai-news-date">{news.date}</span>
+                            <span
+                              className="lcrm-ai-news-sentiment"
+                              style={{ color: getSentimentColor(news.sentiment) }}
+                            >
+                              {news.sentiment}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Talking Points */}
+                  <div className="lcrm-ai-section">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2" width="18" height="18">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                      </svg>
+                      Talking Points
+                    </h4>
+                    <ul className="lcrm-ai-points">
+                      {researchResult.talkingPoints.map((point, idx) => (
+                        <li key={idx}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Relationship Suggestions */}
+                  <div className="lcrm-ai-section">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" width="18" height="18">
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                      </svg>
+                      Relationship Suggestions
+                    </h4>
+                    <ul className="lcrm-ai-suggestions">
+                      {researchResult.relationshipSuggestions.map((suggestion, idx) => (
+                        <li key={idx}>{suggestion}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Risk Factors */}
+                  <div className="lcrm-ai-section lcrm-ai-risks">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" width="18" height="18">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                      Risk Factors
+                    </h4>
+                    <ul>
+                      {researchResult.riskFactors.map((risk, idx) => (
+                        <li key={idx}>{risk}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Competitor Info */}
+                  <div className="lcrm-ai-section lcrm-ai-competitor">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" width="18" height="18">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                      </svg>
+                      Competitive Intelligence
+                    </h4>
+                    <p>{researchResult.competitorInfo}</p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="lcrm-ai-panel-actions">
+                    <button className="lcrm-ai-action-btn secondary">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Export Research
+                    </button>
+                    <button className="lcrm-ai-action-btn primary">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                      Schedule Follow-up
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </main>

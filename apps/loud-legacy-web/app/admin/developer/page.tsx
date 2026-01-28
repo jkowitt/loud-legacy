@@ -27,6 +27,25 @@ interface DatabaseTable {
   size: string;
 }
 
+interface PlatformSettings {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+  paymentRequired: boolean;
+  trialDays: number;
+  betaEnabled: boolean;
+}
+
+interface BetaTester {
+  id: string;
+  email: string;
+  name: string;
+  signupDate: string;
+  platforms: string[];
+  status: "active" | "invited" | "churned";
+}
+
 // Demo data
 const demoLogs: LogEntry[] = [
   { id: "1", timestamp: new Date().toISOString(), level: "info", message: "Server started successfully", source: "system" },
@@ -55,8 +74,24 @@ const demoTables: DatabaseTable[] = [
   { name: "MediaAsset", rowCount: 892, size: "523 KB" },
 ];
 
+const demoPlatformSettings: PlatformSettings[] = [
+  { id: "1", name: "VALORA", slug: "valora", color: "#3B82F6", paymentRequired: false, trialDays: 7, betaEnabled: true },
+  { id: "2", name: "Sportify", slug: "sportify", color: "#8B5CF6", paymentRequired: false, trialDays: 7, betaEnabled: true },
+  { id: "3", name: "Business Now", slug: "business-now", color: "#2D9CDB", paymentRequired: false, trialDays: 7, betaEnabled: true },
+  { id: "4", name: "Legacy CRM", slug: "legacy-crm", color: "#D4AF37", paymentRequired: false, trialDays: 0, betaEnabled: true },
+  { id: "5", name: "Loud Works", slug: "loud-works", color: "#F97316", paymentRequired: false, trialDays: 7, betaEnabled: true },
+];
+
+const demoBetaTesters: BetaTester[] = [
+  { id: "1", email: "john@example.com", name: "John Smith", signupDate: new Date(Date.now() - 86400000 * 5).toISOString(), platforms: ["valora", "sportify"], status: "active" },
+  { id: "2", email: "sarah@company.co", name: "Sarah Johnson", signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), platforms: ["legacy-crm", "business-now"], status: "active" },
+  { id: "3", email: "mike@startup.io", name: "Mike Williams", signupDate: new Date(Date.now() - 86400000 * 7).toISOString(), platforms: ["valora"], status: "active" },
+  { id: "4", email: "emma@agency.com", name: "Emma Davis", signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), platforms: ["sportify", "loud-works"], status: "active" },
+  { id: "5", email: "invited@test.com", name: "Test User", signupDate: new Date().toISOString(), platforms: [], status: "invited" },
+];
+
 export default function DeveloperPage() {
-  const [activeTab, setActiveTab] = useState<"database" | "api" | "logs" | "env" | "webhooks">("database");
+  const [activeTab, setActiveTab] = useState<"database" | "api" | "logs" | "env" | "webhooks" | "settings">("settings");
   const [logs, setLogs] = useState<LogEntry[]>(demoLogs);
   const [apiKeys, setApiKeys] = useState<APIKey[]>(demoAPIKeys);
   const [tables] = useState<DatabaseTable[]>(demoTables);
@@ -70,6 +105,10 @@ export default function DeveloperPage() {
   const [newKeyPermissions, setNewKeyPermissions] = useState<string[]>(["read"]);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings[]>(demoPlatformSettings);
+  const [betaTesters, setBetaTesters] = useState<BetaTester[]>(demoBetaTesters);
+  const [globalBetaMode, setGlobalBetaMode] = useState(true);
+  const [requirePaymentGlobally, setRequirePaymentGlobally] = useState(false);
 
   // Environment variables (safe to display)
   const envVars = [
@@ -153,6 +192,7 @@ export default function DeveloperPage() {
       {/* Tabs */}
       <div className="admin-tabs">
         {[
+          { id: "settings", label: "Platform Settings", icon: "⚡" },
           { id: "database", label: "Database", icon: "🗄️" },
           { id: "api", label: "API Keys", icon: "🔑" },
           { id: "logs", label: "System Logs", icon: "📋" },
@@ -169,6 +209,298 @@ export default function DeveloperPage() {
           </button>
         ))}
       </div>
+
+      {/* Settings Tab */}
+      {activeTab === "settings" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          {/* Global Settings Card */}
+          <div className="admin-card">
+            <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.125rem", fontWeight: 700 }}>Global Settings</h3>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              {/* BETA Mode Toggle */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "1.25rem",
+                background: globalBetaMode ? "rgba(34, 197, 94, 0.1)" : "var(--admin-bg)",
+                borderRadius: "12px",
+                border: globalBetaMode ? "1px solid rgba(34, 197, 94, 0.3)" : "1px solid var(--admin-border)",
+              }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
+                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>BETA Mode</h4>
+                    {globalBetaMode && (
+                      <span className="admin-badge admin-badge-success">Active</span>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, color: "var(--admin-text-secondary)", fontSize: "0.875rem" }}>
+                    When enabled, all new signups are marked as BETA testers with free access to all platforms.
+                  </p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={globalBetaMode}
+                    onChange={(e) => {
+                      setGlobalBetaMode(e.target.checked);
+                      setToast({ message: e.target.checked ? "BETA mode enabled" : "BETA mode disabled", type: "success" });
+                    }}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+
+              {/* Payment Required Toggle */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "1.25rem",
+                background: requirePaymentGlobally ? "rgba(239, 68, 68, 0.1)" : "var(--admin-bg)",
+                borderRadius: "12px",
+                border: requirePaymentGlobally ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid var(--admin-border)",
+              }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
+                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>Require Payment Globally</h4>
+                    {requirePaymentGlobally && (
+                      <span className="admin-badge admin-badge-error">Payments Required</span>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, color: "var(--admin-text-secondary)", fontSize: "0.875rem" }}>
+                    Override individual platform settings and require payment for all platforms.
+                  </p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={requirePaymentGlobally}
+                    onChange={(e) => {
+                      setRequirePaymentGlobally(e.target.checked);
+                      if (e.target.checked) {
+                        setPlatformSettings(platformSettings.map(p => ({ ...p, paymentRequired: true })));
+                      }
+                      setToast({ message: e.target.checked ? "Payment now required for all platforms" : "Payment requirement removed", type: "success" });
+                    }}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Payment Settings */}
+          <div className="admin-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700 }}>Platform Payment Settings</h3>
+                <p style={{ margin: "0.25rem 0 0", color: "var(--admin-text-secondary)", fontSize: "0.875rem" }}>
+                  Configure payment requirements and trial periods for each platform
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {platformSettings.map((platform) => (
+                <div
+                  key={platform.id}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "200px 1fr 150px 150px",
+                    gap: "1.5rem",
+                    alignItems: "center",
+                    padding: "1.25rem",
+                    background: "var(--admin-bg)",
+                    borderRadius: "12px",
+                    border: "1px solid var(--admin-border)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <div style={{
+                      width: "12px",
+                      height: "12px",
+                      borderRadius: "50%",
+                      background: platform.color,
+                    }} />
+                    <span style={{ fontWeight: 600, color: "var(--admin-text)" }}>{platform.name}</span>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <label style={{ fontSize: "0.875rem", color: "var(--admin-text-secondary)" }}>Trial Days:</label>
+                    <select
+                      value={platform.trialDays}
+                      onChange={(e) => {
+                        setPlatformSettings(platformSettings.map(p =>
+                          p.id === platform.id ? { ...p, trialDays: parseInt(e.target.value) } : p
+                        ));
+                        setToast({ message: `${platform.name} trial updated to ${e.target.value} days`, type: "success" });
+                      }}
+                      className="admin-form-select"
+                      style={{ width: "100px" }}
+                    >
+                      <option value="0">No trial</option>
+                      <option value="7">7 days</option>
+                      <option value="14">14 days</option>
+                      <option value="30">30 days</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <label className="toggle-switch toggle-switch-small">
+                      <input
+                        type="checkbox"
+                        checked={platform.paymentRequired}
+                        disabled={requirePaymentGlobally}
+                        onChange={(e) => {
+                          setPlatformSettings(platformSettings.map(p =>
+                            p.id === platform.id ? { ...p, paymentRequired: e.target.checked } : p
+                          ));
+                          setToast({ message: `${platform.name} payment ${e.target.checked ? "required" : "not required"}`, type: "success" });
+                        }}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                    <span style={{ fontSize: "0.8125rem", color: platform.paymentRequired ? "#EF4444" : "#22c55e" }}>
+                      {platform.paymentRequired ? "Payment Required" : "Free Access"}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <label className="toggle-switch toggle-switch-small">
+                      <input
+                        type="checkbox"
+                        checked={platform.betaEnabled}
+                        onChange={(e) => {
+                          setPlatformSettings(platformSettings.map(p =>
+                            p.id === platform.id ? { ...p, betaEnabled: e.target.checked } : p
+                          ));
+                          setToast({ message: `${platform.name} BETA ${e.target.checked ? "enabled" : "disabled"}`, type: "success" });
+                        }}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                    <span style={{ fontSize: "0.8125rem", color: platform.betaEnabled ? "#22c55e" : "var(--admin-text-secondary)" }}>
+                      {platform.betaEnabled ? "BETA On" : "BETA Off"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{
+              marginTop: "1.5rem",
+              padding: "1rem",
+              background: "rgba(59, 130, 246, 0.1)",
+              border: "1px solid rgba(59, 130, 246, 0.2)",
+              borderRadius: "8px",
+            }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" width="20" height="20" style={{ flexShrink: 0, marginTop: "2px" }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+                <div>
+                  <strong style={{ color: "#3B82F6" }}>Current Status</strong>
+                  <p style={{ margin: "0.25rem 0 0", color: "var(--admin-text)", fontSize: "0.875rem" }}>
+                    {globalBetaMode
+                      ? "BETA mode is active. All new signups get free access without payment."
+                      : requirePaymentGlobally
+                        ? "Payment is required for all platforms."
+                        : "Mixed mode: Check individual platform settings above."
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* BETA Testers */}
+          <div className="admin-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700 }}>BETA Testers</h3>
+                <p style={{ margin: "0.25rem 0 0", color: "var(--admin-text-secondary)", fontSize: "0.875rem" }}>
+                  {betaTesters.filter(b => b.status === "active").length} active BETA testers
+                </p>
+              </div>
+              <button className="admin-btn admin-btn-secondary">
+                Export List
+              </button>
+            </div>
+
+            <div style={{ overflowX: "auto" }}>
+              <table className="admin-table" style={{ margin: 0 }}>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Signup Date</th>
+                    <th>Platforms</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {betaTesters.map((tester) => (
+                    <tr key={tester.id}>
+                      <td>
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{tester.name}</div>
+                          <div style={{ fontSize: "0.8125rem", color: "var(--admin-text-secondary)" }}>{tester.email}</div>
+                        </div>
+                      </td>
+                      <td>{new Date(tester.signupDate).toLocaleDateString()}</td>
+                      <td>
+                        <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
+                          {tester.platforms.length > 0 ? tester.platforms.map(p => (
+                            <span key={p} style={{
+                              padding: "0.125rem 0.375rem",
+                              background: "var(--admin-bg)",
+                              borderRadius: "4px",
+                              fontSize: "0.75rem",
+                              textTransform: "capitalize",
+                            }}>
+                              {p.replace("-", " ")}
+                            </span>
+                          )) : <span style={{ color: "var(--admin-text-secondary)", fontSize: "0.8125rem" }}>None yet</span>}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`admin-badge ${
+                          tester.status === "active" ? "admin-badge-success" :
+                          tester.status === "invited" ? "admin-badge-warning" :
+                          "admin-badge-error"
+                        }`}>
+                          {tester.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <button className="admin-btn admin-btn-secondary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}>
+                            View
+                          </button>
+                          <button
+                            className="admin-btn admin-btn-danger"
+                            style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                            onClick={() => {
+                              setBetaTesters(betaTesters.filter(b => b.id !== tester.id));
+                              setToast({ message: "BETA tester removed", type: "success" });
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Database Tab */}
       {activeTab === "database" && (

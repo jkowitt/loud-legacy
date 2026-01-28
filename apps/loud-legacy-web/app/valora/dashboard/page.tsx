@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -35,8 +35,27 @@ const tasks = [
   { id: 4, title: "Site visit - Industrial Park", property: "Industrial Park West", due: "Jan 28", priority: "low" },
 ];
 
+// AI Analysis Result Interface
+interface AIAnalysisResult {
+  overallCondition: string;
+  conditionScore: number;
+  exteriorFindings: string[];
+  interiorFindings: string[];
+  estimatedValue: number;
+  valueRange: { low: number; high: number };
+  confidence: number;
+  marketFactors: string[];
+  recommendations: string[];
+}
+
 export default function ValoraDashboard() {
   const [propertyFilter, setPropertyFilter] = useState("all");
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null);
+  const [analysisType, setAnalysisType] = useState<"exterior" | "interior" | "both">("both");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalPortfolioValue = properties.reduce((sum, p) => sum + p.value, 0);
   const totalSqft = properties.reduce((sum, p) => sum + p.sqft, 0);
@@ -46,6 +65,79 @@ export default function ValoraDashboard() {
   const filteredProperties = propertyFilter === "all"
     ? properties
     : properties.filter(p => p.type.toLowerCase() === propertyFilter.toLowerCase());
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newImages: string[] = [];
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            newImages.push(e.target.result as string);
+            if (newImages.length === files.length) {
+              setUploadedImages(prev => [...prev, ...newImages]);
+            }
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const runAIAnalysis = async () => {
+    if (uploadedImages.length === 0) return;
+
+    setIsAnalyzing(true);
+
+    // Simulate AI analysis
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    const mockResult: AIAnalysisResult = {
+      overallCondition: "Good",
+      conditionScore: 78,
+      exteriorFindings: [
+        "Roof appears in good condition with no visible damage",
+        "Exterior walls show minor weathering, recommend repainting within 2 years",
+        "Windows are double-pane, energy efficient",
+        "Landscaping well-maintained, curb appeal above average",
+        "Parking lot surface shows some wear, may need resealing"
+      ],
+      interiorFindings: [
+        "Flooring in common areas shows moderate wear",
+        "HVAC system appears well-maintained",
+        "Lighting fixtures are modern and energy-efficient",
+        "Paint and finishes are in good condition",
+        "No visible signs of water damage or structural issues"
+      ],
+      estimatedValue: 4250000,
+      valueRange: { low: 3900000, high: 4600000 },
+      confidence: 85,
+      marketFactors: [
+        "Strong rental demand in area (+3.2% YoY)",
+        "Recent comparable sales support valuation",
+        "Interest rates currently at 7.25%",
+        "Local employment growth positive",
+        "New development nearby may impact future value"
+      ],
+      recommendations: [
+        "Schedule professional roof inspection before acquisition",
+        "Budget $45,000 for exterior repainting in capital plan",
+        "Consider parking lot resurfacing ($25,000 estimate)",
+        "Property positioned well for value-add opportunity",
+        "Recommend proceeding with due diligence"
+      ]
+    };
+
+    setAnalysisResult(mockResult);
+    setIsAnalyzing(false);
+  };
+
+  const resetAnalysis = () => {
+    setUploadedImages([]);
+    setAnalysisResult(null);
+    setIsAnalyzing(false);
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -138,6 +230,254 @@ export default function ValoraDashboard() {
               </button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* AI Property Analysis Section */}
+      <section className="val-ai-analysis-section">
+        <div className="container">
+          <div className="val-ai-toggle-card" onClick={() => setShowAIAnalysis(!showAIAnalysis)}>
+            <div className="val-ai-toggle-content">
+              <div className="val-ai-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73v1.54a7 7 0 015.73 5.73h1.54A2 2 0 0122 12a2 2 0 01-1.73 3h-1.54a7 7 0 01-5.73 5.73v1.54A2 2 0 0112 22a2 2 0 01-1-3.73v-1.54a7 7 0 01-5.73-5.73H3.73A2 2 0 012 12a2 2 0 013-1.73V8.73A7 7 0 0110.73 3V1.73A2 2 0 0112 2z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </div>
+              <div className="val-ai-toggle-text">
+                <h3>AI Property Analysis</h3>
+                <p>Upload property photos for AI-powered condition assessment and fair market value prediction</p>
+              </div>
+              <div className="val-ai-toggle-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: showAIAnalysis ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {showAIAnalysis && (
+            <div className="val-ai-panel">
+              {!analysisResult ? (
+                <div className="val-ai-upload-section">
+                  <div className="val-ai-upload-header">
+                    <h4>Upload Property Photos</h4>
+                    <div className="val-ai-type-selector">
+                      {(["exterior", "interior", "both"] as const).map(type => (
+                        <button
+                          key={type}
+                          className={`val-ai-type-btn ${analysisType === type ? "active" : ""}`}
+                          onClick={() => setAnalysisType(type)}
+                        >
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div
+                    className="val-ai-dropzone"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <div className="val-ai-dropzone-content">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="17,8 12,3 7,8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      <span>Drop photos here or click to upload</span>
+                      <small>Support JPG, PNG up to 10MB each</small>
+                    </div>
+                  </div>
+
+                  {uploadedImages.length > 0 && (
+                    <div className="val-ai-uploaded-images">
+                      {uploadedImages.map((img, index) => (
+                        <div key={index} className="val-ai-image-preview">
+                          <img src={img} alt={`Upload ${index + 1}`} />
+                          <button
+                            className="val-ai-image-remove"
+                            onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {uploadedImages.length > 0 && (
+                    <div className="val-ai-actions">
+                      <button className="val-ai-btn secondary" onClick={resetAnalysis}>
+                        Clear All
+                      </button>
+                      <button
+                        className="val-ai-btn primary"
+                        onClick={runAIAnalysis}
+                        disabled={isAnalyzing}
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <span className="val-ai-spinner"></span>
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                              <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73v1.54a7 7 0 015.73 5.73h1.54A2 2 0 0122 12a2 2 0 01-1.73 3h-1.54a7 7 0 01-5.73 5.73v1.54A2 2 0 0112 22a2 2 0 01-1-3.73v-1.54a7 7 0 01-5.73-5.73H3.73A2 2 0 012 12a2 2 0 013-1.73V8.73A7 7 0 0110.73 3V1.73A2 2 0 0112 2z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Run AI Analysis
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="val-ai-results">
+                  <div className="val-ai-results-header">
+                    <h4>AI Analysis Results</h4>
+                    <button className="val-ai-btn secondary small" onClick={resetAnalysis}>
+                      New Analysis
+                    </button>
+                  </div>
+
+                  {/* Condition Score */}
+                  <div className="val-ai-score-section">
+                    <div className="val-ai-score-card">
+                      <div className="val-ai-score-ring">
+                        <svg viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="45" fill="none" stroke="#E5E7EB" strokeWidth="8" />
+                          <circle
+                            cx="50"
+                            cy="50"
+                            r="45"
+                            fill="none"
+                            stroke={analysisResult.conditionScore >= 70 ? "#22C55E" : analysisResult.conditionScore >= 50 ? "#F59E0B" : "#EF4444"}
+                            strokeWidth="8"
+                            strokeDasharray={`${analysisResult.conditionScore * 2.83} 283`}
+                            strokeLinecap="round"
+                            transform="rotate(-90 50 50)"
+                          />
+                        </svg>
+                        <div className="val-ai-score-value">
+                          <span>{analysisResult.conditionScore}</span>
+                          <small>/100</small>
+                        </div>
+                      </div>
+                      <div className="val-ai-score-label">
+                        <span className="condition">{analysisResult.overallCondition}</span>
+                        <span className="confidence">{analysisResult.confidence}% Confidence</span>
+                      </div>
+                    </div>
+
+                    <div className="val-ai-value-card">
+                      <div className="val-ai-value-main">
+                        <span className="label">Estimated Fair Market Value</span>
+                        <span className="value">${(analysisResult.estimatedValue / 1000000).toFixed(2)}M</span>
+                      </div>
+                      <div className="val-ai-value-range">
+                        <span>${(analysisResult.valueRange.low / 1000000).toFixed(2)}M</span>
+                        <div className="val-ai-range-bar">
+                          <div className="val-ai-range-indicator" style={{ left: '50%' }}></div>
+                        </div>
+                        <span>${(analysisResult.valueRange.high / 1000000).toFixed(2)}M</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Findings */}
+                  <div className="val-ai-findings-grid">
+                    <div className="val-ai-findings-card">
+                      <h5>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                        </svg>
+                        Exterior Analysis
+                      </h5>
+                      <ul>
+                        {analysisResult.exteriorFindings.map((finding, i) => (
+                          <li key={i}>{finding}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="val-ai-findings-card">
+                      <h5>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <path d="M3 9h18M9 21V9" />
+                        </svg>
+                        Interior Analysis
+                      </h5>
+                      <ul>
+                        {analysisResult.interiorFindings.map((finding, i) => (
+                          <li key={i}>{finding}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Market Factors & Recommendations */}
+                  <div className="val-ai-findings-grid">
+                    <div className="val-ai-findings-card market">
+                      <h5>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                          <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
+                        </svg>
+                        Market Factors
+                      </h5>
+                      <ul>
+                        {analysisResult.marketFactors.map((factor, i) => (
+                          <li key={i}>{factor}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="val-ai-findings-card recommendations">
+                      <h5>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                          <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                          <polyline points="22,4 12,14.01 9,11.01" />
+                        </svg>
+                        AI Recommendations
+                      </h5>
+                      <ul>
+                        {analysisResult.recommendations.map((rec, i) => (
+                          <li key={i}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="val-ai-result-actions">
+                    <button className="val-ai-btn secondary">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="7,10 12,15 17,10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Download Report
+                    </button>
+                    <button className="val-ai-btn primary">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      Create Valuation
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
