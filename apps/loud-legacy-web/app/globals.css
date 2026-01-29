@@ -12829,6 +12829,13 @@ textarea:focus-visible {
 /* ===========================
    HUB DASHBOARD (Main Dashboard)
    =========================== */
+
+/* Hub Layout - No sidebar for multi-platform hub */
+.hub-layout {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
 .hub-dashboard {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   min-height: 100vh;
