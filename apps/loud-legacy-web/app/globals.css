@@ -17732,3 +17732,84 @@ textarea:focus-visible {
     text-align: left;
   }
 }
+
+/* ===========================
+   EMPTY STATES - ALL DASHBOARDS
+   =========================== */
+
+/* Large empty state (main content areas) */
+.val-empty-state,
+.sp-empty-state,
+.bn-empty-state,
+.lcrm-empty-state,
+.lw-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  color: #64748B;
+}
+
+.val-empty-state svg,
+.sp-empty-state svg,
+.bn-empty-state svg,
+.lcrm-empty-state svg,
+.lw-empty-state svg {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.val-empty-state p,
+.sp-empty-state p,
+.bn-empty-state p,
+.lcrm-empty-state p,
+.lw-empty-state p {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #475569;
+  margin: 0 0 8px 0;
+}
+
+.val-empty-state span,
+.sp-empty-state span,
+.bn-empty-state span,
+.lcrm-empty-state span,
+.lw-empty-state span {
+  font-size: 0.9rem;
+  color: #94A3B8;
+}
+
+/* Small empty state (cards and smaller sections) */
+.val-empty-state-sm,
+.sp-empty-state-sm,
+.bn-empty-state-sm,
+.lcrm-empty-state-sm,
+.lw-empty-state-sm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  color: #94A3B8;
+}
+
+.val-empty-state-sm p,
+.sp-empty-state-sm p,
+.bn-empty-state-sm p,
+.lcrm-empty-state-sm p,
+.lw-empty-state-sm p {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.val-empty-state-sm span,
+.sp-empty-state-sm span,
+.bn-empty-state-sm span,
+.lcrm-empty-state-sm span,
+.lw-empty-state-sm span {
+  font-size: 0.85rem;
+  margin-top: 4px;
+}

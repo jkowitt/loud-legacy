@@ -5,35 +5,19 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
-// Sample data
-const properties = [
-  { id: 1, name: "Downtown Office Tower", type: "Commercial", address: "123 Main St, New York", value: 45000000, sqft: 150000, capRate: 6.2, status: "active", change: 3.2 },
-  { id: 2, name: "Riverside Apartments", type: "Multifamily", address: "456 River Rd, Boston", value: 28000000, sqft: 95000, capRate: 5.8, status: "active", change: 2.1 },
-  { id: 3, name: "Tech Campus Building A", type: "Commercial", address: "789 Innovation Blvd, Austin", value: 62000000, sqft: 200000, capRate: 5.5, status: "under-review", change: 4.5 },
-  { id: 4, name: "Harbor View Retail", type: "Retail", address: "321 Waterfront Dr, Miami", value: 18500000, sqft: 45000, capRate: 7.1, status: "active", change: -1.2 },
-  { id: 5, name: "Industrial Park West", type: "Industrial", address: "555 Commerce Way, Phoenix", value: 35000000, sqft: 250000, capRate: 6.8, status: "active", change: 2.8 },
-];
+// Portfolio data - starts empty for user to add their own
+const properties: { id: number; name: string; type: string; address: string; value: number; sqft: number; capRate: number; status: string; change: number }[] = [];
 
-const recentDeals = [
-  { id: 1, name: "Metropolitan Plaza", type: "Acquisition", value: 52000000, date: "Jan 20, 2024", status: "closed" },
-  { id: 2, name: "Suburban Office Park", type: "Disposition", value: 18500000, date: "Jan 15, 2024", status: "closed" },
-  { id: 3, name: "Lakeview Residences", type: "Refinance", value: 32000000, date: "Jan 12, 2024", status: "pending" },
-  { id: 4, name: "Airport Logistics Hub", type: "Acquisition", value: 75000000, date: "Jan 8, 2024", status: "in-progress" },
-];
+const recentDeals: { id: number; name: string; type: string; value: number; date: string; status: string }[] = [];
 
 const marketTrends = [
-  { sector: "Office", trend: "down", change: -2.3, forecast: "cautious" },
-  { sector: "Multifamily", trend: "up", change: 4.1, forecast: "positive" },
-  { sector: "Industrial", trend: "up", change: 6.8, forecast: "strong" },
-  { sector: "Retail", trend: "stable", change: 0.5, forecast: "neutral" },
+  { sector: "Office", trend: "stable", change: 0, forecast: "neutral" },
+  { sector: "Multifamily", trend: "stable", change: 0, forecast: "neutral" },
+  { sector: "Industrial", trend: "stable", change: 0, forecast: "neutral" },
+  { sector: "Retail", trend: "stable", change: 0, forecast: "neutral" },
 ];
 
-const tasks = [
-  { id: 1, title: "Review Tech Campus appraisal", property: "Tech Campus Building A", due: "Today", priority: "high" },
-  { id: 2, title: "Update Harbor View financials", property: "Harbor View Retail", due: "Tomorrow", priority: "medium" },
-  { id: 3, title: "Prepare investor presentation", property: "Portfolio", due: "Jan 26", priority: "high" },
-  { id: 4, title: "Site visit - Industrial Park", property: "Industrial Park West", due: "Jan 28", priority: "low" },
-];
+const tasks: { id: number; title: string; property: string; due: string; priority: string }[] = [];
 
 // AI Analysis Result Interface
 interface AIAnalysisResult {
@@ -561,36 +545,48 @@ export default function ValoraDashboard() {
                 </div>
               </div>
               <div className="val-properties-table">
-                <div className="val-properties-header">
-                  <span>Property</span>
-                  <span>Type</span>
-                  <span>Value</span>
-                  <span>Sq Ft</span>
-                  <span>Cap Rate</span>
-                  <span>Change</span>
-                  <span>Status</span>
-                </div>
-                {filteredProperties.map((property) => (
-                  <div key={property.id} className="val-property-row">
-                    <div className="val-property-info">
-                      <div className="val-property-icon">{getTypeIcon(property.type)}</div>
-                      <div>
-                        <span className="val-property-name">{property.name}</span>
-                        <span className="val-property-address">{property.address}</span>
-                      </div>
+                {filteredProperties.length > 0 ? (
+                  <>
+                    <div className="val-properties-header">
+                      <span>Property</span>
+                      <span>Type</span>
+                      <span>Value</span>
+                      <span>Sq Ft</span>
+                      <span>Cap Rate</span>
+                      <span>Change</span>
+                      <span>Status</span>
                     </div>
-                    <span className="val-property-type">{property.type}</span>
-                    <span className="val-property-value">${(property.value / 1000000).toFixed(1)}M</span>
-                    <span className="val-property-sqft">{(property.sqft / 1000).toFixed(0)}K</span>
-                    <span className="val-property-cap">{property.capRate}%</span>
-                    <span className={`val-property-change ${property.change >= 0 ? "positive" : "negative"}`}>
-                      {property.change >= 0 ? "+" : ""}{property.change}%
-                    </span>
-                    <span className={`val-property-status ${property.status}`}>
-                      {property.status === "active" ? "Active" : "Under Review"}
-                    </span>
+                    {filteredProperties.map((property) => (
+                      <div key={property.id} className="val-property-row">
+                        <div className="val-property-info">
+                          <div className="val-property-icon">{getTypeIcon(property.type)}</div>
+                          <div>
+                            <span className="val-property-name">{property.name}</span>
+                            <span className="val-property-address">{property.address}</span>
+                          </div>
+                        </div>
+                        <span className="val-property-type">{property.type}</span>
+                        <span className="val-property-value">${(property.value / 1000000).toFixed(1)}M</span>
+                        <span className="val-property-sqft">{(property.sqft / 1000).toFixed(0)}K</span>
+                        <span className="val-property-cap">{property.capRate}%</span>
+                        <span className={`val-property-change ${property.change >= 0 ? "positive" : "negative"}`}>
+                          {property.change >= 0 ? "+" : ""}{property.change}%
+                        </span>
+                        <span className={`val-property-status ${property.status}`}>
+                          {property.status === "active" ? "Active" : "Under Review"}
+                        </span>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div className="val-empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+                      <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" />
+                    </svg>
+                    <p>No properties yet</p>
+                    <span>Add your first property to start building your portfolio</span>
                   </div>
-                ))}
+                )}
               </div>
               <Link href="/valora/properties" className="val-view-all-btn">
                 View All Properties
@@ -604,21 +600,27 @@ export default function ValoraDashboard() {
                 <Link href="/valora/deals" className="val-dash-link">View All</Link>
               </div>
               <div className="val-deals-list">
-                {recentDeals.map((deal) => (
-                  <div key={deal.id} className="val-deal-row">
-                    <div className="val-deal-info">
-                      <span className="val-deal-name">{deal.name}</span>
-                      <span className="val-deal-date">{deal.date}</span>
+                {recentDeals.length > 0 ? (
+                  recentDeals.map((deal) => (
+                    <div key={deal.id} className="val-deal-row">
+                      <div className="val-deal-info">
+                        <span className="val-deal-name">{deal.name}</span>
+                        <span className="val-deal-date">{deal.date}</span>
+                      </div>
+                      <div className="val-deal-meta">
+                        <span className="val-deal-type">{deal.type}</span>
+                        <span className="val-deal-value">${(deal.value / 1000000).toFixed(1)}M</span>
+                      </div>
+                      <span className={`val-deal-status ${deal.status}`}>
+                        {deal.status === "closed" ? "Closed" : deal.status === "pending" ? "Pending" : "In Progress"}
+                      </span>
                     </div>
-                    <div className="val-deal-meta">
-                      <span className="val-deal-type">{deal.type}</span>
-                      <span className="val-deal-value">${(deal.value / 1000000).toFixed(1)}M</span>
-                    </div>
-                    <span className={`val-deal-status ${deal.status}`}>
-                      {deal.status === "closed" ? "Closed" : deal.status === "pending" ? "Pending" : "In Progress"}
-                    </span>
+                  ))
+                ) : (
+                  <div className="val-empty-state-sm">
+                    <p>No deals yet</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -666,21 +668,27 @@ export default function ValoraDashboard() {
                 </button>
               </div>
               <div className="val-tasks-list">
-                {tasks.map((task) => (
-                  <div key={task.id} className="val-task-row">
-                    <div className="val-task-checkbox">
-                      <input type="checkbox" />
+                {tasks.length > 0 ? (
+                  tasks.map((task) => (
+                    <div key={task.id} className="val-task-row">
+                      <div className="val-task-checkbox">
+                        <input type="checkbox" />
+                      </div>
+                      <div className="val-task-info">
+                        <span className="val-task-title">{task.title}</span>
+                        <span className="val-task-property">{task.property}</span>
+                      </div>
+                      <div className="val-task-meta">
+                        <span className="val-task-due">{task.due}</span>
+                        <span className={`val-task-priority ${task.priority}`}>{task.priority}</span>
+                      </div>
                     </div>
-                    <div className="val-task-info">
-                      <span className="val-task-title">{task.title}</span>
-                      <span className="val-task-property">{task.property}</span>
-                    </div>
-                    <div className="val-task-meta">
-                      <span className="val-task-due">{task.due}</span>
-                      <span className={`val-task-priority ${task.priority}`}>{task.priority}</span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="val-empty-state-sm">
+                    <p>No action items</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
