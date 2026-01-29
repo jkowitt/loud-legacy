@@ -17813,3 +17813,549 @@ textarea:focus-visible {
   font-size: 0.85rem;
   margin-top: 4px;
 }
+
+/* ===========================
+   VALORA SAVED ANALYSES
+   =========================== */
+.val-saved-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.val-saved-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+.val-saved-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.val-saved-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.val-saved-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #64748B;
+}
+
+.val-saved-close:hover {
+  background: #F1F5F9;
+}
+
+.val-saved-list {
+  padding: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.val-saved-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #F8FAFC;
+  margin-bottom: 12px;
+}
+
+.val-saved-thumbnail {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  background: #E2E8F0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.val-saved-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.val-saved-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.val-saved-name {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.val-saved-date {
+  font-size: 0.85rem;
+  color: #64748B;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.val-saved-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 0.85rem;
+}
+
+.val-saved-stats span {
+  color: #3B82F6;
+  font-weight: 500;
+}
+
+.val-saved-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #94A3B8;
+}
+
+.val-saved-delete:hover {
+  background: #FEE2E2;
+  color: #EF4444;
+}
+
+.val-ai-save-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.val-ai-property-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.val-ai-save-success {
+  color: #22C55E;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* ===========================
+   BUSINESS NOW QUICK TOOLS
+   =========================== */
+.bn-quick-tools-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.bn-quick-tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: #F8FAFC;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bn-quick-tool-btn:hover {
+  background: #F1F5F9;
+}
+
+.bn-quick-tool-btn.active {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+}
+
+.bn-qt-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3B82F6;
+}
+
+.bn-qt-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.bn-qt-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.bn-tool-panel {
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 20px;
+  animation: slideDown 0.2s ease;
+}
+
+.bn-tool-content h4 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+}
+
+.bn-tool-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bn-tool-input,
+.bn-tool-select,
+.bn-tool-textarea {
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.bn-tool-submit {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.bn-quick-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bn-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.bn-summary-row.highlight {
+  background: #ECFDF5;
+  margin: 0 -20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+}
+
+.bn-summary-row.highlight strong {
+  color: #059669;
+}
+
+.bn-calculator {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bn-calc-row {
+  display: flex;
+  gap: 8px;
+}
+
+.bn-calc-btn {
+  flex: 1;
+  padding: 10px;
+  background: #E2E8F0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.bn-calc-btn:hover {
+  background: #CBD5E1;
+}
+
+/* Business Now Task Form */
+.bn-add-task-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.bn-task-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.bn-task-priority-select {
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  min-width: 100px;
+}
+
+.bn-add-task-btn {
+  padding: 10px 14px;
+  background: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===========================
+   SPORTIFY QUICK ACTIONS
+   =========================== */
+.sp-quick-action.active {
+  background: #ECFDF5;
+  border-color: #059669;
+}
+
+.sp-action-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  animation: slideDown 0.2s ease;
+}
+
+.sp-action-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+}
+
+.sp-action-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sp-action-select,
+.sp-action-input {
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.sp-ticket-qty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sp-ticket-qty button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #E2E8F0;
+  background: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.sp-ticket-qty span {
+  font-size: 1.2rem;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: center;
+}
+
+.sp-action-submit {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.sp-report-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sp-report-btn {
+  padding: 10px 16px;
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sp-report-btn:hover {
+  background: #F1F5F9;
+}
+
+.sp-venue-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sp-venue-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* ===========================
+   LEGACY CRM QUICK ACTIONS
+   =========================== */
+.lcrm-quick-action.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border-color: #8B5CF6;
+}
+
+.lcrm-action-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  animation: slideDown 0.2s ease;
+}
+
+.lcrm-action-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+}
+
+.lcrm-action-select,
+.lcrm-action-input,
+.lcrm-action-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.lcrm-action-submit {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ===========================
+   LOUD WORKS QUICK ACTIONS
+   =========================== */
+.lw-quick-action.active {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.05) 100%);
+  border-color: #F97316;
+}
+
+.lw-action-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  animation: slideDown 0.2s ease;
+}
+
+.lw-action-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+}
+
+.lw-action-input,
+.lw-action-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.lw-action-submit {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.lw-report-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.lw-report-btn {
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.lw-report-btn:hover {
+  background: #FFF7ED;
+  border-color: #F97316;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .bn-quick-tools-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .lw-report-buttons {
+    grid-template-columns: 1fr;
+  }
+}
