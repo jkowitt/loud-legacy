@@ -35,7 +35,7 @@ export default function SignInPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password. Try the demo account below.");
+        setError("Invalid email or password. Please try again.");
       } else {
         router.push("/dashboard");
       }
@@ -44,12 +44,6 @@ export default function SignInPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fillDemoCredentials = () => {
-    setEmail("demo@loud-legacy.com");
-    setPassword("demo123");
-    setError("");
   };
 
   return (
@@ -68,22 +62,6 @@ export default function SignInPage() {
           <div className="auth-header">
             <h1>Welcome to Loud Legacy</h1>
             <p>Sign in to access all your business tools</p>
-          </div>
-
-          {/* Demo Account Banner */}
-          <div className="auth-demo-banner" onClick={fillDemoCredentials}>
-            <div className="auth-demo-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
-            </div>
-            <div className="auth-demo-text">
-              <strong>Try the Demo Account</strong>
-              <span>Click here to fill in demo credentials instantly</span>
-            </div>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-              <polyline points="9,18 15,12 9,6" />
-            </svg>
           </div>
 
           {error && <div className="auth-error">{error}</div>}
