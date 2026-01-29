@@ -1,68 +1,158 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
-// Portfolio data - starts empty for user to add their own
-const properties: { id: number; name: string; type: string; address: string; value: number; sqft: number; capRate: number; status: string; change: number }[] = [];
-
-const recentDeals: { id: number; name: string; type: string; value: number; date: string; status: string }[] = [];
-
-const marketTrends = [
-  { sector: "Office", trend: "stable", change: 0, forecast: "neutral" },
-  { sector: "Multifamily", trend: "stable", change: 0, forecast: "neutral" },
-  { sector: "Industrial", trend: "stable", change: 0, forecast: "neutral" },
-  { sector: "Retail", trend: "stable", change: 0, forecast: "neutral" },
+// Property Types
+const PROPERTY_TYPES = [
+  { id: "single-family", name: "Single Family", icon: "🏠" },
+  { id: "multifamily", name: "Multifamily", icon: "🏢" },
+  { id: "commercial", name: "Commercial", icon: "🏬" },
+  { id: "industrial", name: "Industrial", icon: "🏭" },
+  { id: "retail", name: "Retail", icon: "🛒" },
+  { id: "office", name: "Office", icon: "🏛️" },
+  { id: "mixed-use", name: "Mixed Use", icon: "🏗️" },
+  { id: "land", name: "Land", icon: "🌍" },
+  { id: "hospitality", name: "Hospitality", icon: "🏨" },
+  { id: "self-storage", name: "Self Storage", icon: "📦" },
 ];
 
-const tasks: { id: number; title: string; property: string; due: string; priority: string }[] = [];
-
-// Saved Analysis Interface
-interface SavedAnalysis {
+// Saved Workspace Interface
+interface SavedWorkspace {
   id: string;
+  name: string;
   date: string;
+  address: string;
+  propertyType: string;
+  valuation: ValuationResult | null;
+  underwriting: UnderwritingData | null;
+  comps: CompProperty[];
   images: string[];
-  result: AIAnalysisResult;
-  propertyName?: string;
+  notes: string;
 }
 
-// AI Analysis Result Interface
-interface AIAnalysisResult {
-  overallCondition: string;
-  conditionScore: number;
-  exteriorFindings: string[];
-  interiorFindings: string[];
+// Valuation Result Interface
+interface ValuationResult {
   estimatedValue: number;
   valueRange: { low: number; high: number };
   confidence: number;
+  approaches: {
+    income: { value: number; capRate: number; noi: number };
+    sales: { value: number; pricePerSqft: number; adjustedComps: number };
+    cost: { value: number; landValue: number; improvements: number; depreciation: number };
+  };
   marketFactors: string[];
-  recommendations: string[];
+  improvements: ImprovementItem[];
+  conditionScore: number;
 }
 
+// Comp Property Interface
+interface CompProperty {
+  id: string;
+  address: string;
+  distance: string;
+  salePrice: number;
+  saleDate: string;
+  sqft: number;
+  pricePerSqft: number;
+  propertyType: string;
+  yearBuilt: number;
+  beds?: number;
+  baths?: number;
+  units?: number;
+  capRate?: number;
+}
+
+// Improvement Item Interface
+interface ImprovementItem {
+  area: string;
+  issue: string;
+  recommendation: string;
+  estimatedCost: number;
+  potentialValueAdd: number;
+  priority: "high" | "medium" | "low";
+}
+
+// Underwriting Data Interface
+interface UnderwritingData {
+  purchasePrice: number;
+  downPayment: number;
+  loanAmount: number;
+  interestRate: number;
+  loanTerm: number;
+  monthlyPayment: number;
+  annualDebtService: number;
+  grossRent: number;
+  vacancy: number;
+  effectiveGrossIncome: number;
+  operatingExpenses: number;
+  noi: number;
+  cashFlow: number;
+  capRate: number;
+  cashOnCash: number;
+  dscr: number;
+  grm: number;
+}
+
+// Current Interest Rates (simulated real-time)
+const CURRENT_RATES = {
+  conventional30: 7.125,
+  conventional15: 6.625,
+  commercial: 7.50,
+  bridge: 10.25,
+  sba504: 6.875,
+  lastUpdated: new Date().toLocaleString(),
+};
+
 export default function ValoraDashboard() {
-  const [propertyFilter, setPropertyFilter] = useState("all");
-  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  // Address & Property State
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [showPropertyTypes, setShowPropertyTypes] = useState(false);
+
+  // Property Details State
+  const [sqft, setSqft] = useState("");
+  const [lotSize, setLotSize] = useState("");
+  const [yearBuilt, setYearBuilt] = useState("");
+  const [units, setUnits] = useState("1");
+  const [beds, setBeds] = useState("");
+  const [baths, setBaths] = useState("");
+
+  // Analysis State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null);
-  const [analysisType, setAnalysisType] = useState<"exterior" | "interior" | "both">("both");
-  const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);
-  const [showSavedAnalyses, setShowSavedAnalyses] = useState(false);
-  const [propertyName, setPropertyName] = useState("");
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [valuation, setValuation] = useState<ValuationResult | null>(null);
+  const [comps, setComps] = useState<CompProperty[]>([]);
+  const [activeTab, setActiveTab] = useState<"valuation" | "comps" | "underwriting" | "improvements" | "map">("valuation");
+
+  // Photo State (optional)
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const totalPortfolioValue = properties.reduce((sum, p) => sum + p.value, 0);
-  const totalSqft = properties.reduce((sum, p) => sum + p.sqft, 0);
-  const avgCapRate = (properties.reduce((sum, p) => sum + p.capRate, 0) / properties.length).toFixed(1);
-  const activeDeals = recentDeals.filter(d => d.status !== "closed").length;
+  // Underwriting State
+  const [underwriting, setUnderwriting] = useState<UnderwritingData | null>(null);
+  const [purchasePrice, setPurchasePrice] = useState("");
+  const [downPaymentPercent, setDownPaymentPercent] = useState("25");
+  const [interestRate, setInterestRate] = useState(CURRENT_RATES.commercial.toString());
+  const [loanTerm, setLoanTerm] = useState("30");
+  const [grossRent, setGrossRent] = useState("");
+  const [vacancyRate, setVacancyRate] = useState("5");
+  const [operatingExpenseRatio, setOperatingExpenseRatio] = useState("35");
 
-  const filteredProperties = propertyFilter === "all"
-    ? properties
-    : properties.filter(p => p.type.toLowerCase() === propertyFilter.toLowerCase());
+  // Workspace State
+  const [savedWorkspaces, setSavedWorkspaces] = useState<SavedWorkspace[]>([]);
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [showSavedWorkspaces, setShowSavedWorkspaces] = useState(false);
+  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
+  const [notes, setNotes] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Handle Image Upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -82,141 +172,316 @@ export default function ValoraDashboard() {
     }
   };
 
-  const runAIAnalysis = async () => {
-    if (uploadedImages.length === 0) return;
+  // Run Full Analysis
+  const runAnalysis = async () => {
+    if (!address || !propertyType) return;
 
     setIsAnalyzing(true);
 
-    // Simulate AI analysis
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Simulate API calls for property data, comps, and valuation
+    await new Promise(resolve => setTimeout(resolve, 2500));
 
-    const mockResult: AIAnalysisResult = {
-      overallCondition: "Good",
-      conditionScore: 78,
-      exteriorFindings: [
-        "Roof appears in good condition with no visible damage",
-        "Exterior walls show minor weathering, recommend repainting within 2 years",
-        "Windows are double-pane, energy efficient",
-        "Landscaping well-maintained, curb appeal above average",
-        "Parking lot surface shows some wear, may need resealing"
-      ],
-      interiorFindings: [
-        "Flooring in common areas shows moderate wear",
-        "HVAC system appears well-maintained",
-        "Lighting fixtures are modern and energy-efficient",
-        "Paint and finishes are in good condition",
-        "No visible signs of water damage or structural issues"
-      ],
-      estimatedValue: 4250000,
-      valueRange: { low: 3900000, high: 4600000 },
-      confidence: 85,
+    // Generate mock comps based on property type
+    const mockComps: CompProperty[] = [
+      {
+        id: "1",
+        address: "123 Oak Street",
+        distance: "0.3 mi",
+        salePrice: 425000,
+        saleDate: "2024-01-15",
+        sqft: 2100,
+        pricePerSqft: 202,
+        propertyType: propertyType,
+        yearBuilt: 1995,
+        beds: 4,
+        baths: 2.5,
+      },
+      {
+        id: "2",
+        address: "456 Maple Avenue",
+        distance: "0.5 mi",
+        salePrice: 398000,
+        saleDate: "2024-02-08",
+        sqft: 1950,
+        pricePerSqft: 204,
+        propertyType: propertyType,
+        yearBuilt: 1998,
+        beds: 3,
+        baths: 2,
+      },
+      {
+        id: "3",
+        address: "789 Pine Road",
+        distance: "0.7 mi",
+        salePrice: 445000,
+        saleDate: "2024-01-28",
+        sqft: 2250,
+        pricePerSqft: 198,
+        propertyType: propertyType,
+        yearBuilt: 2001,
+        beds: 4,
+        baths: 3,
+      },
+      {
+        id: "4",
+        address: "321 Elm Boulevard",
+        distance: "0.9 mi",
+        salePrice: 412000,
+        saleDate: "2023-12-20",
+        sqft: 2050,
+        pricePerSqft: 201,
+        propertyType: propertyType,
+        yearBuilt: 1992,
+        beds: 4,
+        baths: 2,
+      },
+      {
+        id: "5",
+        address: "654 Cedar Lane",
+        distance: "1.1 mi",
+        salePrice: 438000,
+        saleDate: "2024-02-14",
+        sqft: 2180,
+        pricePerSqft: 201,
+        propertyType: propertyType,
+        yearBuilt: 2003,
+        beds: 4,
+        baths: 2.5,
+      },
+    ];
+
+    // Generate valuation result
+    const baseSqft = parseInt(sqft) || 2000;
+    const avgPricePerSqft = 205;
+    const estimatedValue = baseSqft * avgPricePerSqft;
+
+    const mockValuation: ValuationResult = {
+      estimatedValue: estimatedValue,
+      valueRange: {
+        low: Math.round(estimatedValue * 0.92),
+        high: Math.round(estimatedValue * 1.08)
+      },
+      confidence: 87,
+      approaches: {
+        income: {
+          value: Math.round(estimatedValue * 1.02),
+          capRate: 5.8,
+          noi: Math.round(estimatedValue * 0.058),
+        },
+        sales: {
+          value: estimatedValue,
+          pricePerSqft: avgPricePerSqft,
+          adjustedComps: 5,
+        },
+        cost: {
+          value: Math.round(estimatedValue * 0.95),
+          landValue: Math.round(estimatedValue * 0.25),
+          improvements: Math.round(estimatedValue * 0.85),
+          depreciation: Math.round(estimatedValue * 0.15),
+        },
+      },
       marketFactors: [
-        "Strong rental demand in area (+3.2% YoY)",
-        "Recent comparable sales support valuation",
-        "Interest rates currently at 7.25%",
-        "Local employment growth positive",
-        "New development nearby may impact future value"
+        "Strong buyer demand in area (+8% YoY)",
+        "Limited inventory driving prices up",
+        "School district rated 8/10",
+        "Recent commercial development nearby",
+        "Property taxes 1.2% of assessed value",
       ],
-      recommendations: [
-        "Schedule professional roof inspection before acquisition",
-        "Budget $45,000 for exterior repainting in capital plan",
-        "Consider parking lot resurfacing ($25,000 estimate)",
-        "Property positioned well for value-add opportunity",
-        "Recommend proceeding with due diligence"
-      ]
+      improvements: [
+        {
+          area: "Kitchen",
+          issue: "Dated appliances and countertops",
+          recommendation: "Update to modern stainless appliances and quartz counters",
+          estimatedCost: 25000,
+          potentialValueAdd: 45000,
+          priority: "high",
+        },
+        {
+          area: "Bathrooms",
+          issue: "Original fixtures and tile",
+          recommendation: "Remodel master bath, update fixtures in secondary baths",
+          estimatedCost: 18000,
+          potentialValueAdd: 30000,
+          priority: "high",
+        },
+        {
+          area: "Exterior",
+          issue: "Landscaping needs attention",
+          recommendation: "Professional landscaping and curb appeal improvements",
+          estimatedCost: 8000,
+          potentialValueAdd: 15000,
+          priority: "medium",
+        },
+        {
+          area: "HVAC",
+          issue: "System 15+ years old",
+          recommendation: "Replace with high-efficiency system",
+          estimatedCost: 12000,
+          potentialValueAdd: 18000,
+          priority: "medium",
+        },
+        {
+          area: "Flooring",
+          issue: "Carpet in living areas worn",
+          recommendation: "Install hardwood or luxury vinyl plank",
+          estimatedCost: 10000,
+          potentialValueAdd: 20000,
+          priority: "low",
+        },
+      ],
+      conditionScore: uploadedImages.length > 0 ? 72 : 75,
     };
 
-    setAnalysisResult(mockResult);
+    setComps(mockComps);
+    setValuation(mockValuation);
+    setPurchasePrice(estimatedValue.toString());
     setIsAnalyzing(false);
+    setAnalysisComplete(true);
   };
 
-  const resetAnalysis = () => {
-    setUploadedImages([]);
-    setAnalysisResult(null);
-    setIsAnalyzing(false);
-    setPropertyName("");
-    setSaveSuccess(false);
+  // Calculate Underwriting
+  const calculateUnderwriting = () => {
+    const price = parseFloat(purchasePrice) || 0;
+    const downPmt = price * (parseFloat(downPaymentPercent) / 100);
+    const loan = price - downPmt;
+    const rate = parseFloat(interestRate) / 100 / 12;
+    const term = parseFloat(loanTerm) * 12;
+    const monthly = loan * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1);
+    const annualDebt = monthly * 12;
+    const gross = parseFloat(grossRent) * 12 || 0;
+    const vacancy = parseFloat(vacancyRate) / 100;
+    const egi = gross * (1 - vacancy);
+    const opex = egi * (parseFloat(operatingExpenseRatio) / 100);
+    const noi = egi - opex;
+    const cf = noi - annualDebt;
+
+    setUnderwriting({
+      purchasePrice: price,
+      downPayment: downPmt,
+      loanAmount: loan,
+      interestRate: parseFloat(interestRate),
+      loanTerm: parseFloat(loanTerm),
+      monthlyPayment: monthly,
+      annualDebtService: annualDebt,
+      grossRent: gross,
+      vacancy: vacancy * 100,
+      effectiveGrossIncome: egi,
+      operatingExpenses: opex,
+      noi: noi,
+      cashFlow: cf,
+      capRate: price > 0 ? (noi / price) * 100 : 0,
+      cashOnCash: downPmt > 0 ? (cf / downPmt) * 100 : 0,
+      dscr: annualDebt > 0 ? noi / annualDebt : 0,
+      grm: gross > 0 ? price / gross : 0,
+    });
   };
 
-  const saveAnalysis = () => {
-    if (!analysisResult) return;
+  // Auto-calculate underwriting when inputs change
+  useEffect(() => {
+    if (purchasePrice && grossRent) {
+      calculateUnderwriting();
+    }
+  }, [purchasePrice, downPaymentPercent, interestRate, loanTerm, grossRent, vacancyRate, operatingExpenseRatio]);
 
-    const newAnalysis: SavedAnalysis = {
-      id: Date.now().toString(),
+  // Save Workspace
+  const saveWorkspace = () => {
+    const workspace: SavedWorkspace = {
+      id: currentWorkspaceId || Date.now().toString(),
+      name: workspaceName || `${address}, ${city}`,
       date: new Date().toLocaleDateString(),
+      address: `${address}, ${city}, ${state} ${zipCode}`,
+      propertyType: propertyType,
+      valuation: valuation,
+      underwriting: underwriting,
+      comps: comps,
       images: uploadedImages,
-      result: analysisResult,
-      propertyName: propertyName || "Untitled Property"
+      notes: notes,
     };
 
-    setSavedAnalyses(prev => [newAnalysis, ...prev]);
+    if (currentWorkspaceId) {
+      setSavedWorkspaces(prev => prev.map(w => w.id === currentWorkspaceId ? workspace : w));
+    } else {
+      setSavedWorkspaces(prev => [workspace, ...prev]);
+      setCurrentWorkspaceId(workspace.id);
+    }
+
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
-  const deleteAnalysis = (id: string) => {
-    setSavedAnalyses(prev => prev.filter(a => a.id !== id));
-  };
+  // Load Workspace
+  const loadWorkspace = (workspace: SavedWorkspace) => {
+    const addressParts = workspace.address.split(", ");
+    setAddress(addressParts[0] || "");
+    setCity(addressParts[1] || "");
+    const stateZip = addressParts[2]?.split(" ") || [];
+    setState(stateZip[0] || "");
+    setZipCode(stateZip[1] || "");
+    setPropertyType(workspace.propertyType);
+    setValuation(workspace.valuation);
+    setUnderwriting(workspace.underwriting);
+    setComps(workspace.comps);
+    setUploadedImages(workspace.images);
+    setNotes(workspace.notes);
+    setWorkspaceName(workspace.name);
+    setCurrentWorkspaceId(workspace.id);
+    setAnalysisComplete(true);
+    setShowSavedWorkspaces(false);
 
-  const openNewAnalysis = () => {
-    resetAnalysis();
-    setShowAIAnalysis(true);
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "commercial":
-        return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
-            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" />
-          </svg>
-        );
-      case "multifamily":
-        return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
-            <path d="M3 21h18M9 21V8l6-4v17M3 21V10l6-2" />
-            <path d="M13 10h.01M13 14h.01M13 18h.01M5 14h.01M5 18h.01" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        );
-      case "retail":
-        return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
-            <path d="M3 9h18v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path d="M3 9l2.45-4.9A2 2 0 017.24 3h9.52a2 2 0 011.8 1.1L21 9" />
-            <path d="M12 3v6" />
-          </svg>
-        );
-      case "industrial":
-        return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
-            <path d="M2 20h20M4 20V8l5 4V8l5 4V4h6v16" />
-            <path d="M17 10h.01M17 14h.01M17 18h.01" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        );
-      default:
-        return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="val-type-svg">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-        );
+    if (workspace.underwriting) {
+      setPurchasePrice(workspace.underwriting.purchasePrice.toString());
+      setGrossRent((workspace.underwriting.grossRent / 12).toString());
     }
   };
 
-  const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case "up": return "↑";
-      case "down": return "↓";
-      default: return "→";
+  // Delete Workspace
+  const deleteWorkspace = (id: string) => {
+    setSavedWorkspaces(prev => prev.filter(w => w.id !== id));
+    if (currentWorkspaceId === id) {
+      setCurrentWorkspaceId(null);
     }
   };
 
-  const getTrendColor = (trend: string) => {
-    switch (trend) {
-      case "up": return "#22C55E";
-      case "down": return "#EF4444";
-      default: return "#64748B";
-    }
+  // Reset Analysis
+  const resetAnalysis = () => {
+    setAddress("");
+    setCity("");
+    setState("");
+    setZipCode("");
+    setPropertyType("");
+    setSqft("");
+    setLotSize("");
+    setYearBuilt("");
+    setUnits("1");
+    setBeds("");
+    setBaths("");
+    setUploadedImages([]);
+    setValuation(null);
+    setUnderwriting(null);
+    setComps([]);
+    setAnalysisComplete(false);
+    setCurrentWorkspaceId(null);
+    setWorkspaceName("");
+    setNotes("");
+    setPurchasePrice("");
+    setGrossRent("");
+    setActiveTab("valuation");
+  };
+
+  // Export Report
+  const exportReport = (format: "pdf" | "excel") => {
+    // In production, this would generate actual files
+    alert(`Exporting ${format.toUpperCase()} report for ${address}...`);
+  };
+
+  // Format Currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
   };
 
   return (
@@ -231,633 +496,719 @@ export default function ValoraDashboard() {
               <div className="val-breadcrumb">
                 <Link href="/valora">VALORA</Link>
                 <span>/</span>
-                <span>Dashboard</span>
+                <span>Property Intelligence</span>
               </div>
-              <h1>Portfolio Intelligence</h1>
-              <p>Real-time insights for smarter real estate decisions.</p>
+              <h1>Property Analysis & Valuation</h1>
+              <p>AI-powered valuations, comps, and underwriting for all property types</p>
             </div>
             <div className="val-dash-actions">
-              {savedAnalyses.length > 0 && (
-                <button
-                  className="val-dash-btn secondary"
-                  onClick={() => setShowSavedAnalyses(!showSavedAnalyses)}
-                >
+              {savedWorkspaces.length > 0 && (
+                <button className="val-dash-btn secondary" onClick={() => setShowSavedWorkspaces(true)}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                    <polyline points="14,2 14,8 20,8" />
+                    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
                   </svg>
-                  Saved ({savedAnalyses.length})
+                  Saved ({savedWorkspaces.length})
                 </button>
               )}
-              <button className="val-dash-btn primary" onClick={openNewAnalysis}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                New Analysis
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* AI Property Analysis Section */}
-      <section className="val-ai-analysis-section">
-        <div className="container">
-          <div className="val-ai-toggle-card" onClick={() => setShowAIAnalysis(!showAIAnalysis)}>
-            <div className="val-ai-toggle-content">
-              <div className="val-ai-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73v1.54a7 7 0 015.73 5.73h1.54A2 2 0 0122 12a2 2 0 01-1.73 3h-1.54a7 7 0 01-5.73 5.73v1.54A2 2 0 0112 22a2 2 0 01-1-3.73v-1.54a7 7 0 01-5.73-5.73H3.73A2 2 0 012 12a2 2 0 013-1.73V8.73A7 7 0 0110.73 3V1.73A2 2 0 0112 2z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              </div>
-              <div className="val-ai-toggle-text">
-                <h3>AI Property Analysis</h3>
-                <p>Upload property photos for AI-powered condition assessment and fair market value prediction</p>
-              </div>
-              <div className="val-ai-toggle-arrow">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: showAIAnalysis ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {showAIAnalysis && (
-            <div className="val-ai-panel">
-              {!analysisResult ? (
-                <div className="val-ai-upload-section">
-                  <div className="val-ai-upload-header">
-                    <h4>Upload Property Photos</h4>
-                    <div className="val-ai-type-selector">
-                      {(["exterior", "interior", "both"] as const).map(type => (
-                        <button
-                          key={type}
-                          className={`val-ai-type-btn ${analysisType === type ? "active" : ""}`}
-                          onClick={() => setAnalysisType(type)}
-                        >
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div
-                    className="val-ai-dropzone"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: 'none' }}
-                    />
-                    <div className="val-ai-dropzone-content">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                        <polyline points="17,8 12,3 7,8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                      </svg>
-                      <span>Drop photos here or click to upload</span>
-                      <small>Support JPG, PNG up to 10MB each</small>
-                    </div>
-                  </div>
-
-                  {uploadedImages.length > 0 && (
-                    <div className="val-ai-uploaded-images">
-                      {uploadedImages.map((img, index) => (
-                        <div key={index} className="val-ai-image-preview">
-                          <img src={img} alt={`Upload ${index + 1}`} />
-                          <button
-                            className="val-ai-image-remove"
-                            onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {uploadedImages.length > 0 && (
-                    <div className="val-ai-actions">
-                      <button className="val-ai-btn secondary" onClick={resetAnalysis}>
-                        Clear All
-                      </button>
-                      <button
-                        className="val-ai-btn primary"
-                        onClick={runAIAnalysis}
-                        disabled={isAnalyzing}
-                      >
-                        {isAnalyzing ? (
-                          <>
-                            <span className="val-ai-spinner"></span>
-                            Analyzing...
-                          </>
-                        ) : (
-                          <>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                              <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73v1.54a7 7 0 015.73 5.73h1.54A2 2 0 0122 12a2 2 0 01-1.73 3h-1.54a7 7 0 01-5.73 5.73v1.54A2 2 0 0112 22a2 2 0 01-1-3.73v-1.54a7 7 0 01-5.73-5.73H3.73A2 2 0 012 12a2 2 0 013-1.73V8.73A7 7 0 0110.73 3V1.73A2 2 0 0112 2z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                            Run AI Analysis
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="val-ai-results">
-                  <div className="val-ai-results-header">
-                    <h4>AI Analysis Results</h4>
-                    <button className="val-ai-btn secondary small" onClick={resetAnalysis}>
-                      New Analysis
-                    </button>
-                  </div>
-
-                  {/* Condition Score */}
-                  <div className="val-ai-score-section">
-                    <div className="val-ai-score-card">
-                      <div className="val-ai-score-ring">
-                        <svg viewBox="0 0 100 100">
-                          <circle cx="50" cy="50" r="45" fill="none" stroke="#E5E7EB" strokeWidth="8" />
-                          <circle
-                            cx="50"
-                            cy="50"
-                            r="45"
-                            fill="none"
-                            stroke={analysisResult.conditionScore >= 70 ? "#22C55E" : analysisResult.conditionScore >= 50 ? "#F59E0B" : "#EF4444"}
-                            strokeWidth="8"
-                            strokeDasharray={`${analysisResult.conditionScore * 2.83} 283`}
-                            strokeLinecap="round"
-                            transform="rotate(-90 50 50)"
-                          />
-                        </svg>
-                        <div className="val-ai-score-value">
-                          <span>{analysisResult.conditionScore}</span>
-                          <small>/100</small>
-                        </div>
-                      </div>
-                      <div className="val-ai-score-label">
-                        <span className="condition">{analysisResult.overallCondition}</span>
-                        <span className="confidence">{analysisResult.confidence}% Confidence</span>
-                      </div>
-                    </div>
-
-                    <div className="val-ai-value-card">
-                      <div className="val-ai-value-main">
-                        <span className="label">Estimated Fair Market Value</span>
-                        <span className="value">${(analysisResult.estimatedValue / 1000000).toFixed(2)}M</span>
-                      </div>
-                      <div className="val-ai-value-range">
-                        <span>${(analysisResult.valueRange.low / 1000000).toFixed(2)}M</span>
-                        <div className="val-ai-range-bar">
-                          <div className="val-ai-range-indicator" style={{ left: '50%' }}></div>
-                        </div>
-                        <span>${(analysisResult.valueRange.high / 1000000).toFixed(2)}M</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Findings */}
-                  <div className="val-ai-findings-grid">
-                    <div className="val-ai-findings-card">
-                      <h5>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-                          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                        </svg>
-                        Exterior Analysis
-                      </h5>
-                      <ul>
-                        {analysisResult.exteriorFindings.map((finding, i) => (
-                          <li key={i}>{finding}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="val-ai-findings-card">
-                      <h5>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <path d="M3 9h18M9 21V9" />
-                        </svg>
-                        Interior Analysis
-                      </h5>
-                      <ul>
-                        {analysisResult.interiorFindings.map((finding, i) => (
-                          <li key={i}>{finding}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Market Factors & Recommendations */}
-                  <div className="val-ai-findings-grid">
-                    <div className="val-ai-findings-card market">
-                      <h5>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-                          <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
-                        </svg>
-                        Market Factors
-                      </h5>
-                      <ul>
-                        {analysisResult.marketFactors.map((factor, i) => (
-                          <li key={i}>{factor}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="val-ai-findings-card recommendations">
-                      <h5>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-                          <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                          <polyline points="22,4 12,14.01 9,11.01" />
-                        </svg>
-                        AI Recommendations
-                      </h5>
-                      <ul>
-                        {analysisResult.recommendations.map((rec, i) => (
-                          <li key={i}>{rec}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="val-ai-save-section">
-                    <input
-                      type="text"
-                      placeholder="Property name (optional)"
-                      value={propertyName}
-                      onChange={(e) => setPropertyName(e.target.value)}
-                      className="val-ai-property-input"
-                    />
-                    {saveSuccess && (
-                      <span className="val-ai-save-success">Analysis saved!</span>
-                    )}
-                  </div>
-
-                  <div className="val-ai-result-actions">
-                    <button className="val-ai-btn secondary" onClick={resetAnalysis}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                      </svg>
-                      New Analysis
-                    </button>
-                    <button className="val-ai-btn primary" onClick={saveAnalysis}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                        <polyline points="17 21 17 13 7 13 7 21" />
-                        <polyline points="7 3 7 8 15 8" />
-                      </svg>
-                      Save to Profile
-                    </button>
-                  </div>
-                </div>
+              {analysisComplete && (
+                <button className="val-dash-btn secondary" onClick={resetAnalysis}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  New Analysis
+                </button>
               )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Saved Analyses Modal */}
-      {showSavedAnalyses && savedAnalyses.length > 0 && (
-        <div className="val-saved-modal-overlay" onClick={() => setShowSavedAnalyses(false)}>
-          <div className="val-saved-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="val-saved-modal-header">
-              <h3>Saved Analyses</h3>
-              <button className="val-saved-close" onClick={() => setShowSavedAnalyses(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <div className="val-saved-list">
-              {savedAnalyses.map((analysis) => (
-                <div key={analysis.id} className="val-saved-item">
-                  <div className="val-saved-thumbnail">
-                    {analysis.images[0] ? (
-                      <img src={analysis.images[0]} alt="Property" />
-                    ) : (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
-                        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="val-saved-info">
-                    <span className="val-saved-name">{analysis.propertyName}</span>
-                    <span className="val-saved-date">{analysis.date}</span>
-                    <div className="val-saved-stats">
-                      <span>Score: {analysis.result.conditionScore}/100</span>
-                      <span>Value: ${(analysis.result.estimatedValue / 1000000).toFixed(2)}M</span>
-                    </div>
-                  </div>
-                  <button
-                    className="val-saved-delete"
-                    onClick={() => deleteAnalysis(analysis.id)}
-                    title="Delete"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats */}
-      <section className="val-dash-stats">
-        <div className="container">
-          <div className="val-dash-stats-grid">
-            <div className="val-dash-stat">
-              <div className="val-dash-stat-icon emerald">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="1" x2="12" y2="23" />
-                  <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                </svg>
-              </div>
-              <div className="val-dash-stat-content">
-                <span className="val-dash-stat-value">${(totalPortfolioValue / 1000000).toFixed(0)}M</span>
-                <span className="val-dash-stat-label">Portfolio Value</span>
-              </div>
-            </div>
-
-            <div className="val-dash-stat">
-              <div className="val-dash-stat-icon blue">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M3 9h18" />
-                  <path d="M9 21V9" />
-                </svg>
-              </div>
-              <div className="val-dash-stat-content">
-                <span className="val-dash-stat-value">{(totalSqft / 1000).toFixed(0)}K</span>
-                <span className="val-dash-stat-label">Total Sq Ft</span>
-              </div>
-            </div>
-
-            <div className="val-dash-stat">
-              <div className="val-dash-stat-icon amber">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                </svg>
-              </div>
-              <div className="val-dash-stat-content">
-                <span className="val-dash-stat-value">{avgCapRate}%</span>
-                <span className="val-dash-stat-label">Avg Cap Rate</span>
-              </div>
-            </div>
-
-            <div className="val-dash-stat">
-              <div className="val-dash-stat-icon violet">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                  <polyline points="22,4 12,14.01 9,11.01" />
-                </svg>
-              </div>
-              <div className="val-dash-stat-content">
-                <span className="val-dash-stat-value">{activeDeals}</span>
-                <span className="val-dash-stat-label">Active Deals</span>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="val-dash-main">
-        <div className="container">
-          <div className="val-dash-layout">
-            {/* Properties Table */}
-            <div className="val-dash-card full-width">
-              <div className="val-dash-card-header">
-                <h3>Property Portfolio</h3>
-                <div className="val-property-filters">
-                  {["all", "commercial", "multifamily", "retail", "industrial"].map((filter) => (
+      <div className="container">
+        <div className="val-main-layout">
+          {/* Left Panel - Input Form */}
+          <div className="val-input-panel">
+            <div className="val-input-card">
+              <h3>Property Information</h3>
+
+              {/* Address Input */}
+              <div className="val-form-section">
+                <label>Property Address</label>
+                <input
+                  type="text"
+                  placeholder="Street address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="val-input"
+                />
+                <div className="val-input-row">
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="val-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="State"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="val-input small"
+                  />
+                  <input
+                    type="text"
+                    placeholder="ZIP"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    className="val-input small"
+                  />
+                </div>
+              </div>
+
+              {/* Property Type */}
+              <div className="val-form-section">
+                <label>Property Type</label>
+                <div className="val-type-selector">
+                  <button
+                    className="val-type-dropdown"
+                    onClick={() => setShowPropertyTypes(!showPropertyTypes)}
+                  >
+                    {propertyType ? (
+                      <>
+                        <span>{PROPERTY_TYPES.find(t => t.id === propertyType)?.icon}</span>
+                        <span>{PROPERTY_TYPES.find(t => t.id === propertyType)?.name}</span>
+                      </>
+                    ) : (
+                      <span>Select property type...</span>
+                    )}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </button>
+                  {showPropertyTypes && (
+                    <div className="val-type-menu">
+                      {PROPERTY_TYPES.map(type => (
+                        <button
+                          key={type.id}
+                          className={`val-type-option ${propertyType === type.id ? "active" : ""}`}
+                          onClick={() => {
+                            setPropertyType(type.id);
+                            setShowPropertyTypes(false);
+                          }}
+                        >
+                          <span>{type.icon}</span>
+                          <span>{type.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Property Details */}
+              <div className="val-form-section">
+                <label>Property Details</label>
+                <div className="val-input-row">
+                  <div className="val-input-group">
+                    <input
+                      type="number"
+                      placeholder="Sq Ft"
+                      value={sqft}
+                      onChange={(e) => setSqft(e.target.value)}
+                      className="val-input"
+                    />
+                    <span className="val-input-suffix">sqft</span>
+                  </div>
+                  <div className="val-input-group">
+                    <input
+                      type="number"
+                      placeholder="Lot Size"
+                      value={lotSize}
+                      onChange={(e) => setLotSize(e.target.value)}
+                      className="val-input"
+                    />
+                    <span className="val-input-suffix">acres</span>
+                  </div>
+                </div>
+                <div className="val-input-row">
+                  <input
+                    type="number"
+                    placeholder="Year Built"
+                    value={yearBuilt}
+                    onChange={(e) => setYearBuilt(e.target.value)}
+                    className="val-input"
+                  />
+                  {(propertyType === "multifamily" || propertyType === "commercial") && (
+                    <input
+                      type="number"
+                      placeholder="# Units"
+                      value={units}
+                      onChange={(e) => setUnits(e.target.value)}
+                      className="val-input"
+                    />
+                  )}
+                </div>
+                {(propertyType === "single-family" || propertyType === "multifamily") && (
+                  <div className="val-input-row">
+                    <input
+                      type="number"
+                      placeholder="Beds"
+                      value={beds}
+                      onChange={(e) => setBeds(e.target.value)}
+                      className="val-input"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Baths"
+                      value={baths}
+                      onChange={(e) => setBaths(e.target.value)}
+                      className="val-input"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Photo Upload (Optional) */}
+              <div className="val-form-section">
+                <label>
+                  Property Photos <span className="optional">(optional - helps assess condition)</span>
+                </label>
+                <div
+                  className="val-photo-dropzone"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="M21 15l-5-5L5 21" />
+                  </svg>
+                  <span>Drop photos or click to upload</span>
+                </div>
+                {uploadedImages.length > 0 && (
+                  <div className="val-uploaded-photos">
+                    {uploadedImages.map((img, index) => (
+                      <div key={index} className="val-photo-thumb">
+                        <img src={img} alt={`Photo ${index + 1}`} />
+                        <button onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Analyze Button */}
+              <button
+                className="val-analyze-btn"
+                onClick={runAnalysis}
+                disabled={!address || !propertyType || isAnalyzing}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <span className="val-spinner"></span>
+                    Analyzing Property...
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 16v-4M12 8h.01" />
+                    </svg>
+                    Run AI Analysis
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Current Interest Rates */}
+            <div className="val-rates-card">
+              <h4>Current Interest Rates</h4>
+              <div className="val-rates-list">
+                <div className="val-rate-item">
+                  <span>30-Year Fixed</span>
+                  <span className="rate">{CURRENT_RATES.conventional30}%</span>
+                </div>
+                <div className="val-rate-item">
+                  <span>15-Year Fixed</span>
+                  <span className="rate">{CURRENT_RATES.conventional15}%</span>
+                </div>
+                <div className="val-rate-item">
+                  <span>Commercial</span>
+                  <span className="rate">{CURRENT_RATES.commercial}%</span>
+                </div>
+                <div className="val-rate-item">
+                  <span>Bridge Loan</span>
+                  <span className="rate">{CURRENT_RATES.bridge}%</span>
+                </div>
+                <div className="val-rate-item">
+                  <span>SBA 504</span>
+                  <span className="rate">{CURRENT_RATES.sba504}%</span>
+                </div>
+              </div>
+              <span className="val-rates-updated">Updated: {CURRENT_RATES.lastUpdated}</span>
+            </div>
+          </div>
+
+          {/* Right Panel - Results */}
+          <div className="val-results-panel">
+            {!analysisComplete ? (
+              <div className="val-empty-results">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="64" height="64">
+                  <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+                  <path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <h3>Enter Property Details</h3>
+                <p>Input an address and property type to get AI-powered valuations, comparable sales, and underwriting analysis.</p>
+              </div>
+            ) : (
+              <>
+                {/* Results Header */}
+                <div className="val-results-header">
+                  <div className="val-results-title">
+                    <h2>{address}</h2>
+                    <p>{city}, {state} {zipCode}</p>
+                  </div>
+                  <div className="val-results-actions">
+                    <input
+                      type="text"
+                      placeholder="Workspace name"
+                      value={workspaceName}
+                      onChange={(e) => setWorkspaceName(e.target.value)}
+                      className="val-workspace-input"
+                    />
+                    <button className="val-save-btn" onClick={saveWorkspace}>
+                      {saveSuccess ? "Saved!" : "Save"}
+                    </button>
+                    <div className="val-export-dropdown">
+                      <button className="val-export-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                        </svg>
+                        Export
+                      </button>
+                      <div className="val-export-menu">
+                        <button onClick={() => exportReport("pdf")}>Export PDF</button>
+                        <button onClick={() => exportReport("excel")}>Export Excel</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="val-tabs">
+                  {(["valuation", "comps", "underwriting", "improvements", "map"] as const).map(tab => (
                     <button
-                      key={filter}
-                      className={`val-filter-btn ${propertyFilter === filter ? "active" : ""}`}
-                      onClick={() => setPropertyFilter(filter)}
+                      key={tab}
+                      className={`val-tab ${activeTab === tab ? "active" : ""}`}
+                      onClick={() => setActiveTab(tab)}
                     >
-                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>
                   ))}
                 </div>
-              </div>
-              <div className="val-properties-table">
-                {filteredProperties.length > 0 ? (
-                  <>
-                    <div className="val-properties-header">
-                      <span>Property</span>
-                      <span>Type</span>
-                      <span>Value</span>
-                      <span>Sq Ft</span>
-                      <span>Cap Rate</span>
-                      <span>Change</span>
-                      <span>Status</span>
-                    </div>
-                    {filteredProperties.map((property) => (
-                      <div key={property.id} className="val-property-row">
-                        <div className="val-property-info">
-                          <div className="val-property-icon">{getTypeIcon(property.type)}</div>
-                          <div>
-                            <span className="val-property-name">{property.name}</span>
-                            <span className="val-property-address">{property.address}</span>
+
+                {/* Tab Content */}
+                <div className="val-tab-content">
+                  {/* Valuation Tab */}
+                  {activeTab === "valuation" && valuation && (
+                    <div className="val-valuation-content">
+                      {/* Main Value */}
+                      <div className="val-main-value">
+                        <div className="val-value-card primary">
+                          <span className="label">Estimated Market Value</span>
+                          <span className="value">{formatCurrency(valuation.estimatedValue)}</span>
+                          <div className="range">
+                            <span>{formatCurrency(valuation.valueRange.low)}</span>
+                            <div className="range-bar">
+                              <div className="range-fill" style={{ width: "50%" }}></div>
+                            </div>
+                            <span>{formatCurrency(valuation.valueRange.high)}</span>
+                          </div>
+                          <span className="confidence">{valuation.confidence}% Confidence</span>
+                        </div>
+                        {uploadedImages.length > 0 && (
+                          <div className="val-condition-score">
+                            <div className="score-ring">
+                              <svg viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#E5E7EB" strokeWidth="8" />
+                                <circle
+                                  cx="50" cy="50" r="45" fill="none"
+                                  stroke={valuation.conditionScore >= 70 ? "#22C55E" : valuation.conditionScore >= 50 ? "#F59E0B" : "#EF4444"}
+                                  strokeWidth="8"
+                                  strokeDasharray={`${valuation.conditionScore * 2.83} 283`}
+                                  strokeLinecap="round"
+                                  transform="rotate(-90 50 50)"
+                                />
+                              </svg>
+                              <div className="score-text">
+                                <span>{valuation.conditionScore}</span>
+                                <small>/100</small>
+                              </div>
+                            </div>
+                            <span className="score-label">Condition Score</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Valuation Approaches */}
+                      <div className="val-approaches">
+                        <h4>Valuation Approaches</h4>
+                        <div className="val-approaches-grid">
+                          <div className="val-approach-card">
+                            <h5>Income Approach</h5>
+                            <span className="approach-value">{formatCurrency(valuation.approaches.income.value)}</span>
+                            <div className="approach-details">
+                              <div><span>Cap Rate:</span><span>{valuation.approaches.income.capRate}%</span></div>
+                              <div><span>NOI:</span><span>{formatCurrency(valuation.approaches.income.noi)}</span></div>
+                            </div>
+                          </div>
+                          <div className="val-approach-card">
+                            <h5>Sales Comparison</h5>
+                            <span className="approach-value">{formatCurrency(valuation.approaches.sales.value)}</span>
+                            <div className="approach-details">
+                              <div><span>$/SF:</span><span>${valuation.approaches.sales.pricePerSqft}</span></div>
+                              <div><span>Comps Used:</span><span>{valuation.approaches.sales.adjustedComps}</span></div>
+                            </div>
+                          </div>
+                          <div className="val-approach-card">
+                            <h5>Cost Approach</h5>
+                            <span className="approach-value">{formatCurrency(valuation.approaches.cost.value)}</span>
+                            <div className="approach-details">
+                              <div><span>Land:</span><span>{formatCurrency(valuation.approaches.cost.landValue)}</span></div>
+                              <div><span>Depreciation:</span><span>{formatCurrency(valuation.approaches.cost.depreciation)}</span></div>
+                            </div>
                           </div>
                         </div>
-                        <span className="val-property-type">{property.type}</span>
-                        <span className="val-property-value">${(property.value / 1000000).toFixed(1)}M</span>
-                        <span className="val-property-sqft">{(property.sqft / 1000).toFixed(0)}K</span>
-                        <span className="val-property-cap">{property.capRate}%</span>
-                        <span className={`val-property-change ${property.change >= 0 ? "positive" : "negative"}`}>
-                          {property.change >= 0 ? "+" : ""}{property.change}%
-                        </span>
-                        <span className={`val-property-status ${property.status}`}>
-                          {property.status === "active" ? "Active" : "Under Review"}
-                        </span>
                       </div>
-                    ))}
-                  </>
-                ) : (
-                  <div className="val-empty-state">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
-                      <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" />
-                    </svg>
-                    <p>No properties yet</p>
-                    <span>Add your first property to start building your portfolio</span>
-                  </div>
-                )}
-              </div>
-              <Link href="/valora/properties" className="val-view-all-btn">
-                View All Properties
-              </Link>
-            </div>
 
-            {/* Recent Deals */}
-            <div className="val-dash-card">
-              <div className="val-dash-card-header">
-                <h3>Recent Deals</h3>
-                <Link href="/valora/deals" className="val-dash-link">View All</Link>
-              </div>
-              <div className="val-deals-list">
-                {recentDeals.length > 0 ? (
-                  recentDeals.map((deal) => (
-                    <div key={deal.id} className="val-deal-row">
-                      <div className="val-deal-info">
-                        <span className="val-deal-name">{deal.name}</span>
-                        <span className="val-deal-date">{deal.date}</span>
-                      </div>
-                      <div className="val-deal-meta">
-                        <span className="val-deal-type">{deal.type}</span>
-                        <span className="val-deal-value">${(deal.value / 1000000).toFixed(1)}M</span>
-                      </div>
-                      <span className={`val-deal-status ${deal.status}`}>
-                        {deal.status === "closed" ? "Closed" : deal.status === "pending" ? "Pending" : "In Progress"}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="val-empty-state-sm">
-                    <p>No deals yet</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Market Trends */}
-            <div className="val-dash-card">
-              <div className="val-dash-card-header">
-                <h3>Market Trends</h3>
-                <Link href="/valora/market" className="val-dash-link">Full Report</Link>
-              </div>
-              <div className="val-trends-list">
-                {marketTrends.map((trend, index) => (
-                  <div key={index} className="val-trend-row">
-                    <span className="val-trend-sector">{trend.sector}</span>
-                    <div className="val-trend-indicator">
-                      <span
-                        className="val-trend-arrow"
-                        style={{ color: getTrendColor(trend.trend) }}
-                      >
-                        {getTrendIcon(trend.trend)}
-                      </span>
-                      <span
-                        className="val-trend-change"
-                        style={{ color: getTrendColor(trend.trend) }}
-                      >
-                        {trend.change > 0 ? "+" : ""}{trend.change}%
-                      </span>
-                    </div>
-                    <span className={`val-trend-forecast ${trend.forecast}`}>
-                      {trend.forecast.charAt(0).toUpperCase() + trend.forecast.slice(1)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Tasks */}
-            <div className="val-dash-card">
-              <div className="val-dash-card-header">
-                <h3>Action Items</h3>
-                <button className="val-add-btn">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="val-tasks-list">
-                {tasks.length > 0 ? (
-                  tasks.map((task) => (
-                    <div key={task.id} className="val-task-row">
-                      <div className="val-task-checkbox">
-                        <input type="checkbox" />
-                      </div>
-                      <div className="val-task-info">
-                        <span className="val-task-title">{task.title}</span>
-                        <span className="val-task-property">{task.property}</span>
-                      </div>
-                      <div className="val-task-meta">
-                        <span className="val-task-due">{task.due}</span>
-                        <span className={`val-task-priority ${task.priority}`}>{task.priority}</span>
+                      {/* Market Factors */}
+                      <div className="val-market-factors">
+                        <h4>Market Factors</h4>
+                        <ul>
+                          {valuation.marketFactors.map((factor, i) => (
+                            <li key={i}>{factor}</li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="val-empty-state-sm">
-                    <p>No action items</p>
-                  </div>
-                )}
-              </div>
-            </div>
+                  )}
 
-            {/* Quick Tools */}
-            <div className="val-dash-card">
-              <div className="val-dash-card-header">
-                <h3>Analysis Tools</h3>
-              </div>
-              <div className="val-quick-tools">
-                <button className="val-quick-tool">
-                  <div className="val-tool-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M18 20V10M12 20V4M6 20v-6" />
-                    </svg>
-                  </div>
-                  <div className="val-tool-text">
-                    <span className="val-tool-name">Valuation Model</span>
-                    <span className="val-tool-desc">Run DCF analysis</span>
-                  </div>
-                </button>
-                <button className="val-quick-tool">
-                  <div className="val-tool-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
-                    </svg>
-                  </div>
-                  <div className="val-tool-text">
-                    <span className="val-tool-name">Comp Analysis</span>
-                    <span className="val-tool-desc">Find comparables</span>
-                  </div>
-                </button>
-                <button className="val-quick-tool">
-                  <div className="val-tool-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <circle cx="12" cy="10" r="3" />
-                      <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z" />
-                    </svg>
-                  </div>
-                  <div className="val-tool-text">
-                    <span className="val-tool-name">Market Map</span>
-                    <span className="val-tool-desc">Location insights</span>
-                  </div>
-                </button>
-                <button className="val-quick-tool">
-                  <div className="val-tool-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14,2 14,8 20,8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                    </svg>
-                  </div>
-                  <div className="val-tool-text">
-                    <span className="val-tool-name">Report Builder</span>
-                    <span className="val-tool-desc">Generate reports</span>
-                  </div>
-                </button>
-              </div>
+                  {/* Comps Tab */}
+                  {activeTab === "comps" && (
+                    <div className="val-comps-content">
+                      <div className="val-comps-header">
+                        <h4>Comparable Sales</h4>
+                        <span>{comps.length} properties within 1.5 miles</span>
+                      </div>
+                      <div className="val-comps-table">
+                        <div className="val-comps-row header">
+                          <span>Address</span>
+                          <span>Distance</span>
+                          <span>Sale Price</span>
+                          <span>Date</span>
+                          <span>Sq Ft</span>
+                          <span>$/SF</span>
+                        </div>
+                        {comps.map(comp => (
+                          <div key={comp.id} className="val-comps-row">
+                            <span className="address">{comp.address}</span>
+                            <span>{comp.distance}</span>
+                            <span className="price">{formatCurrency(comp.salePrice)}</span>
+                            <span>{comp.saleDate}</span>
+                            <span>{comp.sqft.toLocaleString()}</span>
+                            <span>${comp.pricePerSqft}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="val-comps-summary">
+                        <div className="summary-item">
+                          <span>Average Sale Price</span>
+                          <span>{formatCurrency(comps.reduce((a, b) => a + b.salePrice, 0) / comps.length)}</span>
+                        </div>
+                        <div className="summary-item">
+                          <span>Average $/SF</span>
+                          <span>${Math.round(comps.reduce((a, b) => a + b.pricePerSqft, 0) / comps.length)}</span>
+                        </div>
+                        <div className="summary-item">
+                          <span>Median Sale Price</span>
+                          <span>{formatCurrency(comps.sort((a, b) => a.salePrice - b.salePrice)[Math.floor(comps.length / 2)].salePrice)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Underwriting Tab */}
+                  {activeTab === "underwriting" && (
+                    <div className="val-underwriting-content">
+                      <div className="val-uw-inputs">
+                        <h4>Deal Inputs</h4>
+                        <div className="val-uw-grid">
+                          <div className="val-uw-input">
+                            <label>Purchase Price</label>
+                            <input
+                              type="number"
+                              value={purchasePrice}
+                              onChange={(e) => setPurchasePrice(e.target.value)}
+                            />
+                          </div>
+                          <div className="val-uw-input">
+                            <label>Down Payment %</label>
+                            <input
+                              type="number"
+                              value={downPaymentPercent}
+                              onChange={(e) => setDownPaymentPercent(e.target.value)}
+                            />
+                          </div>
+                          <div className="val-uw-input">
+                            <label>Interest Rate %</label>
+                            <input
+                              type="number"
+                              step="0.125"
+                              value={interestRate}
+                              onChange={(e) => setInterestRate(e.target.value)}
+                            />
+                          </div>
+                          <div className="val-uw-input">
+                            <label>Loan Term (years)</label>
+                            <input
+                              type="number"
+                              value={loanTerm}
+                              onChange={(e) => setLoanTerm(e.target.value)}
+                            />
+                          </div>
+                          <div className="val-uw-input">
+                            <label>Monthly Gross Rent</label>
+                            <input
+                              type="number"
+                              value={grossRent}
+                              onChange={(e) => setGrossRent(e.target.value)}
+                            />
+                          </div>
+                          <div className="val-uw-input">
+                            <label>Vacancy Rate %</label>
+                            <input
+                              type="number"
+                              value={vacancyRate}
+                              onChange={(e) => setVacancyRate(e.target.value)}
+                            />
+                          </div>
+                          <div className="val-uw-input">
+                            <label>Operating Expense %</label>
+                            <input
+                              type="number"
+                              value={operatingExpenseRatio}
+                              onChange={(e) => setOperatingExpenseRatio(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {underwriting && (
+                        <div className="val-uw-results">
+                          <h4>Analysis Results</h4>
+                          <div className="val-uw-metrics">
+                            <div className={`val-uw-metric ${underwriting.cashFlow >= 0 ? "positive" : "negative"}`}>
+                              <span className="metric-label">Annual Cash Flow</span>
+                              <span className="metric-value">{formatCurrency(underwriting.cashFlow)}</span>
+                            </div>
+                            <div className={`val-uw-metric ${underwriting.cashOnCash >= 8 ? "positive" : underwriting.cashOnCash >= 5 ? "neutral" : "negative"}`}>
+                              <span className="metric-label">Cash-on-Cash Return</span>
+                              <span className="metric-value">{underwriting.cashOnCash.toFixed(2)}%</span>
+                            </div>
+                            <div className={`val-uw-metric ${underwriting.capRate >= 6 ? "positive" : underwriting.capRate >= 4 ? "neutral" : "negative"}`}>
+                              <span className="metric-label">Cap Rate</span>
+                              <span className="metric-value">{underwriting.capRate.toFixed(2)}%</span>
+                            </div>
+                            <div className={`val-uw-metric ${underwriting.dscr >= 1.25 ? "positive" : underwriting.dscr >= 1 ? "neutral" : "negative"}`}>
+                              <span className="metric-label">DSCR</span>
+                              <span className="metric-value">{underwriting.dscr.toFixed(2)}x</span>
+                            </div>
+                          </div>
+
+                          <div className="val-uw-breakdown">
+                            <div className="breakdown-section">
+                              <h5>Financing</h5>
+                              <div className="breakdown-row">
+                                <span>Down Payment</span>
+                                <span>{formatCurrency(underwriting.downPayment)}</span>
+                              </div>
+                              <div className="breakdown-row">
+                                <span>Loan Amount</span>
+                                <span>{formatCurrency(underwriting.loanAmount)}</span>
+                              </div>
+                              <div className="breakdown-row">
+                                <span>Monthly Payment</span>
+                                <span>{formatCurrency(underwriting.monthlyPayment)}</span>
+                              </div>
+                              <div className="breakdown-row">
+                                <span>Annual Debt Service</span>
+                                <span>{formatCurrency(underwriting.annualDebtService)}</span>
+                              </div>
+                            </div>
+                            <div className="breakdown-section">
+                              <h5>Income & Expenses</h5>
+                              <div className="breakdown-row">
+                                <span>Gross Rental Income</span>
+                                <span>{formatCurrency(underwriting.grossRent)}</span>
+                              </div>
+                              <div className="breakdown-row">
+                                <span>Less Vacancy ({underwriting.vacancy}%)</span>
+                                <span>-{formatCurrency(underwriting.grossRent * (underwriting.vacancy / 100))}</span>
+                              </div>
+                              <div className="breakdown-row">
+                                <span>Effective Gross Income</span>
+                                <span>{formatCurrency(underwriting.effectiveGrossIncome)}</span>
+                              </div>
+                              <div className="breakdown-row">
+                                <span>Operating Expenses</span>
+                                <span>-{formatCurrency(underwriting.operatingExpenses)}</span>
+                              </div>
+                              <div className="breakdown-row highlight">
+                                <span>Net Operating Income (NOI)</span>
+                                <span>{formatCurrency(underwriting.noi)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Improvements Tab */}
+                  {activeTab === "improvements" && valuation && (
+                    <div className="val-improvements-content">
+                      <div className="val-improvements-header">
+                        <h4>Value-Add Opportunities</h4>
+                        <div className="val-improvements-summary">
+                          <span>Total Investment: {formatCurrency(valuation.improvements.reduce((a, b) => a + b.estimatedCost, 0))}</span>
+                          <span>Potential Value Add: {formatCurrency(valuation.improvements.reduce((a, b) => a + b.potentialValueAdd, 0))}</span>
+                          <span className="roi">
+                            ROI: {((valuation.improvements.reduce((a, b) => a + b.potentialValueAdd, 0) / valuation.improvements.reduce((a, b) => a + b.estimatedCost, 0) - 1) * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="val-improvements-list">
+                        {valuation.improvements.map((item, i) => (
+                          <div key={i} className={`val-improvement-item priority-${item.priority}`}>
+                            <div className="improvement-header">
+                              <span className="area">{item.area}</span>
+                              <span className={`priority ${item.priority}`}>{item.priority}</span>
+                            </div>
+                            <p className="issue">{item.issue}</p>
+                            <p className="recommendation">{item.recommendation}</p>
+                            <div className="improvement-numbers">
+                              <div>
+                                <span>Est. Cost</span>
+                                <span className="cost">{formatCurrency(item.estimatedCost)}</span>
+                              </div>
+                              <div>
+                                <span>Value Add</span>
+                                <span className="value-add">{formatCurrency(item.potentialValueAdd)}</span>
+                              </div>
+                              <div>
+                                <span>ROI</span>
+                                <span className="item-roi">{((item.potentialValueAdd / item.estimatedCost - 1) * 100).toFixed(0)}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Map Tab */}
+                  {activeTab === "map" && (
+                    <div className="val-map-content">
+                      <div className="val-map-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+                          <circle cx="12" cy="10" r="3" />
+                          <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z" />
+                        </svg>
+                        <h4>Interactive Map</h4>
+                        <p>View property location, nearby comps, and area amenities</p>
+                        <div className="map-legend">
+                          <div className="legend-item">
+                            <span className="dot subject"></span>
+                            <span>Subject Property</span>
+                          </div>
+                          <div className="legend-item">
+                            <span className="dot comp"></span>
+                            <span>Comparable Sales ({comps.length})</span>
+                          </div>
+                        </div>
+                        <p className="map-note">Map integration available with API key</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Notes Section */}
+                <div className="val-notes-section">
+                  <h4>Notes</h4>
+                  <textarea
+                    placeholder="Add notes about this property..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={3}
+                  ></textarea>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Saved Workspaces Modal */}
+      {showSavedWorkspaces && (
+        <div className="val-modal-overlay" onClick={() => setShowSavedWorkspaces(false)}>
+          <div className="val-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="val-modal-header">
+              <h3>Saved Workspaces</h3>
+              <button onClick={() => setShowSavedWorkspaces(false)}>×</button>
+            </div>
+            <div className="val-modal-content">
+              {savedWorkspaces.length > 0 ? (
+                <div className="val-workspaces-list">
+                  {savedWorkspaces.map(workspace => (
+                    <div key={workspace.id} className="val-workspace-item">
+                      <div className="workspace-info" onClick={() => loadWorkspace(workspace)}>
+                        <span className="workspace-name">{workspace.name}</span>
+                        <span className="workspace-address">{workspace.address}</span>
+                        <div className="workspace-meta">
+                          <span>{workspace.date}</span>
+                          <span>{PROPERTY_TYPES.find(t => t.id === workspace.propertyType)?.name}</span>
+                          {workspace.valuation && (
+                            <span className="workspace-value">{formatCurrency(workspace.valuation.estimatedValue)}</span>
+                          )}
+                        </div>
+                      </div>
+                      <button className="workspace-delete" onClick={() => deleteWorkspace(workspace.id)}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="val-no-workspaces">
+                  <p>No saved workspaces yet</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </section>
+      )}
 
       <Footer />
     </main>
