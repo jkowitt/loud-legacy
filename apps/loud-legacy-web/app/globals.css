@@ -22772,6 +22772,35 @@ textarea:focus-visible {
   color: var(--text-secondary);
 }
 
+/* Empty States */
+.val-uw-empty,
+.val-rentroll-empty,
+.val-pnl-empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 2px dashed var(--border-color);
+}
+
+.val-uw-empty h4,
+.val-rentroll-empty h4,
+.val-pnl-empty h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.val-uw-empty p,
+.val-rentroll-empty p,
+.val-pnl-empty p {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .val-main-layout {
