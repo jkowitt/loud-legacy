@@ -62,6 +62,13 @@ interface SavedWorkspace {
   isPublic: boolean;
   askingPrice?: number;
   listingDate?: string;
+  purchasePrice?: string;
+  downPaymentPercent?: string;
+  interestRate?: string;
+  loanTerm?: string;
+  grossRent?: string;
+  vacancyRate?: string;
+  operatingExpenseRatio?: string;
 }
 
 // Valuation Result Interface
@@ -173,7 +180,7 @@ export default function ValoraDashboard() {
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [valuation, setValuation] = useState<ValuationResult | null>(null);
   const [comps, setComps] = useState<CompProperty[]>([]);
-  const [activeTab, setActiveTab] = useState<"valuation" | "comps" | "underwriting" | "rentroll" | "pnl" | "improvements" | "map">("valuation");
+  const [activeTab, setActiveTab] = useState<"underwriting" | "rentroll" | "pnl" | "valuation" | "comps" | "improvements" | "map">("underwriting");
 
   // Photo State (optional)
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -221,7 +228,7 @@ export default function ValoraDashboard() {
   const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [promoteSuccess, setPromoteSuccess] = useState(false);
 
-  // Check if property type is NOT single-family
+  // Check if property type is NOT single-family (shows underwriting workspace)
   const isIncomeProperty = propertyType && propertyType !== "single-family" && propertyType !== "land";
 
   // Handle Image Upload
@@ -362,54 +369,24 @@ export default function ValoraDashboard() {
       conditionScore: uploadedImages.length > 0 ? 72 : 75,
     };
 
-    // Generate sample rent roll for income properties
-    if (isIncomeProperty) {
-      const numUnits = parseInt(units) || 4;
-      const sampleRentRoll: RentRollUnit[] = [];
-      for (let i = 1; i <= numUnits; i++) {
-        sampleRentRoll.push({
-          id: i.toString(),
-          unitNumber: `${i}`,
-          unitType: i <= 2 ? "2BR/1BA" : "1BR/1BA",
-          sqft: i <= 2 ? 950 : 750,
-          beds: i <= 2 ? 2 : 1,
-          baths: 1,
-          monthlyRent: i <= 2 ? 1450 : 1150,
-          marketRent: i <= 2 ? 1550 : 1250,
-          leaseStart: "2024-01-01",
-          leaseEnd: "2024-12-31",
-          tenant: i === numUnits ? "" : `Tenant ${i}`,
-          status: i === numUnits ? "vacant" : "occupied"
-        });
-      }
-      setRentRoll(sampleRentRoll);
-
-      // Set sample expenses
-      const monthlyRent = sampleRentRoll.reduce((sum, u) => sum + u.marketRent, 0);
-      setExpenses([
-        { id: "1", category: "Property Taxes", annual: Math.round(estimatedValue * 0.012), monthly: Math.round(estimatedValue * 0.012 / 12) },
-        { id: "2", category: "Insurance", annual: Math.round(estimatedValue * 0.005), monthly: Math.round(estimatedValue * 0.005 / 12) },
-        { id: "3", category: "Utilities", annual: numUnits * 1200, monthly: numUnits * 100 },
-        { id: "4", category: "Repairs & Maintenance", annual: Math.round(monthlyRent * 12 * 0.05), monthly: Math.round(monthlyRent * 0.05) },
-        { id: "5", category: "Property Management", annual: Math.round(monthlyRent * 12 * 0.08), monthly: Math.round(monthlyRent * 0.08) },
-        { id: "6", category: "Landscaping", annual: 2400, monthly: 200 },
-        { id: "7", category: "Trash Removal", annual: numUnits * 360, monthly: numUnits * 30 },
-        { id: "8", category: "Professional Fees", annual: 1200, monthly: 100 },
-        { id: "9", category: "Reserves", annual: Math.round(monthlyRent * 12 * 0.05), monthly: Math.round(monthlyRent * 0.05) },
-        { id: "10", category: "Other", annual: 0, monthly: 0 },
-      ]);
-    }
-
     setComps(mockComps);
     setValuation(mockValuation);
-    setPurchasePrice(estimatedValue.toString());
+    if (!purchasePrice) {
+      setPurchasePrice(estimatedValue.toString());
+    }
     setIsAnalyzing(false);
     setAnalysisComplete(true);
+    setActiveTab("valuation");
   };
 
   // Calculate Underwriting
   const calculateUnderwriting = () => {
     const price = parseFloat(purchasePrice) || 0;
+    if (price === 0) {
+      setUnderwriting(null);
+      return;
+    }
+
     const downPmt = price * (parseFloat(downPaymentPercent) / 100);
     const loan = price - downPmt;
     const rate = parseFloat(interestRate) / 100 / 12;
@@ -449,7 +426,7 @@ export default function ValoraDashboard() {
   };
 
   useEffect(() => {
-    if (purchasePrice && (grossRent || rentRoll.length > 0)) {
+    if (purchasePrice || grossRent || rentRoll.length > 0) {
       calculateUnderwriting();
     }
   }, [purchasePrice, downPaymentPercent, interestRate, loanTerm, grossRent, vacancyRate, operatingExpenseRatio, rentRoll, expenses]);
@@ -458,9 +435,9 @@ export default function ValoraDashboard() {
   const saveWorkspace = () => {
     const workspace: SavedWorkspace = {
       id: currentWorkspaceId || Date.now().toString(),
-      name: workspaceName || `${address}, ${city}`,
+      name: workspaceName || `${propertyType ? PROPERTY_TYPES.find(t => t.id === propertyType)?.name : "Property"} - ${address || "Underwriting"}`,
       date: new Date().toLocaleDateString(),
-      address: `${address}, ${city}, ${state} ${zipCode}`,
+      address: address ? `${address}, ${city}, ${state} ${zipCode}` : "No address",
       propertyType,
       valuation,
       underwriting,
@@ -472,6 +449,13 @@ export default function ValoraDashboard() {
       isPublic,
       askingPrice: askingPrice ? parseFloat(askingPrice) : undefined,
       listingDate: isPublic ? new Date().toISOString() : undefined,
+      purchasePrice,
+      downPaymentPercent,
+      interestRate,
+      loanTerm,
+      grossRent,
+      vacancyRate,
+      operatingExpenseRatio,
     };
 
     if (currentWorkspaceId) {
@@ -497,12 +481,14 @@ export default function ValoraDashboard() {
 
   // Load Workspace
   const loadWorkspace = (workspace: SavedWorkspace) => {
-    const addressParts = workspace.address.split(", ");
-    setAddress(addressParts[0] || "");
-    setCity(addressParts[1] || "");
-    const stateZip = addressParts[2]?.split(" ") || [];
-    setState(stateZip[0] || "");
-    setZipCode(stateZip[1] || "");
+    if (workspace.address && workspace.address !== "No address") {
+      const addressParts = workspace.address.split(", ");
+      setAddress(addressParts[0] || "");
+      setCity(addressParts[1] || "");
+      const stateZip = addressParts[2]?.split(" ") || [];
+      setState(stateZip[0] || "");
+      setZipCode(stateZip[1] || "");
+    }
     setPropertyType(workspace.propertyType);
     setValuation(workspace.valuation);
     setUnderwriting(workspace.underwriting);
@@ -515,13 +501,23 @@ export default function ValoraDashboard() {
     setExpenses(workspace.expenses || DEFAULT_EXPENSES);
     setIsPublic(workspace.isPublic || false);
     setAskingPrice(workspace.askingPrice?.toString() || "");
-    setAnalysisComplete(true);
-    setShowSavedWorkspaces(false);
 
-    if (workspace.underwriting) {
-      setPurchasePrice(workspace.underwriting.purchasePrice.toString());
-      setGrossRent((workspace.underwriting.grossRent / 12).toString());
+    // Restore underwriting inputs
+    if (workspace.purchasePrice) setPurchasePrice(workspace.purchasePrice);
+    if (workspace.downPaymentPercent) setDownPaymentPercent(workspace.downPaymentPercent);
+    if (workspace.interestRate) setInterestRate(workspace.interestRate);
+    if (workspace.loanTerm) setLoanTerm(workspace.loanTerm);
+    if (workspace.grossRent) setGrossRent(workspace.grossRent);
+    if (workspace.vacancyRate) setVacancyRate(workspace.vacancyRate);
+    if (workspace.operatingExpenseRatio) setOperatingExpenseRatio(workspace.operatingExpenseRatio);
+
+    if (workspace.valuation) {
+      setAnalysisComplete(true);
+      setActiveTab("valuation");
+    } else {
+      setActiveTab("underwriting");
     }
+    setShowSavedWorkspaces(false);
   };
 
   // Delete Workspace
@@ -536,13 +532,15 @@ export default function ValoraDashboard() {
     setSqft(""); setLotSize(""); setYearBuilt(""); setUnits("1"); setBeds(""); setBaths("");
     setUploadedImages([]); setValuation(null); setUnderwriting(null); setComps([]);
     setAnalysisComplete(false); setCurrentWorkspaceId(null); setWorkspaceName(""); setNotes("");
-    setPurchasePrice(""); setGrossRent(""); setActiveTab("valuation");
+    setPurchasePrice(""); setGrossRent(""); setActiveTab("underwriting");
     setRentRoll([]); setExpenses(DEFAULT_EXPENSES); setIsPublic(false); setAskingPrice("");
+    setDownPaymentPercent("25"); setInterestRate(CURRENT_RATES.commercial.toString()); setLoanTerm("30");
+    setVacancyRate("5"); setOperatingExpenseRatio("35");
   };
 
   // Export Report
   const exportReport = (format: "pdf" | "excel") => {
-    alert(`Exporting ${format.toUpperCase()} report for ${address}...`);
+    alert(`Exporting ${format.toUpperCase()} report...`);
   };
 
   // Format Currency
@@ -550,14 +548,19 @@ export default function ValoraDashboard() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
   };
 
-  // Get available tabs based on property type
+  // Get available tabs based on property type and analysis state
   const getAvailableTabs = () => {
-    const baseTabs: Array<"valuation" | "comps" | "underwriting" | "rentroll" | "pnl" | "improvements" | "map"> = ["valuation", "comps", "underwriting"];
+    const tabs: Array<"underwriting" | "rentroll" | "pnl" | "valuation" | "comps" | "improvements" | "map"> = [];
+
     if (isIncomeProperty) {
-      baseTabs.push("rentroll", "pnl");
+      tabs.push("underwriting", "rentroll", "pnl");
     }
-    baseTabs.push("improvements", "map");
-    return baseTabs;
+
+    if (analysisComplete) {
+      tabs.push("valuation", "comps", "improvements", "map");
+    }
+
+    return tabs;
   };
 
   return (
@@ -599,7 +602,7 @@ export default function ValoraDashboard() {
                   Saved ({savedWorkspaces.length})
                 </button>
               )}
-              {analysisComplete && (
+              {(analysisComplete || isIncomeProperty) && (
                 <button className="val-dash-btn secondary" onClick={resetAnalysis}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                     <line x1="12" y1="5" x2="12" y2="19" />
@@ -623,7 +626,7 @@ export default function ValoraDashboard() {
 
               {/* Address Input */}
               <div className="val-form-section">
-                <label>Property Address</label>
+                <label>Property Address <span className="optional">(optional for underwriting)</span></label>
                 <input type="text" placeholder="Street address" value={address} onChange={(e) => setAddress(e.target.value)} className="val-input" />
                 <div className="val-input-row">
                   <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="val-input" />
@@ -739,24 +742,33 @@ export default function ValoraDashboard() {
             </div>
           </div>
 
-          {/* Right Panel - Results */}
+          {/* Right Panel - Underwriting Workspace / Results */}
           <div className="val-results-panel">
-            {!analysisComplete ? (
+            {!isIncomeProperty && !analysisComplete ? (
               <div className="val-empty-results">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="64" height="64">
                   <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
                   <path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01" strokeWidth="2" strokeLinecap="round" />
                 </svg>
-                <h3>Enter Property Details</h3>
-                <p>Input an address and property type to get AI-powered valuations, comparable sales, and underwriting analysis.</p>
+                <h3>Select a Property Type</h3>
+                <p>Choose a non-single-family property type (Multifamily, Commercial, Industrial, etc.) to open the underwriting workspace, or enter an address to run AI analysis.</p>
               </div>
             ) : (
               <>
-                {/* Results Header */}
+                {/* Workspace Header */}
                 <div className="val-results-header">
                   <div className="val-results-title">
-                    <h2>{address}</h2>
-                    <p>{city}, {state} {zipCode}</p>
+                    {address ? (
+                      <>
+                        <h2>{address}</h2>
+                        <p>{city}, {state} {zipCode}</p>
+                      </>
+                    ) : (
+                      <>
+                        <h2>{PROPERTY_TYPES.find(t => t.id === propertyType)?.name} Underwriting</h2>
+                        <p>Enter deal inputs below to analyze returns</p>
+                      </>
+                    )}
                     {isPublic && <span className="val-public-badge">On Market</span>}
                   </div>
                   <div className="val-results-actions">
@@ -793,6 +805,171 @@ export default function ValoraDashboard() {
 
                 {/* Tab Content */}
                 <div className="val-tab-content">
+                  {/* Underwriting Tab */}
+                  {activeTab === "underwriting" && isIncomeProperty && (
+                    <div className="val-underwriting-content">
+                      <div className="val-uw-inputs">
+                        <h4>Deal Inputs</h4>
+                        <div className="val-uw-grid">
+                          <div className="val-uw-input"><label>Purchase Price</label><input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} placeholder="Enter amount" /></div>
+                          <div className="val-uw-input"><label>Down Payment %</label><input type="number" value={downPaymentPercent} onChange={(e) => setDownPaymentPercent(e.target.value)} /></div>
+                          <div className="val-uw-input"><label>Interest Rate %</label><input type="number" step="0.125" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} /></div>
+                          <div className="val-uw-input"><label>Loan Term (years)</label><input type="number" value={loanTerm} onChange={(e) => setLoanTerm(e.target.value)} /></div>
+                        </div>
+                        {rentRoll.length === 0 && (
+                          <>
+                            <h4 style={{ marginTop: "1.5rem" }}>Income Inputs</h4>
+                            <div className="val-uw-grid">
+                              <div className="val-uw-input"><label>Monthly Gross Rent</label><input type="number" value={grossRent} onChange={(e) => setGrossRent(e.target.value)} placeholder="Or use Rent Roll" /></div>
+                              <div className="val-uw-input"><label>Vacancy Rate %</label><input type="number" value={vacancyRate} onChange={(e) => setVacancyRate(e.target.value)} /></div>
+                              <div className="val-uw-input"><label>Operating Expense %</label><input type="number" value={operatingExpenseRatio} onChange={(e) => setOperatingExpenseRatio(e.target.value)} /></div>
+                            </div>
+                          </>
+                        )}
+                        {rentRoll.length > 0 && (
+                          <p className="val-uw-note">Income and expenses calculated from Rent Roll and P&L tabs</p>
+                        )}
+                      </div>
+                      {underwriting && (
+                        <div className="val-uw-results">
+                          <h4>Analysis Results</h4>
+                          <div className="val-uw-metrics">
+                            <div className={`val-uw-metric ${underwriting.cashFlow >= 0 ? "positive" : "negative"}`}><span className="metric-label">Annual Cash Flow</span><span className="metric-value">{formatCurrency(underwriting.cashFlow)}</span></div>
+                            <div className={`val-uw-metric ${underwriting.cashOnCash >= 8 ? "positive" : underwriting.cashOnCash >= 5 ? "neutral" : "negative"}`}><span className="metric-label">Cash-on-Cash</span><span className="metric-value">{underwriting.cashOnCash.toFixed(2)}%</span></div>
+                            <div className={`val-uw-metric ${underwriting.capRate >= 6 ? "positive" : underwriting.capRate >= 4 ? "neutral" : "negative"}`}><span className="metric-label">Cap Rate</span><span className="metric-value">{underwriting.capRate.toFixed(2)}%</span></div>
+                            <div className={`val-uw-metric ${underwriting.dscr >= 1.25 ? "positive" : underwriting.dscr >= 1 ? "neutral" : "negative"}`}><span className="metric-label">DSCR</span><span className="metric-value">{underwriting.dscr.toFixed(2)}x</span></div>
+                          </div>
+                          <div className="val-uw-breakdown">
+                            <div className="breakdown-section">
+                              <h5>Financing</h5>
+                              <div className="breakdown-row"><span>Down Payment</span><span>{formatCurrency(underwriting.downPayment)}</span></div>
+                              <div className="breakdown-row"><span>Loan Amount</span><span>{formatCurrency(underwriting.loanAmount)}</span></div>
+                              <div className="breakdown-row"><span>Monthly Payment</span><span>{formatCurrency(underwriting.monthlyPayment)}</span></div>
+                              <div className="breakdown-row"><span>Annual Debt Service</span><span>{formatCurrency(underwriting.annualDebtService)}</span></div>
+                            </div>
+                            <div className="breakdown-section">
+                              <h5>Income & Expenses</h5>
+                              <div className="breakdown-row"><span>Gross Rental Income</span><span>{formatCurrency(underwriting.grossRent)}</span></div>
+                              <div className="breakdown-row"><span>Less Vacancy ({underwriting.vacancy}%)</span><span>-{formatCurrency(underwriting.grossRent * (underwriting.vacancy / 100))}</span></div>
+                              <div className="breakdown-row"><span>Effective Gross Income</span><span>{formatCurrency(underwriting.effectiveGrossIncome)}</span></div>
+                              <div className="breakdown-row"><span>Operating Expenses</span><span>-{formatCurrency(underwriting.operatingExpenses)}</span></div>
+                              <div className="breakdown-row highlight"><span>Net Operating Income (NOI)</span><span>{formatCurrency(underwriting.noi)}</span></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {!underwriting && (
+                        <div className="val-uw-empty">
+                          <p>Enter a purchase price and income details to see underwriting analysis</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Rent Roll Tab */}
+                  {activeTab === "rentroll" && isIncomeProperty && (
+                    <div className="val-rentroll-content">
+                      <div className="val-rentroll-header">
+                        <h4>Rent Roll</h4>
+                        <button className="val-add-unit-btn" onClick={() => setShowAddUnit(true)}>+ Add Unit</button>
+                      </div>
+                      {rentRoll.length > 0 ? (
+                        <>
+                          <div className="val-rentroll-summary">
+                            <div className="summary-stat"><span>Total Units</span><span>{rentRollTotals.totalUnits}</span></div>
+                            <div className="summary-stat"><span>Occupied</span><span className="positive">{rentRollTotals.occupiedUnits}</span></div>
+                            <div className="summary-stat"><span>Vacant</span><span className="negative">{rentRollTotals.vacantUnits}</span></div>
+                            <div className="summary-stat"><span>Occupancy</span><span>{rentRollTotals.occupancyRate.toFixed(1)}%</span></div>
+                            <div className="summary-stat"><span>Monthly Income</span><span>{formatCurrency(rentRollTotals.totalMonthlyRent)}</span></div>
+                            <div className="summary-stat"><span>Loss to Lease</span><span className="negative">{formatCurrency(rentRollTotals.lossToLease)}/mo</span></div>
+                          </div>
+                          <div className="val-rentroll-table">
+                            <div className="val-rentroll-row header">
+                              <span>Unit</span><span>Type</span><span>Sq Ft</span><span>Rent</span><span>Market</span><span>Tenant</span><span>Lease End</span><span>Status</span><span></span>
+                            </div>
+                            {rentRoll.map(unit => (
+                              <div key={unit.id} className="val-rentroll-row">
+                                <span className="unit-num">{unit.unitNumber}</span>
+                                <span>{unit.unitType}</span>
+                                <span>{unit.sqft}</span>
+                                <span>{formatCurrency(unit.monthlyRent)}</span>
+                                <span>{formatCurrency(unit.marketRent)}</span>
+                                <span>{unit.tenant || "-"}</span>
+                                <span>{unit.leaseEnd || "-"}</span>
+                                <span className={`status ${unit.status}`}>{unit.status}</span>
+                                <button className="delete-unit" onClick={() => deleteUnit(unit.id)}>×</button>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="val-rentroll-empty">
+                          <p>No units added yet. Click "+ Add Unit" to build your rent roll.</p>
+                          <p className="hint">Adding units will automatically feed income data to the underwriting analysis.</p>
+                        </div>
+                      )}
+                      {showAddUnit && (
+                        <div className="val-add-unit-form">
+                          <h5>Add Unit</h5>
+                          <div className="add-unit-grid">
+                            <input placeholder="Unit #" value={newUnit.unitNumber} onChange={(e) => setNewUnit({...newUnit, unitNumber: e.target.value})} />
+                            <select value={newUnit.unitType} onChange={(e) => setNewUnit({...newUnit, unitType: e.target.value})}>
+                              <option>Studio</option><option>1BR/1BA</option><option>2BR/1BA</option><option>2BR/2BA</option><option>3BR/2BA</option>
+                            </select>
+                            <input type="number" placeholder="Sq Ft" value={newUnit.sqft || ""} onChange={(e) => setNewUnit({...newUnit, sqft: parseInt(e.target.value)})} />
+                            <input type="number" placeholder="Monthly Rent" value={newUnit.monthlyRent || ""} onChange={(e) => setNewUnit({...newUnit, monthlyRent: parseInt(e.target.value)})} />
+                            <input type="number" placeholder="Market Rent" value={newUnit.marketRent || ""} onChange={(e) => setNewUnit({...newUnit, marketRent: parseInt(e.target.value)})} />
+                            <input placeholder="Tenant Name" value={newUnit.tenant} onChange={(e) => setNewUnit({...newUnit, tenant: e.target.value})} />
+                            <input type="date" placeholder="Lease End" value={newUnit.leaseEnd} onChange={(e) => setNewUnit({...newUnit, leaseEnd: e.target.value})} />
+                            <select value={newUnit.status} onChange={(e) => setNewUnit({...newUnit, status: e.target.value as "occupied" | "vacant" | "notice"})}>
+                              <option value="occupied">Occupied</option><option value="vacant">Vacant</option><option value="notice">Notice</option>
+                            </select>
+                          </div>
+                          <div className="add-unit-actions">
+                            <button className="cancel" onClick={() => setShowAddUnit(false)}>Cancel</button>
+                            <button className="add" onClick={addUnit}>Add Unit</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* P&L Tab */}
+                  {activeTab === "pnl" && isIncomeProperty && (
+                    <div className="val-pnl-content">
+                      <h4>Pro Forma P&L Statement</h4>
+                      <div className="val-pnl-section income">
+                        <h5>Income</h5>
+                        <div className="pnl-row"><span>Gross Potential Rent</span><span>{formatCurrency(grossPotentialRent)}</span></div>
+                        <div className="pnl-row negative"><span>Less: Vacancy & Loss to Lease</span><span>-{formatCurrency(vacancyLoss)}</span></div>
+                        <div className="pnl-row total"><span>Effective Gross Income</span><span>{formatCurrency(effectiveGrossIncome)}</span></div>
+                      </div>
+                      <div className="val-pnl-section expenses">
+                        <h5>Operating Expenses</h5>
+                        {expenses.map(exp => (
+                          <div key={exp.id} className="pnl-row editable">
+                            <span>{exp.category}</span>
+                            <div className="expense-inputs">
+                              <input type="number" value={exp.monthly || ""} onChange={(e) => updateExpense(exp.id, "monthly", parseInt(e.target.value) || 0)} placeholder="Monthly" />
+                              <span className="per-label">/mo</span>
+                              <input type="number" value={exp.annual || ""} onChange={(e) => updateExpense(exp.id, "annual", parseInt(e.target.value) || 0)} placeholder="Annual" />
+                              <span className="per-label">/yr</span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="pnl-row total"><span>Total Operating Expenses</span><span>-{formatCurrency(totalExpenses)}</span></div>
+                      </div>
+                      <div className="val-pnl-section noi">
+                        <div className="pnl-row highlight"><span>Net Operating Income (NOI)</span><span>{formatCurrency(noiFromPnL)}</span></div>
+                        <div className="pnl-metrics">
+                          <div><span>Expense Ratio</span><span>{effectiveGrossIncome > 0 ? ((totalExpenses / effectiveGrossIncome) * 100).toFixed(1) : 0}%</span></div>
+                          <div><span>Per Unit/Year</span><span>{rentRoll.length > 0 ? formatCurrency(totalExpenses / rentRoll.length) : "-"}</span></div>
+                          <div><span>Per Sq Ft/Year</span><span>{rentRollTotals.totalSqft > 0 ? `$${(totalExpenses / rentRollTotals.totalSqft).toFixed(2)}` : "-"}</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Valuation Tab */}
                   {activeTab === "valuation" && valuation && (
                     <div className="val-valuation-content">
@@ -881,154 +1058,6 @@ export default function ValoraDashboard() {
                     </div>
                   )}
 
-                  {/* Underwriting Tab */}
-                  {activeTab === "underwriting" && (
-                    <div className="val-underwriting-content">
-                      <div className="val-uw-inputs">
-                        <h4>Deal Inputs</h4>
-                        <div className="val-uw-grid">
-                          <div className="val-uw-input"><label>Purchase Price</label><input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} /></div>
-                          <div className="val-uw-input"><label>Down Payment %</label><input type="number" value={downPaymentPercent} onChange={(e) => setDownPaymentPercent(e.target.value)} /></div>
-                          <div className="val-uw-input"><label>Interest Rate %</label><input type="number" step="0.125" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} /></div>
-                          <div className="val-uw-input"><label>Loan Term (years)</label><input type="number" value={loanTerm} onChange={(e) => setLoanTerm(e.target.value)} /></div>
-                          {!isIncomeProperty && (
-                            <>
-                              <div className="val-uw-input"><label>Monthly Gross Rent</label><input type="number" value={grossRent} onChange={(e) => setGrossRent(e.target.value)} /></div>
-                              <div className="val-uw-input"><label>Vacancy Rate %</label><input type="number" value={vacancyRate} onChange={(e) => setVacancyRate(e.target.value)} /></div>
-                              <div className="val-uw-input"><label>Operating Expense %</label><input type="number" value={operatingExpenseRatio} onChange={(e) => setOperatingExpenseRatio(e.target.value)} /></div>
-                            </>
-                          )}
-                        </div>
-                        {isIncomeProperty && rentRoll.length > 0 && (
-                          <p className="val-uw-note">Income and expenses calculated from Rent Roll and P&L tabs</p>
-                        )}
-                      </div>
-                      {underwriting && (
-                        <div className="val-uw-results">
-                          <h4>Analysis Results</h4>
-                          <div className="val-uw-metrics">
-                            <div className={`val-uw-metric ${underwriting.cashFlow >= 0 ? "positive" : "negative"}`}><span className="metric-label">Annual Cash Flow</span><span className="metric-value">{formatCurrency(underwriting.cashFlow)}</span></div>
-                            <div className={`val-uw-metric ${underwriting.cashOnCash >= 8 ? "positive" : underwriting.cashOnCash >= 5 ? "neutral" : "negative"}`}><span className="metric-label">Cash-on-Cash</span><span className="metric-value">{underwriting.cashOnCash.toFixed(2)}%</span></div>
-                            <div className={`val-uw-metric ${underwriting.capRate >= 6 ? "positive" : underwriting.capRate >= 4 ? "neutral" : "negative"}`}><span className="metric-label">Cap Rate</span><span className="metric-value">{underwriting.capRate.toFixed(2)}%</span></div>
-                            <div className={`val-uw-metric ${underwriting.dscr >= 1.25 ? "positive" : underwriting.dscr >= 1 ? "neutral" : "negative"}`}><span className="metric-label">DSCR</span><span className="metric-value">{underwriting.dscr.toFixed(2)}x</span></div>
-                          </div>
-                          <div className="val-uw-breakdown">
-                            <div className="breakdown-section">
-                              <h5>Financing</h5>
-                              <div className="breakdown-row"><span>Down Payment</span><span>{formatCurrency(underwriting.downPayment)}</span></div>
-                              <div className="breakdown-row"><span>Loan Amount</span><span>{formatCurrency(underwriting.loanAmount)}</span></div>
-                              <div className="breakdown-row"><span>Monthly Payment</span><span>{formatCurrency(underwriting.monthlyPayment)}</span></div>
-                              <div className="breakdown-row"><span>Annual Debt Service</span><span>{formatCurrency(underwriting.annualDebtService)}</span></div>
-                            </div>
-                            <div className="breakdown-section">
-                              <h5>Income & Expenses</h5>
-                              <div className="breakdown-row"><span>Gross Rental Income</span><span>{formatCurrency(underwriting.grossRent)}</span></div>
-                              <div className="breakdown-row"><span>Less Vacancy ({underwriting.vacancy}%)</span><span>-{formatCurrency(underwriting.grossRent * (underwriting.vacancy / 100))}</span></div>
-                              <div className="breakdown-row"><span>Effective Gross Income</span><span>{formatCurrency(underwriting.effectiveGrossIncome)}</span></div>
-                              <div className="breakdown-row"><span>Operating Expenses</span><span>-{formatCurrency(underwriting.operatingExpenses)}</span></div>
-                              <div className="breakdown-row highlight"><span>Net Operating Income (NOI)</span><span>{formatCurrency(underwriting.noi)}</span></div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Rent Roll Tab */}
-                  {activeTab === "rentroll" && isIncomeProperty && (
-                    <div className="val-rentroll-content">
-                      <div className="val-rentroll-header">
-                        <h4>Rent Roll</h4>
-                        <button className="val-add-unit-btn" onClick={() => setShowAddUnit(true)}>+ Add Unit</button>
-                      </div>
-                      <div className="val-rentroll-summary">
-                        <div className="summary-stat"><span>Total Units</span><span>{rentRollTotals.totalUnits}</span></div>
-                        <div className="summary-stat"><span>Occupied</span><span className="positive">{rentRollTotals.occupiedUnits}</span></div>
-                        <div className="summary-stat"><span>Vacant</span><span className="negative">{rentRollTotals.vacantUnits}</span></div>
-                        <div className="summary-stat"><span>Occupancy</span><span>{rentRollTotals.occupancyRate.toFixed(1)}%</span></div>
-                        <div className="summary-stat"><span>Monthly Income</span><span>{formatCurrency(rentRollTotals.totalMonthlyRent)}</span></div>
-                        <div className="summary-stat"><span>Loss to Lease</span><span className="negative">{formatCurrency(rentRollTotals.lossToLease)}/mo</span></div>
-                      </div>
-                      <div className="val-rentroll-table">
-                        <div className="val-rentroll-row header">
-                          <span>Unit</span><span>Type</span><span>Sq Ft</span><span>Rent</span><span>Market</span><span>Tenant</span><span>Lease End</span><span>Status</span><span></span>
-                        </div>
-                        {rentRoll.map(unit => (
-                          <div key={unit.id} className="val-rentroll-row">
-                            <span className="unit-num">{unit.unitNumber}</span>
-                            <span>{unit.unitType}</span>
-                            <span>{unit.sqft}</span>
-                            <span>{formatCurrency(unit.monthlyRent)}</span>
-                            <span>{formatCurrency(unit.marketRent)}</span>
-                            <span>{unit.tenant || "-"}</span>
-                            <span>{unit.leaseEnd || "-"}</span>
-                            <span className={`status ${unit.status}`}>{unit.status}</span>
-                            <button className="delete-unit" onClick={() => deleteUnit(unit.id)}>×</button>
-                          </div>
-                        ))}
-                      </div>
-                      {showAddUnit && (
-                        <div className="val-add-unit-form">
-                          <h5>Add Unit</h5>
-                          <div className="add-unit-grid">
-                            <input placeholder="Unit #" value={newUnit.unitNumber} onChange={(e) => setNewUnit({...newUnit, unitNumber: e.target.value})} />
-                            <select value={newUnit.unitType} onChange={(e) => setNewUnit({...newUnit, unitType: e.target.value})}>
-                              <option>Studio</option><option>1BR/1BA</option><option>2BR/1BA</option><option>2BR/2BA</option><option>3BR/2BA</option>
-                            </select>
-                            <input type="number" placeholder="Sq Ft" value={newUnit.sqft || ""} onChange={(e) => setNewUnit({...newUnit, sqft: parseInt(e.target.value)})} />
-                            <input type="number" placeholder="Monthly Rent" value={newUnit.monthlyRent || ""} onChange={(e) => setNewUnit({...newUnit, monthlyRent: parseInt(e.target.value)})} />
-                            <input type="number" placeholder="Market Rent" value={newUnit.marketRent || ""} onChange={(e) => setNewUnit({...newUnit, marketRent: parseInt(e.target.value)})} />
-                            <input placeholder="Tenant Name" value={newUnit.tenant} onChange={(e) => setNewUnit({...newUnit, tenant: e.target.value})} />
-                            <input type="date" placeholder="Lease End" value={newUnit.leaseEnd} onChange={(e) => setNewUnit({...newUnit, leaseEnd: e.target.value})} />
-                            <select value={newUnit.status} onChange={(e) => setNewUnit({...newUnit, status: e.target.value as any})}>
-                              <option value="occupied">Occupied</option><option value="vacant">Vacant</option><option value="notice">Notice</option>
-                            </select>
-                          </div>
-                          <div className="add-unit-actions">
-                            <button className="cancel" onClick={() => setShowAddUnit(false)}>Cancel</button>
-                            <button className="add" onClick={addUnit}>Add Unit</button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* P&L Tab */}
-                  {activeTab === "pnl" && isIncomeProperty && (
-                    <div className="val-pnl-content">
-                      <h4>Pro Forma P&L Statement</h4>
-                      <div className="val-pnl-section income">
-                        <h5>Income</h5>
-                        <div className="pnl-row"><span>Gross Potential Rent</span><span>{formatCurrency(grossPotentialRent)}</span></div>
-                        <div className="pnl-row negative"><span>Less: Vacancy & Loss to Lease</span><span>-{formatCurrency(vacancyLoss)}</span></div>
-                        <div className="pnl-row total"><span>Effective Gross Income</span><span>{formatCurrency(effectiveGrossIncome)}</span></div>
-                      </div>
-                      <div className="val-pnl-section expenses">
-                        <h5>Operating Expenses</h5>
-                        {expenses.map(exp => (
-                          <div key={exp.id} className="pnl-row editable">
-                            <span>{exp.category}</span>
-                            <div className="expense-inputs">
-                              <input type="number" value={exp.monthly || ""} onChange={(e) => updateExpense(exp.id, "monthly", parseInt(e.target.value) || 0)} placeholder="Monthly" />
-                              <span className="per-label">/mo</span>
-                              <input type="number" value={exp.annual || ""} onChange={(e) => updateExpense(exp.id, "annual", parseInt(e.target.value) || 0)} placeholder="Annual" />
-                              <span className="per-label">/yr</span>
-                            </div>
-                          </div>
-                        ))}
-                        <div className="pnl-row total"><span>Total Operating Expenses</span><span>-{formatCurrency(totalExpenses)}</span></div>
-                      </div>
-                      <div className="val-pnl-section noi">
-                        <div className="pnl-row highlight"><span>Net Operating Income (NOI)</span><span>{formatCurrency(noiFromPnL)}</span></div>
-                        <div className="pnl-metrics">
-                          <div><span>Expense Ratio</span><span>{effectiveGrossIncome > 0 ? ((totalExpenses / effectiveGrossIncome) * 100).toFixed(1) : 0}%</span></div>
-                          <div><span>Per Unit/Year</span><span>{rentRoll.length > 0 ? formatCurrency(totalExpenses / rentRoll.length) : "-"}</span></div>
-                          <div><span>Per Sq Ft/Year</span><span>{rentRollTotals.totalSqft > 0 ? `$${(totalExpenses / rentRollTotals.totalSqft).toFixed(2)}` : "-"}</span></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Improvements Tab */}
                   {activeTab === "improvements" && valuation && (
                     <div className="val-improvements-content">
@@ -1077,7 +1106,7 @@ export default function ValoraDashboard() {
                 {/* Notes Section */}
                 <div className="val-notes-section">
                   <h4>Notes</h4>
-                  <textarea placeholder="Add notes about this property..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}></textarea>
+                  <textarea placeholder="Add notes about this property or deal..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}></textarea>
                 </div>
               </>
             )}
@@ -1123,6 +1152,7 @@ export default function ValoraDashboard() {
                           <span>{workspace.date}</span>
                           <span>{PROPERTY_TYPES.find(t => t.id === workspace.propertyType)?.name}</span>
                           {workspace.valuation && <span className="workspace-value">{formatCurrency(workspace.valuation.estimatedValue)}</span>}
+                          {!workspace.valuation && workspace.underwriting && <span className="workspace-value">NOI: {formatCurrency(workspace.underwriting.noi)}</span>}
                         </div>
                       </div>
                       <button className="workspace-delete" onClick={() => deleteWorkspace(workspace.id)}>
