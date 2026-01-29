@@ -31,37 +31,20 @@ interface AIAccountResearch {
   competitorInfo: string;
 }
 
-// Sample data
-const contacts = [
-  { id: 1, name: "Sarah Mitchell", company: "TechVentures Inc", email: "sarah@techventures.com", phone: "(555) 123-4567", status: "hot", lastContact: "2024-01-18", value: 125000, avatar: "SM" },
-  { id: 2, name: "Michael Chen", company: "Apex Partners", email: "mchen@apexpartners.com", phone: "(555) 234-5678", status: "warm", lastContact: "2024-01-15", value: 85000, avatar: "MC" },
-  { id: 3, name: "Jennifer Walsh", company: "Summit Holdings", email: "jwalsh@summit.co", phone: "(555) 345-6789", status: "hot", lastContact: "2024-01-17", value: 200000, avatar: "JW" },
-  { id: 4, name: "David Park", company: "Innovate Labs", email: "dpark@innovatelabs.io", phone: "(555) 456-7890", status: "cold", lastContact: "2024-01-05", value: 45000, avatar: "DP" },
-  { id: 5, name: "Amanda Foster", company: "Growth Capital", email: "afoster@growthcap.com", phone: "(555) 567-8901", status: "warm", lastContact: "2024-01-12", value: 150000, avatar: "AF" },
-];
+// CRM data - starts empty for user to add their own
+const contacts: { id: number; name: string; company: string; email: string; phone: string; status: string; lastContact: string; value: number; avatar: string }[] = [];
 
 const pipeline = [
-  { stage: "Lead", count: 24, value: 480000, color: "#64748B" },
-  { stage: "Qualified", count: 18, value: 720000, color: "#3B82F6" },
-  { stage: "Proposal", count: 12, value: 960000, color: "#8B5CF6" },
-  { stage: "Negotiation", count: 8, value: 640000, color: "#F59E0B" },
-  { stage: "Closed", count: 15, value: 1200000, color: "#10B981" },
+  { stage: "Lead", count: 0, value: 0, color: "#64748B" },
+  { stage: "Qualified", count: 0, value: 0, color: "#3B82F6" },
+  { stage: "Proposal", count: 0, value: 0, color: "#8B5CF6" },
+  { stage: "Negotiation", count: 0, value: 0, color: "#F59E0B" },
+  { stage: "Closed", count: 0, value: 0, color: "#10B981" },
 ];
 
-const activities = [
-  { id: 1, type: "call", contact: "Sarah Mitchell", description: "Discussed Q1 partnership proposal", time: "2 hours ago" },
-  { id: 2, type: "email", contact: "Michael Chen", description: "Sent follow-up on pricing details", time: "4 hours ago" },
-  { id: 3, type: "meeting", contact: "Jennifer Walsh", description: "Strategy session for expansion", time: "Yesterday" },
-  { id: 4, type: "note", contact: "David Park", description: "Added notes from trade show meeting", time: "Yesterday" },
-  { id: 5, type: "task", contact: "Amanda Foster", description: "Schedule product demo", time: "2 days ago" },
-];
+const activities: { id: number; type: string; contact: string; description: string; time: string }[] = [];
 
-const upcomingTasks = [
-  { id: 1, title: "Call Sarah Mitchell", type: "call", dueDate: "Today, 2:00 PM", priority: "high" },
-  { id: 2, title: "Send proposal to Jennifer Walsh", type: "email", dueDate: "Today, 5:00 PM", priority: "high" },
-  { id: 3, title: "Follow up with Michael Chen", type: "call", dueDate: "Tomorrow, 10:00 AM", priority: "medium" },
-  { id: 4, title: "Prepare quarterly review deck", type: "task", dueDate: "Jan 25, 2024", priority: "medium" },
-];
+const upcomingTasks: { id: number; title: string; type: string; dueDate: string; priority: string }[] = [];
 
 export default function LegacyCRMDashboard() {
   const [contactFilter, setContactFilter] = useState("all");
@@ -333,31 +316,38 @@ export default function LegacyCRMDashboard() {
                 />
               </div>
               <div className="lcrm-contacts-list">
-                {filteredContacts.map((contact) => (
-                  <div key={contact.id} className="lcrm-contact-row">
-                    <div className="lcrm-contact-avatar" style={{ background: `linear-gradient(135deg, ${getStatusColor(contact.status)} 0%, ${getStatusColor(contact.status)}99 100%)` }}>
-                      {contact.avatar}
+                {filteredContacts.length > 0 ? (
+                  filteredContacts.map((contact) => (
+                    <div key={contact.id} className="lcrm-contact-row">
+                      <div className="lcrm-contact-avatar" style={{ background: `linear-gradient(135deg, ${getStatusColor(contact.status)} 0%, ${getStatusColor(contact.status)}99 100%)` }}>
+                        {contact.avatar}
+                      </div>
+                      <div className="lcrm-contact-info">
+                        <span className="lcrm-contact-name">{contact.name}</span>
+                        <span className="lcrm-contact-company">{contact.company}</span>
+                      </div>
+                      <div className="lcrm-contact-meta">
+                        <span className="lcrm-contact-value">${(contact.value / 1000).toFixed(0)}K</span>
+                        <span className={`lcrm-contact-status ${contact.status}`}>{contact.status}</span>
+                      </div>
+                      <button
+                        className="lcrm-ai-research-btn"
+                        onClick={() => runAIResearch(contact)}
+                        title="AI Account Research"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                        </svg>
+                      </button>
                     </div>
-                    <div className="lcrm-contact-info">
-                      <span className="lcrm-contact-name">{contact.name}</span>
-                      <span className="lcrm-contact-company">{contact.company}</span>
-                    </div>
-                    <div className="lcrm-contact-meta">
-                      <span className="lcrm-contact-value">${(contact.value / 1000).toFixed(0)}K</span>
-                      <span className={`lcrm-contact-status ${contact.status}`}>{contact.status}</span>
-                    </div>
-                    <button
-                      className="lcrm-ai-research-btn"
-                      onClick={() => runAIResearch(contact)}
-                      title="AI Account Research"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                        <circle cx="12" cy="12" r="3" />
-                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                      </svg>
-                    </button>
+                  ))
+                ) : (
+                  <div className="lcrm-empty-state-sm">
+                    <p>No contacts yet</p>
+                    <span>Add your first contact to get started</span>
                   </div>
-                ))}
+                )}
               </div>
               <Link href="/legacy-crm/contacts" className="lcrm-view-all-btn">
                 View All Contacts
@@ -371,16 +361,22 @@ export default function LegacyCRMDashboard() {
                 <Link href="/legacy-crm/activities" className="lcrm-dash-link">View All</Link>
               </div>
               <div className="lcrm-activity-feed">
-                {activities.map((activity) => (
-                  <div key={activity.id} className="lcrm-activity-item">
-                    <span className="lcrm-activity-icon">{getActivityIcon(activity.type)}</span>
-                    <div className="lcrm-activity-content">
-                      <span className="lcrm-activity-contact">{activity.contact}</span>
-                      <span className="lcrm-activity-desc">{activity.description}</span>
-                      <span className="lcrm-activity-time">{activity.time}</span>
+                {activities.length > 0 ? (
+                  activities.map((activity) => (
+                    <div key={activity.id} className="lcrm-activity-item">
+                      <span className="lcrm-activity-icon">{getActivityIcon(activity.type)}</span>
+                      <div className="lcrm-activity-content">
+                        <span className="lcrm-activity-contact">{activity.contact}</span>
+                        <span className="lcrm-activity-desc">{activity.description}</span>
+                        <span className="lcrm-activity-time">{activity.time}</span>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="lcrm-empty-state-sm">
+                    <p>No recent activity</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -396,18 +392,24 @@ export default function LegacyCRMDashboard() {
                 </button>
               </div>
               <div className="lcrm-upcoming-tasks">
-                {upcomingTasks.map((task) => (
-                  <div key={task.id} className="lcrm-upcoming-task">
-                    <div className="lcrm-task-checkbox">
-                      <input type="checkbox" />
+                {upcomingTasks.length > 0 ? (
+                  upcomingTasks.map((task) => (
+                    <div key={task.id} className="lcrm-upcoming-task">
+                      <div className="lcrm-task-checkbox">
+                        <input type="checkbox" />
+                      </div>
+                      <div className="lcrm-task-info">
+                        <span className="lcrm-task-title">{task.title}</span>
+                        <span className="lcrm-task-due">{task.dueDate}</span>
+                      </div>
+                      <span className={`lcrm-task-priority ${task.priority}`}>{task.priority}</span>
                     </div>
-                    <div className="lcrm-task-info">
-                      <span className="lcrm-task-title">{task.title}</span>
-                      <span className="lcrm-task-due">{task.dueDate}</span>
-                    </div>
-                    <span className={`lcrm-task-priority ${task.priority}`}>{task.priority}</span>
+                  ))
+                ) : (
+                  <div className="lcrm-empty-state-sm">
+                    <p>No upcoming tasks</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 

@@ -34,31 +34,12 @@ interface AIBusinessAnalysis {
   riskFactors: string[];
 }
 
-// Sample data
-const revenueData = [
-  { month: "Jan", revenue: 45000, expenses: 32000 },
-  { month: "Feb", revenue: 52000, expenses: 35000 },
-  { month: "Mar", revenue: 48000, expenses: 33000 },
-  { month: "Apr", revenue: 61000, expenses: 38000 },
-  { month: "May", revenue: 55000, expenses: 36000 },
-  { month: "Jun", revenue: 67000, expenses: 41000 },
-];
+// Business data - starts empty for user to add their own
+const revenueData: { month: string; revenue: number; expenses: number }[] = [];
 
-const recentTransactions = [
-  { id: 1, description: "Client Payment - ABC Corp", amount: 12500, type: "income", date: "2024-01-18" },
-  { id: 2, description: "Software Subscription", amount: -299, type: "expense", date: "2024-01-17" },
-  { id: 3, description: "Consulting Fee - XYZ Inc", amount: 8500, type: "income", date: "2024-01-16" },
-  { id: 4, description: "Office Supplies", amount: -156, type: "expense", date: "2024-01-15" },
-  { id: 5, description: "Project Milestone - StartupCo", amount: 15000, type: "income", date: "2024-01-14" },
-];
+const recentTransactions: { id: number; description: string; amount: number; type: string; date: string }[] = [];
 
-const tasks = [
-  { id: 1, title: "Review Q4 financial statements", priority: "high", dueDate: "2024-01-20", completed: false },
-  { id: 2, title: "Prepare investor presentation", priority: "high", dueDate: "2024-01-22", completed: false },
-  { id: 3, title: "Update business plan for 2024", priority: "medium", dueDate: "2024-01-25", completed: false },
-  { id: 4, title: "Schedule team performance reviews", priority: "medium", dueDate: "2024-01-28", completed: true },
-  { id: 5, title: "Renew business insurance", priority: "low", dueDate: "2024-02-01", completed: false },
-];
+const tasks: { id: number; title: string; priority: string; dueDate: string; completed: boolean }[] = [];
 
 const quickTools = [
   {
@@ -399,25 +380,35 @@ export default function BusinessNowDashboard() {
                 </div>
               </div>
               <div className="bn-chart">
-                <div className="bn-bar-chart">
-                  {revenueData.map((data, index) => (
-                    <div key={index} className="bn-bar-group">
-                      <div className="bn-bars">
-                        <div
-                          className="bn-bar revenue"
-                          style={{ height: `${(data.revenue / maxValue) * 100}%` }}
-                          title={`Revenue: $${data.revenue.toLocaleString()}`}
-                        />
-                        <div
-                          className="bn-bar expenses"
-                          style={{ height: `${(data.expenses / maxValue) * 100}%` }}
-                          title={`Expenses: $${data.expenses.toLocaleString()}`}
-                        />
+                {revenueData.length > 0 ? (
+                  <div className="bn-bar-chart">
+                    {revenueData.map((data, index) => (
+                      <div key={index} className="bn-bar-group">
+                        <div className="bn-bars">
+                          <div
+                            className="bn-bar revenue"
+                            style={{ height: `${(data.revenue / maxValue) * 100}%` }}
+                            title={`Revenue: $${data.revenue.toLocaleString()}`}
+                          />
+                          <div
+                            className="bn-bar expenses"
+                            style={{ height: `${(data.expenses / maxValue) * 100}%` }}
+                            title={`Expenses: $${data.expenses.toLocaleString()}`}
+                          />
+                        </div>
+                        <span className="bn-bar-label">{data.month}</span>
                       </div>
-                      <span className="bn-bar-label">{data.month}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bn-empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+                      <path d="M18 20V10M12 20V4M6 20v-6" />
+                    </svg>
+                    <p>No financial data yet</p>
+                    <span>Add transactions to see your revenue chart</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -428,28 +419,34 @@ export default function BusinessNowDashboard() {
                 <Link href="/business-now/expenses" className="bn-link">View All</Link>
               </div>
               <div className="bn-transactions">
-                {recentTransactions.map((tx) => (
-                  <div key={tx.id} className="bn-transaction">
-                    <div className="bn-transaction-icon" data-type={tx.type}>
-                      {tx.type === "income" ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="23,6 13.5,15.5 8.5,10.5 1,18" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="23,18 13.5,8.5 8.5,13.5 1,6" />
-                        </svg>
-                      )}
+                {recentTransactions.length > 0 ? (
+                  recentTransactions.map((tx) => (
+                    <div key={tx.id} className="bn-transaction">
+                      <div className="bn-transaction-icon" data-type={tx.type}>
+                        {tx.type === "income" ? (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="23,18 13.5,8.5 8.5,13.5 1,6" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="bn-transaction-details">
+                        <span className="bn-transaction-desc">{tx.description}</span>
+                        <span className="bn-transaction-date">{new Date(tx.date).toLocaleDateString()}</span>
+                      </div>
+                      <span className={`bn-transaction-amount ${tx.type}`}>
+                        {tx.type === "income" ? "+" : ""}{tx.amount < 0 ? "-" : ""}${Math.abs(tx.amount).toLocaleString()}
+                      </span>
                     </div>
-                    <div className="bn-transaction-details">
-                      <span className="bn-transaction-desc">{tx.description}</span>
-                      <span className="bn-transaction-date">{new Date(tx.date).toLocaleDateString()}</span>
-                    </div>
-                    <span className={`bn-transaction-amount ${tx.type}`}>
-                      {tx.type === "income" ? "+" : ""}{tx.amount < 0 ? "-" : ""}${Math.abs(tx.amount).toLocaleString()}
-                    </span>
+                  ))
+                ) : (
+                  <div className="bn-empty-state-sm">
+                    <p>No transactions yet</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -470,19 +467,25 @@ export default function BusinessNowDashboard() {
                 </div>
               </div>
               <div className="bn-tasks">
-                {filteredTasks.map((task) => (
-                  <div key={task.id} className={`bn-task ${task.completed ? "completed" : ""}`}>
-                    <label className="bn-task-checkbox">
-                      <input type="checkbox" defaultChecked={task.completed} />
-                      <span className="bn-checkmark"></span>
-                    </label>
-                    <div className="bn-task-content">
-                      <span className="bn-task-title">{task.title}</span>
-                      <span className="bn-task-due">Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                {filteredTasks.length > 0 ? (
+                  filteredTasks.map((task) => (
+                    <div key={task.id} className={`bn-task ${task.completed ? "completed" : ""}`}>
+                      <label className="bn-task-checkbox">
+                        <input type="checkbox" defaultChecked={task.completed} />
+                        <span className="bn-checkmark"></span>
+                      </label>
+                      <div className="bn-task-content">
+                        <span className="bn-task-title">{task.title}</span>
+                        <span className="bn-task-due">Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                      </div>
+                      <span className={`bn-task-priority ${task.priority}`}>{task.priority}</span>
                     </div>
-                    <span className={`bn-task-priority ${task.priority}`}>{task.priority}</span>
+                  ))
+                ) : (
+                  <div className="bn-empty-state-sm">
+                    <p>No tasks yet</p>
                   </div>
-                ))}
+                )}
               </div>
               <button className="bn-add-task">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">

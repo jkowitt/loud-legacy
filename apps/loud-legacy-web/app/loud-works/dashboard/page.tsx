@@ -53,57 +53,28 @@ interface AIGrowthAnalysis {
   skillGaps: string[];
 }
 
-// Sample data
-const teamMembers = [
-  { id: 1, name: "Sarah Johnson", role: "Event Coordinator", department: "Operations", status: "active", certifications: 4, hireDate: "Mar 2023", avatar: "SJ" },
-  { id: 2, name: "Marcus Chen", role: "Senior Analyst", department: "Finance", status: "active", certifications: 6, hireDate: "Jan 2022", avatar: "MC" },
-  { id: 3, name: "Emily Rodriguez", role: "Marketing Lead", department: "Marketing", status: "active", certifications: 3, hireDate: "Jun 2023", avatar: "ER" },
-  { id: 4, name: "James Wilson", role: "Operations Manager", department: "Operations", status: "active", certifications: 8, hireDate: "Sep 2021", avatar: "JW" },
-  { id: 5, name: "Aisha Patel", role: "Junior Developer", department: "Technology", status: "onboarding", certifications: 2, hireDate: "Jan 2024", avatar: "AP" },
-];
+// Workforce data - starts empty for user to add their own
+const teamMembers: { id: number; name: string; role: string; department: string; status: string; certifications: number; hireDate: string; avatar: string }[] = [];
 
-const openPositions = [
-  { id: 1, title: "Event Staff Lead", department: "Operations", applicants: 23, posted: "Jan 10", priority: "high" },
-  { id: 2, title: "Financial Analyst", department: "Finance", applicants: 45, posted: "Jan 5", priority: "medium" },
-  { id: 3, title: "Content Creator", department: "Marketing", applicants: 67, posted: "Dec 28", priority: "low" },
-];
+const openPositions: { id: number; title: string; department: string; applicants: number; posted: string; priority: string }[] = [];
 
-const upcomingTrainings = [
-  { id: 1, name: "Safety & Compliance", date: "Jan 28", attendees: 12, type: "required" },
-  { id: 2, name: "Leadership Development", date: "Feb 5", attendees: 8, type: "optional" },
-  { id: 3, name: "Customer Service Excellence", date: "Feb 12", attendees: 15, type: "required" },
-];
+const upcomingTrainings: { id: number; name: string; date: string; attendees: number; type: string }[] = [];
 
-const recentActivity = [
-  { id: 1, action: "New hire completed onboarding", person: "Aisha Patel", time: "2 hours ago", type: "onboarding" },
-  { id: 2, action: "Certification earned", person: "Marcus Chen", time: "Yesterday", type: "certification" },
-  { id: 3, action: "Performance review completed", person: "Emily Rodriguez", time: "2 days ago", type: "review" },
-  { id: 4, action: "Training registered", person: "James Wilson", time: "3 days ago", type: "training" },
-];
+const recentActivity: { id: number; action: string; person: string; time: string; type: string }[] = [];
 
-const scheduleToday = [
-  { id: 1, shift: "Morning", time: "6:00 AM - 2:00 PM", staffed: 8, required: 8, status: "covered" },
-  { id: 2, shift: "Afternoon", time: "2:00 PM - 10:00 PM", staffed: 6, required: 8, status: "understaffed" },
-  { id: 3, shift: "Evening Event", time: "6:00 PM - 11:00 PM", staffed: 12, required: 12, status: "covered" },
-];
+const scheduleToday: { id: number; shift: string; time: string; staffed: number; required: number; status: string }[] = [];
 
 export default function LoudWorksDashboard() {
   const [selectedDepartment, setSelectedDepartment] = useState("all");
 
   // AI Growth Optimizer State
   const [showGrowthOptimizer, setShowGrowthOptimizer] = useState(false);
-  const [goals, setGoals] = useState<GrowthGoal[]>([
-    { id: "1", title: "Earn Project Management Certification", category: "certification", priority: "high", targetDate: "Mar 2024" },
-    { id: "2", title: "Develop Leadership Skills", category: "leadership", priority: "medium", targetDate: "Jun 2024" },
-  ]);
+  const [goals, setGoals] = useState<GrowthGoal[]>([]);
   const [newGoal, setNewGoal] = useState("");
   const [newGoalCategory, setNewGoalCategory] = useState<GrowthGoal["category"]>("skill");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [growthAnalysis, setGrowthAnalysis] = useState<AIGrowthAnalysis | null>(null);
-  const [certificates, setCertificates] = useState<CertificateUpload[]>([
-    { id: "1", trainingName: "Safety & Compliance", fileName: "safety_cert.pdf", uploadDate: "Jan 15, 2024", status: "verified", assignedBy: "HR Admin" },
-    { id: "2", trainingName: "Customer Service Excellence", fileName: "", uploadDate: "", status: "pending", assignedBy: "Manager" },
-  ]);
+  const [certificates, setCertificates] = useState<CertificateUpload[]>([]);
   const certInputRef = useRef<HTMLInputElement>(null);
   const [uploadingCertId, setUploadingCertId] = useState<string | null>(null);
 
@@ -395,36 +366,50 @@ export default function LoudWorksDashboard() {
                 </div>
               </div>
               <div className="lw-team-table">
-                <div className="lw-team-header">
-                  <span>Employee</span>
-                  <span>Department</span>
-                  <span>Certifications</span>
-                  <span>Hire Date</span>
-                  <span>Status</span>
-                </div>
-                {filteredMembers.map((member) => (
-                  <div key={member.id} className="lw-team-row">
-                    <div className="lw-member-info">
-                      <div className="lw-member-avatar">{member.avatar}</div>
-                      <div>
-                        <span className="lw-member-name">{member.name}</span>
-                        <span className="lw-member-role">{member.role}</span>
+                {filteredMembers.length > 0 ? (
+                  <>
+                    <div className="lw-team-header">
+                      <span>Employee</span>
+                      <span>Department</span>
+                      <span>Certifications</span>
+                      <span>Hire Date</span>
+                      <span>Status</span>
+                    </div>
+                    {filteredMembers.map((member) => (
+                      <div key={member.id} className="lw-team-row">
+                        <div className="lw-member-info">
+                          <div className="lw-member-avatar">{member.avatar}</div>
+                          <div>
+                            <span className="lw-member-name">{member.name}</span>
+                            <span className="lw-member-role">{member.role}</span>
+                          </div>
+                        </div>
+                        <span className="lw-member-dept">{member.department}</span>
+                        <div className="lw-member-certs">
+                          <span className="lw-cert-count">{member.certifications}</span>
+                          <span className="lw-cert-label">earned</span>
+                        </div>
+                        <span className="lw-member-hire">{member.hireDate}</span>
+                        <span
+                          className="lw-member-status"
+                          style={{ color: getStatusColor(member.status) }}
+                        >
+                          {member.status}
+                        </span>
                       </div>
-                    </div>
-                    <span className="lw-member-dept">{member.department}</span>
-                    <div className="lw-member-certs">
-                      <span className="lw-cert-count">{member.certifications}</span>
-                      <span className="lw-cert-label">earned</span>
-                    </div>
-                    <span className="lw-member-hire">{member.hireDate}</span>
-                    <span
-                      className="lw-member-status"
-                      style={{ color: getStatusColor(member.status) }}
-                    >
-                      {member.status}
-                    </span>
+                    ))}
+                  </>
+                ) : (
+                  <div className="lw-empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                    <p>No team members yet</p>
+                    <span>Add your first team member to get started</span>
                   </div>
-                ))}
+                )}
               </div>
               <Link href="/loud-works/team" className="lw-view-all-btn">
                 View Full Directory
@@ -438,31 +423,37 @@ export default function LoudWorksDashboard() {
                 <Link href="/loud-works/schedule" className="lw-dash-link">Full Schedule</Link>
               </div>
               <div className="lw-schedule-list">
-                {scheduleToday.map((shift) => (
-                  <div key={shift.id} className="lw-schedule-row">
-                    <div className="lw-shift-info">
-                      <span className="lw-shift-name">{shift.shift}</span>
-                      <span className="lw-shift-time">{shift.time}</span>
-                    </div>
-                    <div className="lw-shift-coverage">
-                      <div className="lw-coverage-bar">
-                        <div
-                          className="lw-coverage-fill"
-                          style={{
-                            width: `${(shift.staffed / shift.required) * 100}%`,
-                            background: shift.status === "covered" ? "#22C55E" : "#EF4444"
-                          }}
-                        />
+                {scheduleToday.length > 0 ? (
+                  scheduleToday.map((shift) => (
+                    <div key={shift.id} className="lw-schedule-row">
+                      <div className="lw-shift-info">
+                        <span className="lw-shift-name">{shift.shift}</span>
+                        <span className="lw-shift-time">{shift.time}</span>
                       </div>
-                      <span className="lw-coverage-text">
-                        {shift.staffed}/{shift.required} staffed
+                      <div className="lw-shift-coverage">
+                        <div className="lw-coverage-bar">
+                          <div
+                            className="lw-coverage-fill"
+                            style={{
+                              width: `${(shift.staffed / shift.required) * 100}%`,
+                              background: shift.status === "covered" ? "#22C55E" : "#EF4444"
+                            }}
+                          />
+                        </div>
+                        <span className="lw-coverage-text">
+                          {shift.staffed}/{shift.required} staffed
+                        </span>
+                      </div>
+                      <span className={`lw-shift-status ${shift.status}`}>
+                        {shift.status === "covered" ? "Covered" : "Needs Staff"}
                       </span>
                     </div>
-                    <span className={`lw-shift-status ${shift.status}`}>
-                      {shift.status === "covered" ? "Covered" : "Needs Staff"}
-                    </span>
+                  ))
+                ) : (
+                  <div className="lw-empty-state-sm">
+                    <p>No shifts scheduled</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -473,23 +464,29 @@ export default function LoudWorksDashboard() {
                 <Link href="/loud-works/recruiting" className="lw-dash-link">View All</Link>
               </div>
               <div className="lw-positions-list">
-                {openPositions.map((position) => (
-                  <div key={position.id} className="lw-position-row">
-                    <div className="lw-position-info">
-                      <span className="lw-position-title">{position.title}</span>
-                      <span className="lw-position-dept">{position.department}</span>
+                {openPositions.length > 0 ? (
+                  openPositions.map((position) => (
+                    <div key={position.id} className="lw-position-row">
+                      <div className="lw-position-info">
+                        <span className="lw-position-title">{position.title}</span>
+                        <span className="lw-position-dept">{position.department}</span>
+                      </div>
+                      <div className="lw-position-meta">
+                        <span className="lw-position-applicants">{position.applicants} applicants</span>
+                        <span
+                          className="lw-position-priority"
+                          style={{ background: getPriorityColor(position.priority) }}
+                        >
+                          {position.priority}
+                        </span>
+                      </div>
                     </div>
-                    <div className="lw-position-meta">
-                      <span className="lw-position-applicants">{position.applicants} applicants</span>
-                      <span
-                        className="lw-position-priority"
-                        style={{ background: getPriorityColor(position.priority) }}
-                      >
-                        {position.priority}
-                      </span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="lw-empty-state-sm">
+                    <p>No open positions</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -500,24 +497,30 @@ export default function LoudWorksDashboard() {
                 <Link href="/loud-works/training" className="lw-dash-link">Manage</Link>
               </div>
               <div className="lw-training-list">
-                {upcomingTrainings.map((training) => (
-                  <div key={training.id} className="lw-training-row">
-                    <div className="lw-training-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polygon points="12,2 2,7 12,12 22,7" />
-                        <polyline points="2,17 12,22 22,17" />
-                        <polyline points="2,12 12,17 22,12" />
-                      </svg>
+                {upcomingTrainings.length > 0 ? (
+                  upcomingTrainings.map((training) => (
+                    <div key={training.id} className="lw-training-row">
+                      <div className="lw-training-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polygon points="12,2 2,7 12,12 22,7" />
+                          <polyline points="2,17 12,22 22,17" />
+                          <polyline points="2,12 12,17 22,12" />
+                        </svg>
+                      </div>
+                      <div className="lw-training-info">
+                        <span className="lw-training-name">{training.name}</span>
+                        <span className="lw-training-meta">{training.date} &middot; {training.attendees} registered</span>
+                      </div>
+                      <span className={`lw-training-type ${training.type}`}>
+                        {training.type}
+                      </span>
                     </div>
-                    <div className="lw-training-info">
-                      <span className="lw-training-name">{training.name}</span>
-                      <span className="lw-training-meta">{training.date} &middot; {training.attendees} registered</span>
-                    </div>
-                    <span className={`lw-training-type ${training.type}`}>
-                      {training.type}
-                    </span>
+                  ))
+                ) : (
+                  <div className="lw-empty-state-sm">
+                    <p>No upcoming trainings</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -527,21 +530,27 @@ export default function LoudWorksDashboard() {
                 <h3>Recent Activity</h3>
               </div>
               <div className="lw-activity-list">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="lw-activity-row">
-                    <div className={`lw-activity-icon ${activity.type}`}>
-                      {activity.type === "onboarding" && "👋"}
-                      {activity.type === "certification" && "🎓"}
-                      {activity.type === "review" && "📋"}
-                      {activity.type === "training" && "📚"}
+                {recentActivity.length > 0 ? (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="lw-activity-row">
+                      <div className={`lw-activity-icon ${activity.type}`}>
+                        {activity.type === "onboarding" && "👋"}
+                        {activity.type === "certification" && "🎓"}
+                        {activity.type === "review" && "📋"}
+                        {activity.type === "training" && "📚"}
+                      </div>
+                      <div className="lw-activity-info">
+                        <span className="lw-activity-action">{activity.action}</span>
+                        <span className="lw-activity-person">{activity.person}</span>
+                      </div>
+                      <span className="lw-activity-time">{activity.time}</span>
                     </div>
-                    <div className="lw-activity-info">
-                      <span className="lw-activity-action">{activity.action}</span>
-                      <span className="lw-activity-person">{activity.person}</span>
-                    </div>
-                    <span className="lw-activity-time">{activity.time}</span>
+                  ))
+                ) : (
+                  <div className="lw-empty-state-sm">
+                    <p>No recent activity</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -856,45 +865,51 @@ export default function LoudWorksDashboard() {
                 />
 
                 <div className="lw-ai-certs-list">
-                  {certificates.map((cert) => (
-                    <div key={cert.id} className="lw-ai-cert-item">
-                      <div className="lw-ai-cert-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                          <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                          <polyline points="2 17 12 22 22 17" />
-                          <polyline points="2 12 12 17 22 12" />
-                        </svg>
-                      </div>
-                      <div className="lw-ai-cert-info">
-                        <span className="lw-ai-cert-name">{cert.trainingName}</span>
-                        <span className="lw-ai-cert-meta">
-                          Assigned by: {cert.assignedBy}
-                          {cert.fileName && ` • ${cert.fileName}`}
-                        </span>
-                      </div>
-                      <div className="lw-ai-cert-actions">
-                        {cert.fileName ? (
-                          <span className={`lw-ai-cert-status ${cert.status}`}>
-                            {cert.status === "verified" && "✓ Verified"}
-                            {cert.status === "pending" && "Pending Review"}
-                            {cert.status === "rejected" && "Rejected"}
+                  {certificates.length > 0 ? (
+                    certificates.map((cert) => (
+                      <div key={cert.id} className="lw-ai-cert-item">
+                        <div className="lw-ai-cert-icon">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                            <polyline points="2 17 12 22 22 17" />
+                            <polyline points="2 12 12 17 22 12" />
+                          </svg>
+                        </div>
+                        <div className="lw-ai-cert-info">
+                          <span className="lw-ai-cert-name">{cert.trainingName}</span>
+                          <span className="lw-ai-cert-meta">
+                            Assigned by: {cert.assignedBy}
+                            {cert.fileName && ` • ${cert.fileName}`}
                           </span>
-                        ) : (
-                          <button
-                            className="lw-ai-cert-upload-btn"
-                            onClick={() => triggerCertUpload(cert.id)}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                              <polyline points="17 8 12 3 7 8" />
-                              <line x1="12" y1="3" x2="12" y2="15" />
-                            </svg>
-                            Upload Certificate
-                          </button>
-                        )}
+                        </div>
+                        <div className="lw-ai-cert-actions">
+                          {cert.fileName ? (
+                            <span className={`lw-ai-cert-status ${cert.status}`}>
+                              {cert.status === "verified" && "✓ Verified"}
+                              {cert.status === "pending" && "Pending Review"}
+                              {cert.status === "rejected" && "Rejected"}
+                            </span>
+                          ) : (
+                            <button
+                              className="lw-ai-cert-upload-btn"
+                              onClick={() => triggerCertUpload(cert.id)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                              </svg>
+                              Upload Certificate
+                            </button>
+                          )}
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="lw-empty-state-sm">
+                      <p>No training certificates assigned</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>

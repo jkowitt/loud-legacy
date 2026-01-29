@@ -34,35 +34,14 @@ interface AIAssetAnalysis {
   confidence: number;
 }
 
-// Sample data
-const upcomingEvents = [
-  { id: 1, name: "Championship Finals", sport: "Basketball", date: "Jan 25, 2024", time: "7:00 PM", venue: "Main Arena", ticketsSold: 8500, capacity: 10000, status: "on-sale" },
-  { id: 2, name: "Regional Playoffs", sport: "Football", date: "Jan 27, 2024", time: "3:00 PM", venue: "Stadium East", ticketsSold: 22000, capacity: 25000, status: "on-sale" },
-  { id: 3, name: "Spring Tournament", sport: "Soccer", date: "Feb 3, 2024", time: "1:00 PM", venue: "Sports Complex", ticketsSold: 4200, capacity: 8000, status: "on-sale" },
-  { id: 4, name: "Invitational Meet", sport: "Track & Field", date: "Feb 10, 2024", time: "9:00 AM", venue: "Athletic Center", ticketsSold: 1800, capacity: 5000, status: "upcoming" },
-];
+// Athletics data - starts empty for user to add their own
+const upcomingEvents: { id: number; name: string; sport: string; date: string; time: string; venue: string; ticketsSold: number; capacity: number; status: string }[] = [];
 
-const teams = [
-  { id: 1, name: "Eagles", sport: "Basketball", record: "18-4", standing: 1, nextGame: "Jan 25", logo: "🦅" },
-  { id: 2, name: "Lions", sport: "Football", record: "12-2", standing: 1, nextGame: "Jan 27", logo: "🦁" },
-  { id: 3, name: "Wolves", sport: "Soccer", record: "14-6-2", standing: 2, nextGame: "Feb 3", logo: "🐺" },
-  { id: 4, name: "Hawks", sport: "Baseball", record: "0-0", standing: "-", nextGame: "Mar 15", logo: "🦅" },
-  { id: 5, name: "Tigers", sport: "Hockey", record: "20-8", standing: 3, nextGame: "Jan 28", logo: "🐯" },
-];
+const teams: { id: number; name: string; sport: string; record: string; standing: number | string; nextGame: string; logo: string }[] = [];
 
-const recentResults = [
-  { id: 1, event: "Basketball vs Panthers", result: "W 85-72", date: "Jan 20", attendance: 8200 },
-  { id: 2, event: "Football vs Bears", result: "W 28-14", date: "Jan 18", attendance: 21500 },
-  { id: 3, event: "Soccer vs United", result: "D 2-2", date: "Jan 15", attendance: 5100 },
-  { id: 4, event: "Hockey vs Bruins", result: "L 2-3", date: "Jan 14", attendance: 6800 },
-];
+const recentResults: { id: number; event: string; result: string; date: string; attendance: number }[] = [];
 
-const staffMembers = [
-  { id: 1, name: "Coach Williams", role: "Head Basketball Coach", status: "active" },
-  { id: 2, name: "Coach Martinez", role: "Head Football Coach", status: "active" },
-  { id: 3, name: "Sarah Johnson", role: "Athletic Director", status: "active" },
-  { id: 4, name: "Mike Chen", role: "Equipment Manager", status: "active" },
-];
+const staffMembers: { id: number; name: string; role: string; status: string }[] = [];
 
 export default function SportifyDashboard() {
   const [selectedSport, setSelectedSport] = useState("all");
@@ -374,43 +353,58 @@ export default function SportifyDashboard() {
                 <Link href="/sportify/events" className="sp-dash-link">View All Events</Link>
               </div>
               <div className="sp-events-table">
-                <div className="sp-events-header">
-                  <span>Event</span>
-                  <span>Date & Time</span>
-                  <span>Venue</span>
-                  <span>Ticket Sales</span>
-                  <span>Status</span>
-                </div>
-                {upcomingEvents.map((event) => (
-                  <div key={event.id} className="sp-event-row">
-                    <div className="sp-event-info">
-                      <div className="sp-event-sport">{getSportIcon(event.sport)}</div>
-                      <div>
-                        <span className="sp-event-name">{event.name}</span>
-                        <span className="sp-event-type">{event.sport}</span>
+                {upcomingEvents.length > 0 ? (
+                  <>
+                    <div className="sp-events-header">
+                      <span>Event</span>
+                      <span>Date & Time</span>
+                      <span>Venue</span>
+                      <span>Ticket Sales</span>
+                      <span>Status</span>
+                    </div>
+                    {upcomingEvents.map((event) => (
+                      <div key={event.id} className="sp-event-row">
+                        <div className="sp-event-info">
+                          <div className="sp-event-sport">{getSportIcon(event.sport)}</div>
+                          <div>
+                            <span className="sp-event-name">{event.name}</span>
+                            <span className="sp-event-type">{event.sport}</span>
+                          </div>
+                        </div>
+                        <div className="sp-event-datetime">
+                          <span className="sp-event-date">{event.date}</span>
+                          <span className="sp-event-time">{event.time}</span>
+                        </div>
+                        <span className="sp-event-venue">{event.venue}</span>
+                        <div className="sp-event-tickets">
+                          <div className="sp-tickets-bar">
+                            <div
+                              className="sp-tickets-fill"
+                              style={{ width: `${(event.ticketsSold / event.capacity) * 100}%` }}
+                            />
+                          </div>
+                          <span className="sp-tickets-text">
+                            {(event.ticketsSold / 1000).toFixed(1)}K / {(event.capacity / 1000).toFixed(0)}K
+                          </span>
+                        </div>
+                        <span className={`sp-event-status ${event.status}`}>
+                          {event.status === "on-sale" ? "On Sale" : "Upcoming"}
+                        </span>
                       </div>
-                    </div>
-                    <div className="sp-event-datetime">
-                      <span className="sp-event-date">{event.date}</span>
-                      <span className="sp-event-time">{event.time}</span>
-                    </div>
-                    <span className="sp-event-venue">{event.venue}</span>
-                    <div className="sp-event-tickets">
-                      <div className="sp-tickets-bar">
-                        <div
-                          className="sp-tickets-fill"
-                          style={{ width: `${(event.ticketsSold / event.capacity) * 100}%` }}
-                        />
-                      </div>
-                      <span className="sp-tickets-text">
-                        {(event.ticketsSold / 1000).toFixed(1)}K / {(event.capacity / 1000).toFixed(0)}K
-                      </span>
-                    </div>
-                    <span className={`sp-event-status ${event.status}`}>
-                      {event.status === "on-sale" ? "On Sale" : "Upcoming"}
-                    </span>
+                    ))}
+                  </>
+                ) : (
+                  <div className="sp-empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    <p>No upcoming events</p>
+                    <span>Create your first event to get started</span>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -431,27 +425,33 @@ export default function SportifyDashboard() {
                 </div>
               </div>
               <div className="sp-teams-list">
-                {filteredTeams.map((team) => (
-                  <div key={team.id} className="sp-team-row">
-                    <div className="sp-team-logo">{team.logo}</div>
-                    <div className="sp-team-info">
-                      <span className="sp-team-name">{team.name}</span>
-                      <span className="sp-team-sport">{team.sport}</span>
+                {filteredTeams.length > 0 ? (
+                  filteredTeams.map((team) => (
+                    <div key={team.id} className="sp-team-row">
+                      <div className="sp-team-logo">{team.logo}</div>
+                      <div className="sp-team-info">
+                        <span className="sp-team-name">{team.name}</span>
+                        <span className="sp-team-sport">{team.sport}</span>
+                      </div>
+                      <div className="sp-team-record">
+                        <span className="sp-record-value">{team.record}</span>
+                        <span className="sp-record-label">Record</span>
+                      </div>
+                      <div className="sp-team-standing">
+                        <span className="sp-standing-value">#{team.standing}</span>
+                        <span className="sp-standing-label">Standing</span>
+                      </div>
+                      <div className="sp-team-next">
+                        <span className="sp-next-value">{team.nextGame}</span>
+                        <span className="sp-next-label">Next Game</span>
+                      </div>
                     </div>
-                    <div className="sp-team-record">
-                      <span className="sp-record-value">{team.record}</span>
-                      <span className="sp-record-label">Record</span>
-                    </div>
-                    <div className="sp-team-standing">
-                      <span className="sp-standing-value">#{team.standing}</span>
-                      <span className="sp-standing-label">Standing</span>
-                    </div>
-                    <div className="sp-team-next">
-                      <span className="sp-next-value">{team.nextGame}</span>
-                      <span className="sp-next-label">Next Game</span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="sp-empty-state-sm">
+                    <p>No teams added</p>
                   </div>
-                ))}
+                )}
               </div>
               <Link href="/sportify/teams" className="sp-view-all-btn">
                 View All Teams
@@ -465,25 +465,31 @@ export default function SportifyDashboard() {
                 <Link href="/sportify/events" className="sp-dash-link">View All</Link>
               </div>
               <div className="sp-results-list">
-                {recentResults.map((result) => (
-                  <div key={result.id} className="sp-result-row">
-                    <div className="sp-result-info">
-                      <span className="sp-result-event">{result.event}</span>
-                      <span className="sp-result-date">{result.date}</span>
+                {recentResults.length > 0 ? (
+                  recentResults.map((result) => (
+                    <div key={result.id} className="sp-result-row">
+                      <div className="sp-result-info">
+                        <span className="sp-result-event">{result.event}</span>
+                        <span className="sp-result-date">{result.date}</span>
+                      </div>
+                      <div className="sp-result-meta">
+                        <span
+                          className="sp-result-score"
+                          style={{ color: getResultColor(result.result) }}
+                        >
+                          {result.result}
+                        </span>
+                        <span className="sp-result-attendance">
+                          {(result.attendance / 1000).toFixed(1)}K attended
+                        </span>
+                      </div>
                     </div>
-                    <div className="sp-result-meta">
-                      <span
-                        className="sp-result-score"
-                        style={{ color: getResultColor(result.result) }}
-                      >
-                        {result.result}
-                      </span>
-                      <span className="sp-result-attendance">
-                        {(result.attendance / 1000).toFixed(1)}K attended
-                      </span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="sp-empty-state-sm">
+                    <p>No results yet</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -494,20 +500,26 @@ export default function SportifyDashboard() {
                 <Link href="/sportify/staff" className="sp-dash-link">Manage Staff</Link>
               </div>
               <div className="sp-staff-list">
-                {staffMembers.map((staff) => (
-                  <div key={staff.id} className="sp-staff-row">
-                    <div className="sp-staff-avatar">
-                      {staff.name.split(" ").map(n => n[0]).join("")}
+                {staffMembers.length > 0 ? (
+                  staffMembers.map((staff) => (
+                    <div key={staff.id} className="sp-staff-row">
+                      <div className="sp-staff-avatar">
+                        {staff.name.split(" ").map(n => n[0]).join("")}
+                      </div>
+                      <div className="sp-staff-info">
+                        <span className="sp-staff-name">{staff.name}</span>
+                        <span className="sp-staff-role">{staff.role}</span>
+                      </div>
+                      <span className={`sp-staff-status ${staff.status}`}>
+                        {staff.status}
+                      </span>
                     </div>
-                    <div className="sp-staff-info">
-                      <span className="sp-staff-name">{staff.name}</span>
-                      <span className="sp-staff-role">{staff.role}</span>
-                    </div>
-                    <span className={`sp-staff-status ${staff.status}`}>
-                      {staff.status}
-                    </span>
+                  ))
+                ) : (
+                  <div className="sp-empty-state-sm">
+                    <p>No staff members</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
