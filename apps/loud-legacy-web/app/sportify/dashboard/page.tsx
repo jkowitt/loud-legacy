@@ -46,6 +46,12 @@ const staffMembers: { id: number; name: string; role: string; status: string }[]
 export default function SportifyDashboard() {
   const [selectedSport, setSelectedSport] = useState("all");
 
+  // Quick Action Modal State
+  const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [ticketQuantity, setTicketQuantity] = useState(1);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertSent, setAlertSent] = useState(false);
+
   // AI Asset Optimizer State
   const [showAIOptimizer, setShowAIOptimizer] = useState(false);
   const [assets, setAssets] = useState<AssetItem[]>([]);
@@ -529,7 +535,10 @@ export default function SportifyDashboard() {
                 <h3>Quick Actions</h3>
               </div>
               <div className="sp-quick-actions">
-                <button className="sp-quick-action">
+                <button
+                  className={`sp-quick-action ${activeAction === "tickets" ? "active" : ""}`}
+                  onClick={() => setActiveAction(activeAction === "tickets" ? null : "tickets")}
+                >
                   <div className="sp-qa-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <rect x="2" y="6" width="20" height="12" rx="2" />
@@ -539,7 +548,10 @@ export default function SportifyDashboard() {
                   </div>
                   <span>Sell Tickets</span>
                 </button>
-                <button className="sp-quick-action">
+                <button
+                  className={`sp-quick-action ${activeAction === "reports" ? "active" : ""}`}
+                  onClick={() => setActiveAction(activeAction === "reports" ? null : "reports")}
+                >
                   <div className="sp-qa-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M18 20V10M12 20V4M6 20v-6" />
@@ -547,7 +559,10 @@ export default function SportifyDashboard() {
                   </div>
                   <span>View Reports</span>
                 </button>
-                <button className="sp-quick-action">
+                <button
+                  className={`sp-quick-action ${activeAction === "alert" ? "active" : ""}`}
+                  onClick={() => setActiveAction(activeAction === "alert" ? null : "alert")}
+                >
                   <div className="sp-qa-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M19 10v4M12 3v18M5 10v4" />
@@ -556,7 +571,10 @@ export default function SportifyDashboard() {
                   </div>
                   <span>Send Alert</span>
                 </button>
-                <button className="sp-quick-action">
+                <button
+                  className={`sp-quick-action ${activeAction === "venue" ? "active" : ""}`}
+                  onClick={() => setActiveAction(activeAction === "venue" ? null : "venue")}
+                >
                   <div className="sp-qa-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M3 21h18M5 21V7l7-4 7 4v14" />
@@ -566,6 +584,78 @@ export default function SportifyDashboard() {
                   <span>Venue Setup</span>
                 </button>
               </div>
+              {activeAction && (
+                <div className="sp-action-panel">
+                  {activeAction === "tickets" && (
+                    <div className="sp-action-content">
+                      <h4>Quick Ticket Sale</h4>
+                      <div className="sp-action-form">
+                        <select className="sp-action-select">
+                          <option>Select Event</option>
+                          <option>Championship Finals</option>
+                          <option>Regional Playoffs</option>
+                          <option>Spring Tournament</option>
+                        </select>
+                        <div className="sp-ticket-qty">
+                          <button onClick={() => setTicketQuantity(Math.max(1, ticketQuantity - 1))}>-</button>
+                          <span>{ticketQuantity}</span>
+                          <button onClick={() => setTicketQuantity(ticketQuantity + 1)}>+</button>
+                        </div>
+                        <button className="sp-action-submit">Process Sale</button>
+                      </div>
+                    </div>
+                  )}
+                  {activeAction === "reports" && (
+                    <div className="sp-action-content">
+                      <h4>Quick Reports</h4>
+                      <div className="sp-report-links">
+                        <button className="sp-report-btn">Attendance Report</button>
+                        <button className="sp-report-btn">Revenue Summary</button>
+                        <button className="sp-report-btn">Team Performance</button>
+                      </div>
+                    </div>
+                  )}
+                  {activeAction === "alert" && (
+                    <div className="sp-action-content">
+                      <h4>Send Alert</h4>
+                      <div className="sp-action-form">
+                        <input
+                          type="text"
+                          placeholder="Alert message..."
+                          value={alertMessage}
+                          onChange={(e) => setAlertMessage(e.target.value)}
+                          className="sp-action-input"
+                        />
+                        <button
+                          className="sp-action-submit"
+                          onClick={() => { setAlertSent(true); setAlertMessage(""); setTimeout(() => setAlertSent(false), 2000); }}
+                        >
+                          {alertSent ? "Sent!" : "Send to All Staff"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {activeAction === "venue" && (
+                    <div className="sp-action-content">
+                      <h4>Venue Quick Setup</h4>
+                      <div className="sp-venue-options">
+                        <label className="sp-venue-option">
+                          <input type="checkbox" defaultChecked /> Lighting System
+                        </label>
+                        <label className="sp-venue-option">
+                          <input type="checkbox" defaultChecked /> Sound System
+                        </label>
+                        <label className="sp-venue-option">
+                          <input type="checkbox" /> Scoreboard Active
+                        </label>
+                        <label className="sp-venue-option">
+                          <input type="checkbox" /> Concessions Open
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

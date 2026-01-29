@@ -19,6 +19,15 @@ const marketTrends = [
 
 const tasks: { id: number; title: string; property: string; due: string; priority: string }[] = [];
 
+// Saved Analysis Interface
+interface SavedAnalysis {
+  id: string;
+  date: string;
+  images: string[];
+  result: AIAnalysisResult;
+  propertyName?: string;
+}
+
 // AI Analysis Result Interface
 interface AIAnalysisResult {
   overallCondition: string;
@@ -39,6 +48,10 @@ export default function ValoraDashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null);
   const [analysisType, setAnalysisType] = useState<"exterior" | "interior" | "both">("both");
+  const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);
+  const [showSavedAnalyses, setShowSavedAnalyses] = useState(false);
+  const [propertyName, setPropertyName] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalPortfolioValue = properties.reduce((sum, p) => sum + p.value, 0);
@@ -121,6 +134,33 @@ export default function ValoraDashboard() {
     setUploadedImages([]);
     setAnalysisResult(null);
     setIsAnalyzing(false);
+    setPropertyName("");
+    setSaveSuccess(false);
+  };
+
+  const saveAnalysis = () => {
+    if (!analysisResult) return;
+
+    const newAnalysis: SavedAnalysis = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString(),
+      images: uploadedImages,
+      result: analysisResult,
+      propertyName: propertyName || "Untitled Property"
+    };
+
+    setSavedAnalyses(prev => [newAnalysis, ...prev]);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  const deleteAnalysis = (id: string) => {
+    setSavedAnalyses(prev => prev.filter(a => a.id !== id));
+  };
+
+  const openNewAnalysis = () => {
+    resetAnalysis();
+    setShowAIAnalysis(true);
   };
 
   const getTypeIcon = (type: string) => {
@@ -197,15 +237,19 @@ export default function ValoraDashboard() {
               <p>Real-time insights for smarter real estate decisions.</p>
             </div>
             <div className="val-dash-actions">
-              <button className="val-dash-btn secondary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                  <polyline points="7,10 12,15 17,10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Export
-              </button>
-              <button className="val-dash-btn primary">
+              {savedAnalyses.length > 0 && (
+                <button
+                  className="val-dash-btn secondary"
+                  onClick={() => setShowSavedAnalyses(!showSavedAnalyses)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14,2 14,8 20,8" />
+                  </svg>
+                  Saved ({savedAnalyses.length})
+                </button>
+              )}
+              <button className="val-dash-btn primary" onClick={openNewAnalysis}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
@@ -441,21 +485,34 @@ export default function ValoraDashboard() {
                     </div>
                   </div>
 
+                  <div className="val-ai-save-section">
+                    <input
+                      type="text"
+                      placeholder="Property name (optional)"
+                      value={propertyName}
+                      onChange={(e) => setPropertyName(e.target.value)}
+                      className="val-ai-property-input"
+                    />
+                    {saveSuccess && (
+                      <span className="val-ai-save-success">Analysis saved!</span>
+                    )}
+                  </div>
+
                   <div className="val-ai-result-actions">
-                    <button className="val-ai-btn secondary">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                        <polyline points="7,10 12,15 17,10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                      Download Report
-                    </button>
-                    <button className="val-ai-btn primary">
+                    <button className="val-ai-btn secondary" onClick={resetAnalysis}>
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                         <line x1="12" y1="5" x2="12" y2="19" />
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
-                      Create Valuation
+                      New Analysis
+                    </button>
+                    <button className="val-ai-btn primary" onClick={saveAnalysis}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                      </svg>
+                      Save to Profile
                     </button>
                   </div>
                 </div>
@@ -464,6 +521,56 @@ export default function ValoraDashboard() {
           )}
         </div>
       </section>
+
+      {/* Saved Analyses Modal */}
+      {showSavedAnalyses && savedAnalyses.length > 0 && (
+        <div className="val-saved-modal-overlay" onClick={() => setShowSavedAnalyses(false)}>
+          <div className="val-saved-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="val-saved-modal-header">
+              <h3>Saved Analyses</h3>
+              <button className="val-saved-close" onClick={() => setShowSavedAnalyses(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="val-saved-list">
+              {savedAnalyses.map((analysis) => (
+                <div key={analysis.id} className="val-saved-item">
+                  <div className="val-saved-thumbnail">
+                    {analysis.images[0] ? (
+                      <img src={analysis.images[0]} alt="Property" />
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
+                        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="val-saved-info">
+                    <span className="val-saved-name">{analysis.propertyName}</span>
+                    <span className="val-saved-date">{analysis.date}</span>
+                    <div className="val-saved-stats">
+                      <span>Score: {analysis.result.conditionScore}/100</span>
+                      <span>Value: ${(analysis.result.estimatedValue / 1000000).toFixed(2)}M</span>
+                    </div>
+                  </div>
+                  <button
+                    className="val-saved-delete"
+                    onClick={() => deleteAnalysis(analysis.id)}
+                    title="Delete"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <section className="val-dash-stats">

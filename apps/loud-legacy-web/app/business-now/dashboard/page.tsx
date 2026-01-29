@@ -41,55 +41,13 @@ const recentTransactions: { id: number; description: string; amount: number; typ
 
 const tasks: { id: number; title: string; priority: string; dueDate: string; completed: boolean }[] = [];
 
-const quickTools = [
-  {
-    name: "Invoice Generator",
-    description: "Create professional invoices",
-    href: "/business-now/invoices",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-        <polyline points="14,2 14,8 20,8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-      </svg>
-    )
-  },
-  {
-    name: "Expense Tracker",
-    description: "Track and categorize expenses",
-    href: "/business-now/expenses",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-      </svg>
-    )
-  },
-  {
-    name: "Financial Reports",
-    description: "Generate detailed reports",
-    href: "/business-now/reports",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M18 20V10M12 20V4M6 20v-6" />
-      </svg>
-    )
-  },
-  {
-    name: "Tax Calculator",
-    description: "Estimate tax obligations",
-    href: "/business-now/reports",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="4" y="2" width="16" height="20" rx="2" />
-        <line x1="8" y1="6" x2="16" y2="6" />
-        <line x1="8" y1="10" x2="16" y2="10" />
-        <line x1="8" y1="14" x2="12" y2="14" />
-        <line x1="8" y1="18" x2="14" y2="18" />
-      </svg>
-    )
-  },
-];
+// Quick Tools - now as action buttons with modal functionality
+interface QuickTool {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+}
 
 export default function BusinessNowDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState("month");
@@ -99,6 +57,79 @@ export default function BusinessNowDashboard() {
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AIBusinessAnalysis | null>(null);
+
+  // Quick Tools State
+  const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState("medium");
+  const [localTasks, setLocalTasks] = useState(tasks);
+
+  const quickTools: QuickTool[] = [
+    {
+      id: "invoice",
+      name: "New Invoice",
+      description: "Create invoice",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+          <polyline points="14,2 14,8 20,8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+        </svg>
+      )
+    },
+    {
+      id: "expense",
+      name: "Add Expense",
+      description: "Track expense",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+        </svg>
+      )
+    },
+    {
+      id: "report",
+      name: "Quick Report",
+      description: "View summary",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M18 20V10M12 20V4M6 20v-6" />
+        </svg>
+      )
+    },
+    {
+      id: "calculator",
+      name: "Calculator",
+      description: "Quick math",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="4" y="2" width="16" height="20" rx="2" />
+          <line x1="8" y1="6" x2="16" y2="6" />
+          <line x1="8" y1="10" x2="16" y2="10" />
+          <line x1="8" y1="14" x2="12" y2="14" />
+        </svg>
+      )
+    },
+  ];
+
+  const addTask = () => {
+    if (!newTaskTitle.trim()) return;
+    const newTask = {
+      id: Date.now(),
+      title: newTaskTitle,
+      priority: newTaskPriority,
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      completed: false
+    };
+    setLocalTasks(prev => [newTask, ...prev]);
+    setNewTaskTitle("");
+    setNewTaskPriority("medium");
+  };
+
+  const toggleTaskComplete = (id: number) => {
+    setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  };
 
   const runAIAnalysis = async () => {
     setIsAnalyzing(true);
@@ -239,10 +270,10 @@ export default function BusinessNowDashboard() {
   const maxValue = Math.max(...revenueData.map(d => Math.max(d.revenue, d.expenses)));
 
   const filteredTasks = taskFilter === "all"
-    ? tasks
+    ? localTasks
     : taskFilter === "completed"
-      ? tasks.filter(t => t.completed)
-      : tasks.filter(t => !t.completed);
+      ? localTasks.filter(t => t.completed)
+      : localTasks.filter(t => !t.completed);
 
   return (
     <main className="bn-dashboard">
@@ -471,7 +502,11 @@ export default function BusinessNowDashboard() {
                   filteredTasks.map((task) => (
                     <div key={task.id} className={`bn-task ${task.completed ? "completed" : ""}`}>
                       <label className="bn-task-checkbox">
-                        <input type="checkbox" defaultChecked={task.completed} />
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => toggleTaskComplete(task.id)}
+                        />
                         <span className="bn-checkmark"></span>
                       </label>
                       <div className="bn-task-content">
@@ -487,13 +522,31 @@ export default function BusinessNowDashboard() {
                   </div>
                 )}
               </div>
-              <button className="bn-add-task">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Add New Task
-              </button>
+              <div className="bn-add-task-form">
+                <input
+                  type="text"
+                  placeholder="Add a new task..."
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                  className="bn-task-input"
+                />
+                <select
+                  value={newTaskPriority}
+                  onChange={(e) => setNewTaskPriority(e.target.value)}
+                  className="bn-task-priority-select"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+                <button className="bn-add-task-btn" onClick={addTask}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Quick Tools */}
@@ -501,15 +554,95 @@ export default function BusinessNowDashboard() {
               <div className="bn-card-header">
                 <h3>Quick Tools</h3>
               </div>
-              <div className="bn-tools-grid">
-                {quickTools.map((tool, index) => (
-                  <Link key={index} href={tool.href} className="bn-tool-card">
-                    <div className="bn-tool-icon">{tool.icon}</div>
-                    <span className="bn-tool-name">{tool.name}</span>
-                    <span className="bn-tool-desc">{tool.description}</span>
-                  </Link>
+              <div className="bn-quick-tools-row">
+                {quickTools.map((tool) => (
+                  <button
+                    key={tool.id}
+                    className={`bn-quick-tool-btn ${activeTool === tool.id ? "active" : ""}`}
+                    onClick={() => setActiveTool(activeTool === tool.id ? null : tool.id)}
+                  >
+                    <div className="bn-qt-icon">{tool.icon}</div>
+                    <span className="bn-qt-name">{tool.name}</span>
+                  </button>
                 ))}
               </div>
+              {activeTool && (
+                <div className="bn-tool-panel">
+                  {activeTool === "invoice" && (
+                    <div className="bn-tool-content">
+                      <h4>Create Invoice</h4>
+                      <div className="bn-tool-form">
+                        <input type="text" placeholder="Client name" className="bn-tool-input" />
+                        <input type="number" placeholder="Amount" className="bn-tool-input" />
+                        <textarea placeholder="Description" className="bn-tool-textarea" rows={2} />
+                        <button className="bn-tool-submit">Generate Invoice</button>
+                      </div>
+                    </div>
+                  )}
+                  {activeTool === "expense" && (
+                    <div className="bn-tool-content">
+                      <h4>Add Expense</h4>
+                      <div className="bn-tool-form">
+                        <input type="text" placeholder="Expense description" className="bn-tool-input" />
+                        <input type="number" placeholder="Amount" className="bn-tool-input" />
+                        <select className="bn-tool-select">
+                          <option>Select category</option>
+                          <option>Software</option>
+                          <option>Office</option>
+                          <option>Travel</option>
+                          <option>Marketing</option>
+                        </select>
+                        <button className="bn-tool-submit">Add Expense</button>
+                      </div>
+                    </div>
+                  )}
+                  {activeTool === "report" && (
+                    <div className="bn-tool-content">
+                      <h4>Quick Summary</h4>
+                      <div className="bn-quick-summary">
+                        <div className="bn-summary-row">
+                          <span>Total Revenue</span>
+                          <strong>${(totalRevenue / 1000).toFixed(0)}K</strong>
+                        </div>
+                        <div className="bn-summary-row">
+                          <span>Total Expenses</span>
+                          <strong>${(totalExpenses / 1000).toFixed(0)}K</strong>
+                        </div>
+                        <div className="bn-summary-row highlight">
+                          <span>Net Profit</span>
+                          <strong>${(netProfit / 1000).toFixed(0)}K</strong>
+                        </div>
+                        <div className="bn-summary-row">
+                          <span>Profit Margin</span>
+                          <strong>{profitMargin}%</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {activeTool === "calculator" && (
+                    <div className="bn-tool-content">
+                      <h4>Quick Calculator</h4>
+                      <div className="bn-calculator">
+                        <input type="number" placeholder="Enter amount" className="bn-tool-input" id="calc-input" />
+                        <div className="bn-calc-row">
+                          <button className="bn-calc-btn" onClick={() => {
+                            const input = document.getElementById('calc-input') as HTMLInputElement;
+                            if (input) input.value = (parseFloat(input.value || '0') * 1.1).toFixed(2);
+                          }}>+10%</button>
+                          <button className="bn-calc-btn" onClick={() => {
+                            const input = document.getElementById('calc-input') as HTMLInputElement;
+                            if (input) input.value = (parseFloat(input.value || '0') * 0.9).toFixed(2);
+                          }}>-10%</button>
+                          <button className="bn-calc-btn" onClick={() => {
+                            const input = document.getElementById('calc-input') as HTMLInputElement;
+                            if (input) input.value = (parseFloat(input.value || '0') * 2).toFixed(2);
+                          }}>x2</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

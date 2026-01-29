@@ -50,11 +50,22 @@ export default function LegacyCRMDashboard() {
   const [contactFilter, setContactFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Quick Actions State
+  const [activeQuickAction, setActiveQuickAction] = useState<string | null>(null);
+  const [actionNote, setActionNote] = useState("");
+  const [actionSuccess, setActionSuccess] = useState(false);
+
   // AI Account Research State
   const [showAIResearch, setShowAIResearch] = useState(false);
   const [selectedContact, setSelectedContact] = useState<typeof contacts[0] | null>(null);
   const [isResearching, setIsResearching] = useState(false);
   const [researchResult, setResearchResult] = useState<AIAccountResearch | null>(null);
+
+  const handleQuickAction = () => {
+    setActionSuccess(true);
+    setActionNote("");
+    setTimeout(() => setActionSuccess(false), 2000);
+  };
 
   const runAIResearch = async (contact: typeof contacts[0]) => {
     setSelectedContact(contact);
@@ -419,23 +430,109 @@ export default function LegacyCRMDashboard() {
                 <h3>Quick Actions</h3>
               </div>
               <div className="lcrm-quick-actions">
-                <button className="lcrm-quick-action">
+                <button
+                  className={`lcrm-quick-action ${activeQuickAction === "call" ? "active" : ""}`}
+                  onClick={() => setActiveQuickAction(activeQuickAction === "call" ? null : "call")}
+                >
                   <span className="lcrm-qa-icon">📞</span>
                   <span>Log Call</span>
                 </button>
-                <button className="lcrm-quick-action">
+                <button
+                  className={`lcrm-quick-action ${activeQuickAction === "email" ? "active" : ""}`}
+                  onClick={() => setActiveQuickAction(activeQuickAction === "email" ? null : "email")}
+                >
                   <span className="lcrm-qa-icon">✉️</span>
                   <span>Send Email</span>
                 </button>
-                <button className="lcrm-quick-action">
+                <button
+                  className={`lcrm-quick-action ${activeQuickAction === "meeting" ? "active" : ""}`}
+                  onClick={() => setActiveQuickAction(activeQuickAction === "meeting" ? null : "meeting")}
+                >
                   <span className="lcrm-qa-icon">📅</span>
                   <span>Schedule Meeting</span>
                 </button>
-                <button className="lcrm-quick-action">
+                <button
+                  className={`lcrm-quick-action ${activeQuickAction === "note" ? "active" : ""}`}
+                  onClick={() => setActiveQuickAction(activeQuickAction === "note" ? null : "note")}
+                >
                   <span className="lcrm-qa-icon">📝</span>
                   <span>Add Note</span>
                 </button>
               </div>
+              {activeQuickAction && (
+                <div className="lcrm-action-panel">
+                  {activeQuickAction === "call" && (
+                    <div className="lcrm-action-content">
+                      <h4>Log Call</h4>
+                      <select className="lcrm-action-select">
+                        <option>Select Contact</option>
+                        <option>Add new contact...</option>
+                      </select>
+                      <input type="text" placeholder="Call duration (mins)" className="lcrm-action-input" />
+                      <textarea
+                        placeholder="Call notes..."
+                        value={actionNote}
+                        onChange={(e) => setActionNote(e.target.value)}
+                        className="lcrm-action-textarea"
+                        rows={2}
+                      />
+                      <button className="lcrm-action-submit" onClick={handleQuickAction}>
+                        {actionSuccess ? "Logged!" : "Log Call"}
+                      </button>
+                    </div>
+                  )}
+                  {activeQuickAction === "email" && (
+                    <div className="lcrm-action-content">
+                      <h4>Send Email</h4>
+                      <input type="email" placeholder="Recipient email" className="lcrm-action-input" />
+                      <input type="text" placeholder="Subject" className="lcrm-action-input" />
+                      <textarea
+                        placeholder="Message..."
+                        value={actionNote}
+                        onChange={(e) => setActionNote(e.target.value)}
+                        className="lcrm-action-textarea"
+                        rows={3}
+                      />
+                      <button className="lcrm-action-submit" onClick={handleQuickAction}>
+                        {actionSuccess ? "Sent!" : "Send Email"}
+                      </button>
+                    </div>
+                  )}
+                  {activeQuickAction === "meeting" && (
+                    <div className="lcrm-action-content">
+                      <h4>Schedule Meeting</h4>
+                      <select className="lcrm-action-select">
+                        <option>Select Contact</option>
+                        <option>Add new contact...</option>
+                      </select>
+                      <input type="datetime-local" className="lcrm-action-input" />
+                      <input type="text" placeholder="Meeting title" className="lcrm-action-input" />
+                      <button className="lcrm-action-submit" onClick={handleQuickAction}>
+                        {actionSuccess ? "Scheduled!" : "Schedule"}
+                      </button>
+                    </div>
+                  )}
+                  {activeQuickAction === "note" && (
+                    <div className="lcrm-action-content">
+                      <h4>Add Note</h4>
+                      <select className="lcrm-action-select">
+                        <option>Select Contact</option>
+                        <option>General note...</option>
+                      </select>
+                      <textarea
+                        placeholder="Your note..."
+                        value={actionNote}
+                        onChange={(e) => setActionNote(e.target.value)}
+                        className="lcrm-action-textarea"
+                        rows={4}
+                      />
+                      <button className="lcrm-action-submit" onClick={handleQuickAction}>
+                        {actionSuccess ? "Saved!" : "Save Note"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

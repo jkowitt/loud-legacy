@@ -67,6 +67,12 @@ const scheduleToday: { id: number; shift: string; time: string; staffed: number;
 export default function LoudWorksDashboard() {
   const [selectedDepartment, setSelectedDepartment] = useState("all");
 
+  // Quick Actions State
+  const [activeQuickAction, setActiveQuickAction] = useState<string | null>(null);
+  const [newEmployeeName, setNewEmployeeName] = useState("");
+  const [newEmployeeRole, setNewEmployeeRole] = useState("");
+  const [actionSuccess, setActionSuccess] = useState(false);
+
   // AI Growth Optimizer State
   const [showGrowthOptimizer, setShowGrowthOptimizer] = useState(false);
   const [goals, setGoals] = useState<GrowthGoal[]>([]);
@@ -560,23 +566,104 @@ export default function LoudWorksDashboard() {
                 <h3>Quick Actions</h3>
               </div>
               <div className="lw-quick-actions">
-                <button className="lw-quick-action">
+                <button
+                  className={`lw-quick-action ${activeQuickAction === "employee" ? "active" : ""}`}
+                  onClick={() => setActiveQuickAction(activeQuickAction === "employee" ? null : "employee")}
+                >
                   <span className="lw-qa-icon">👤</span>
                   <span>Add Employee</span>
                 </button>
-                <button className="lw-quick-action">
+                <button
+                  className={`lw-quick-action ${activeQuickAction === "schedule" ? "active" : ""}`}
+                  onClick={() => setActiveQuickAction(activeQuickAction === "schedule" ? null : "schedule")}
+                >
                   <span className="lw-qa-icon">📅</span>
                   <span>Edit Schedule</span>
                 </button>
-                <button className="lw-quick-action">
+                <button
+                  className={`lw-quick-action ${activeQuickAction === "reports" ? "active" : ""}`}
+                  onClick={() => setActiveQuickAction(activeQuickAction === "reports" ? null : "reports")}
+                >
                   <span className="lw-qa-icon">📊</span>
                   <span>Run Reports</span>
                 </button>
-                <button className="lw-quick-action">
+                <button
+                  className={`lw-quick-action ${activeQuickAction === "goals" ? "active" : ""}`}
+                  onClick={() => { setActiveQuickAction(null); setShowGrowthOptimizer(true); }}
+                >
                   <span className="lw-qa-icon">🎯</span>
                   <span>Set Goals</span>
                 </button>
               </div>
+              {activeQuickAction && (
+                <div className="lw-action-panel">
+                  {activeQuickAction === "employee" && (
+                    <div className="lw-action-content">
+                      <h4>Add New Employee</h4>
+                      <input
+                        type="text"
+                        placeholder="Full name"
+                        value={newEmployeeName}
+                        onChange={(e) => setNewEmployeeName(e.target.value)}
+                        className="lw-action-input"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Role / Position"
+                        value={newEmployeeRole}
+                        onChange={(e) => setNewEmployeeRole(e.target.value)}
+                        className="lw-action-input"
+                      />
+                      <select className="lw-action-select">
+                        <option>Select Department</option>
+                        <option>Operations</option>
+                        <option>Finance</option>
+                        <option>Marketing</option>
+                        <option>Technology</option>
+                      </select>
+                      <button
+                        className="lw-action-submit"
+                        onClick={() => { setActionSuccess(true); setNewEmployeeName(""); setNewEmployeeRole(""); setTimeout(() => setActionSuccess(false), 2000); }}
+                      >
+                        {actionSuccess ? "Added!" : "Add Employee"}
+                      </button>
+                    </div>
+                  )}
+                  {activeQuickAction === "schedule" && (
+                    <div className="lw-action-content">
+                      <h4>Quick Schedule Edit</h4>
+                      <select className="lw-action-select">
+                        <option>Select Employee</option>
+                        <option>All Staff</option>
+                      </select>
+                      <select className="lw-action-select">
+                        <option>Select Shift</option>
+                        <option>Morning (6 AM - 2 PM)</option>
+                        <option>Afternoon (2 PM - 10 PM)</option>
+                        <option>Evening Event</option>
+                      </select>
+                      <input type="date" className="lw-action-input" />
+                      <button
+                        className="lw-action-submit"
+                        onClick={() => { setActionSuccess(true); setTimeout(() => setActionSuccess(false), 2000); }}
+                      >
+                        {actionSuccess ? "Updated!" : "Update Schedule"}
+                      </button>
+                    </div>
+                  )}
+                  {activeQuickAction === "reports" && (
+                    <div className="lw-action-content">
+                      <h4>Quick Reports</h4>
+                      <div className="lw-report-buttons">
+                        <button className="lw-report-btn">Attendance Report</button>
+                        <button className="lw-report-btn">Payroll Summary</button>
+                        <button className="lw-report-btn">Training Status</button>
+                        <button className="lw-report-btn">Performance Review</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
