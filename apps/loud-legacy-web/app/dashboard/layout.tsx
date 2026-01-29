@@ -19,11 +19,24 @@ export default function DashboardLayout({
   const userName = session?.user?.name || 'Demo User';
   const userEmail = session?.user?.email || 'demo@valora.com';
 
+  // Don't show VALORA sidebar on the main hub page - it's a multi-platform hub
+  const isHubPage = pathname === '/dashboard';
+
+  // For the hub page, render without the VALORA sidebar
+  if (isHubPage) {
+    return (
+      <div className="hub-layout">
+        {children}
+      </div>
+    );
+  }
+
+  // For VALORA-specific pages, show the sidebar
   return (
     <div className="dashboard-layout">
       <aside className={`dashboard-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
-          <Link href="/dashboard" className="sidebar-logo">
+          <Link href="/valora/dashboard" className="sidebar-logo">
             <span>{isCollapsed ? 'V' : 'VALORA'}</span>
           </Link>
           <button
@@ -37,18 +50,18 @@ export default function DashboardLayout({
 
         <nav className="sidebar-nav">
           <a
-            href="https://loud-legacy.com"
+            href="/dashboard"
             className="nav-item"
-            title="Back to Loud Legacy"
+            title="Back to Hub"
           >
             <span className="nav-icon">🏠</span>
-            {!isCollapsed && <span className="nav-text">Home</span>}
+            {!isCollapsed && <span className="nav-text">Hub</span>}
           </a>
 
           <Link
-            href="/dashboard"
-            className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}
-            title="Dashboard"
+            href="/valora/dashboard"
+            className={`nav-item ${pathname.startsWith('/valora') ? 'active' : ''}`}
+            title="VALORA Dashboard"
           >
             <span className="nav-icon">📊</span>
             {!isCollapsed && <span className="nav-text">Dashboard</span>}
