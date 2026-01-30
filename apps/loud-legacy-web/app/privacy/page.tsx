@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
             <h2>1. Introduction</h2>
             <p>
               Loud Legacy ("we," "our," or "us") operates the loud-legacy.com
-              website and associated platform products including VALORA, Sportify,
+              website and associated platform products including Legacy RE, Sportify,
               Loud Works, Business Now, and Legacy CRM. This Privacy Policy
               describes how we collect, use, disclose, and safeguard your
               information when you visit our website or use our services.

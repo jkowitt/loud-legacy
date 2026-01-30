@@ -84,10 +84,10 @@ const ActivityIcons = {
 const platforms = [
   {
     id: "valora",
-    name: "VALORA",
+    name: "Legacy RE",
     tagline: "Real Estate Intelligence",
-    description: "AI-powered property valuations and market analysis for smarter investment decisions",
-    color: "#3B82F6",
+    description: "AI-powered property valuations, underwriting, and portfolio management",
+    color: "#1B2A4A",
     href: "/valora/dashboard",
     stats: [
       { label: "Properties", value: "12" },
@@ -98,86 +98,22 @@ const platforms = [
       { label: "View Properties", href: "/valora/properties" },
     ],
   },
-  {
-    id: "sportify",
-    name: "Sportify",
-    tagline: "Event Management",
-    description: "Streamline athletic events, team coordination, and game day operations",
-    color: "#10B981",
-    href: "/sportify/dashboard",
-    stats: [
-      { label: "Events", value: "8" },
-      { label: "Teams", value: "24" },
-    ],
-    quickActions: [
-      { label: "Manage Events", href: "/sportify/events" },
-      { label: "View Teams", href: "/sportify/teams" },
-    ],
-  },
-  {
-    id: "business-now",
-    name: "Business Now",
-    tagline: "Operations Hub",
-    description: "Financial tools, invoicing, and operational management in one place",
-    color: "#F59E0B",
-    href: "/business-now/dashboard",
-    stats: [
-      { label: "Invoices", value: "34" },
-      { label: "This Month", value: "$12.4K" },
-    ],
-    quickActions: [
-      { label: "Create Invoice", href: "/business-now/invoices" },
-      { label: "View Reports", href: "/business-now/reports" },
-    ],
-  },
-  {
-    id: "legacy-crm",
-    name: "Legacy CRM",
-    tagline: "Relationship Management",
-    description: "Build and maintain meaningful business relationships with discipline",
-    color: "#8B5CF6",
-    href: "/legacy-crm/dashboard",
-    stats: [
-      { label: "Contacts", value: "156" },
-      { label: "Deals", value: "18" },
-    ],
-    quickActions: [
-      { label: "View Contacts", href: "/legacy-crm/contacts" },
-      { label: "Sales Pipeline", href: "/legacy-crm/pipeline" },
-    ],
-  },
-  {
-    id: "loud-works",
-    name: "Loud Works",
-    tagline: "Workforce Intelligence",
-    description: "Optimize team scheduling, training, and workforce development",
-    color: "#F97316",
-    href: "/loud-works/dashboard",
-    stats: [
-      { label: "Team Members", value: "32" },
-      { label: "Active Projects", value: "7" },
-    ],
-    quickActions: [
-      { label: "View Team", href: "/loud-works/team" },
-      { label: "Scheduling", href: "/loud-works/schedule" },
-    ],
-  },
 ];
 
 const recentActivity = [
-  { platform: "VALORA", action: "New valuation created", item: "123 Main St", time: "2 hours ago", type: "valuation" },
-  { platform: "Legacy CRM", action: "Deal moved to Negotiation", item: "Acme Corp", time: "4 hours ago", type: "deal" },
-  { platform: "Sportify", action: "Event scheduled", item: "Spring Tournament", time: "Yesterday", type: "event" },
-  { platform: "Business Now", action: "Invoice sent", item: "INV-2024-034", time: "Yesterday", type: "invoice" },
-  { platform: "Loud Works", action: "New team member added", item: "Sarah Johnson", time: "2 days ago", type: "team" },
+  { platform: "Legacy RE", action: "New valuation created", item: "123 Main St", time: "2 hours ago", type: "valuation" },
+  { platform: "Legacy RE", action: "Underwriting completed", item: "456 Oak Avenue", time: "4 hours ago", type: "deal" },
+  { platform: "Legacy RE", action: "Comp analysis run", item: "789 Pine Road", time: "Yesterday", type: "valuation" },
+  { platform: "Legacy RE", action: "Property saved to portfolio", item: "321 Elm Blvd", time: "Yesterday", type: "valuation" },
+  { platform: "Legacy RE", action: "Listed on marketplace", item: "654 Cedar Lane", time: "2 days ago", type: "deal" },
 ];
 
 const quickStartItems = [
   { icon: "valuation", label: "Create Property Valuation", href: "/valora/dashboard" },
-  { icon: "invoice", label: "Generate Invoice", href: "/business-now/invoices" },
-  { icon: "team", label: "Add New Contact", href: "/legacy-crm/contacts" },
-  { icon: "event", label: "Schedule Event", href: "/sportify/events" },
-  { icon: "team", label: "Manage Team", href: "/loud-works/team" },
+  { icon: "deal", label: "Run Underwriting Analysis", href: "/valora/dashboard" },
+  { icon: "valuation", label: "Browse Marketplace", href: "/valora/marketplace" },
+  { icon: "valuation", label: "View Properties", href: "/valora/properties" },
+  { icon: "valuation", label: "Broker Portal", href: "/valora/brokers" },
 ];
 
 export default function DashboardPage() {
@@ -198,7 +134,7 @@ export default function DashboardPage() {
           <div className="hub-header-content">
             <div>
               <h1>Welcome back, {firstName}</h1>
-              <p>Your command center for all Loud Legacy platforms</p>
+              <p>Your Legacy RE command center</p>
             </div>
             <div className="hub-header-actions">
               <Link href="/admin" className="hub-btn secondary">
@@ -216,7 +152,7 @@ export default function DashboardPage() {
       {/* Platform Cards */}
       <section className="hub-platforms">
         <div className="container">
-          <h2 className="hub-section-title">Your Platforms</h2>
+          <h2 className="hub-section-title">Your Platform</h2>
           <div className="hub-platforms-grid">
             {platforms.map((platform) => (
               <div
@@ -313,7 +249,7 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <h3>Need Help?</h3>
-                <p>Our team is here to help you get the most out of Loud Legacy.</p>
+                <p>Our team is here to help you get the most out of Legacy RE.</p>
                 <Link href="/contact" className="hub-help-btn">Contact Support</Link>
               </div>
             </div>

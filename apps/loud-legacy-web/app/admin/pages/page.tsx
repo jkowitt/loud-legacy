@@ -20,7 +20,7 @@ const sitePages: PageInfo[] = [
   { path: "/legacy-crm", title: "Legacy CRM", status: "published", lastModified: "2024-01-19", platform: "legacy-crm" },
   { path: "/legacy-crm/demo", title: "Legacy CRM Demo", status: "published", lastModified: "2024-01-19", platform: "legacy-crm" },
   { path: "/sportify", title: "Sportify", status: "draft", lastModified: "2024-01-05", platform: "sportify" },
-  { path: "/valora", title: "VALORA", status: "draft", lastModified: "2024-01-05", platform: "valora" },
+  { path: "/valora", title: "Legacy RE", status: "draft", lastModified: "2024-01-05", platform: "valora" },
 ];
 
 const platformColors: Record<string, string> = {
@@ -88,7 +88,7 @@ export default function AdminPagesPage() {
             <option value="business-now">Business Now</option>
             <option value="legacy-crm">Legacy CRM</option>
             <option value="sportify">Sportify</option>
-            <option value="valora">VALORA</option>
+            <option value="valora">Legacy RE</option>
           </select>
         </div>
       </div>

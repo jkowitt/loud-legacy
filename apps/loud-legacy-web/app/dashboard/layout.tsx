@@ -19,10 +19,10 @@ export default function DashboardLayout({
   const userName = session?.user?.name || 'Demo User';
   const userEmail = session?.user?.email || 'demo@valora.com';
 
-  // Don't show VALORA sidebar on the main hub page - it's a multi-platform hub
+  // Don't show Legacy RE sidebar on the main hub page - it's a multi-platform hub
   const isHubPage = pathname === '/dashboard';
 
-  // For the hub page, render without the VALORA sidebar
+  // For the hub page, render without the Legacy RE sidebar
   if (isHubPage) {
     return (
       <div className="hub-layout">
@@ -31,13 +31,13 @@ export default function DashboardLayout({
     );
   }
 
-  // For VALORA-specific pages, show the sidebar
+  // For Legacy RE-specific pages, show the sidebar
   return (
     <div className="dashboard-layout">
       <aside className={`dashboard-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <Link href="/valora/dashboard" className="sidebar-logo">
-            <span>{isCollapsed ? 'V' : 'VALORA'}</span>
+            <span>{isCollapsed ? 'V' : 'Legacy RE'}</span>
           </Link>
           <button
             className="sidebar-toggle"
@@ -61,7 +61,7 @@ export default function DashboardLayout({
           <Link
             href="/valora/dashboard"
             className={`nav-item ${pathname.startsWith('/valora') ? 'active' : ''}`}
-            title="VALORA Dashboard"
+            title="Legacy RE Dashboard"
           >
             <span className="nav-icon">📊</span>
             {!isCollapsed && <span className="nav-text">Dashboard</span>}

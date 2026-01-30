@@ -178,7 +178,7 @@ export default function AdminDashboard() {
                 { name: "Business Now", path: "/business-now" },
                 { name: "Legacy CRM", path: "/legacy-crm" },
                 { name: "Sportify", path: "/sportify" },
-                { name: "VALORA", path: "/valora" },
+                { name: "Legacy RE", path: "/valora" },
               ].map((page) => (
                 <Link
                   key={page.path}

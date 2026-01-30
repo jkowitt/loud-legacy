@@ -1,30 +1,30 @@
 "use client";
 
 const stats = [
-  { value: "4,200+", label: "Valuations Run", description: "Properties analyzed through VALORA" },
-  { value: "156", label: "Events Executed", description: "Game days managed with Sportify" },
-  { value: "89%", label: "Time Saved", description: "Average reduction in manual work" },
-  { value: "12", label: "Organizations", description: "Athletic departments in beta" },
+  { value: "4,200+", label: "Valuations Run", description: "Properties analyzed through Legacy RE" },
+  { value: "89%", label: "Time Saved", description: "Average reduction in underwriting time" },
+  { value: "50+", label: "Firms", description: "Investment firms using Legacy RE" },
+  { value: "10", label: "Property Types", description: "Supported across all asset classes" },
 ];
 
 const testimonials = [
   {
-    quote: "We went from 6 different spreadsheets to one dashboard. Game day is actually enjoyable now.",
-    author: "Athletic Director",
-    org: "D1 University",
-    product: "Sportify"
-  },
-  {
     quote: "The underwriting process that used to take our team 3 days now takes 4 hours.",
     author: "Managing Partner",
     org: "Regional CRE Firm",
-    product: "VALORA"
+    product: "Legacy RE"
   },
   {
-    quote: "Finally, a CRM that doesn't try to be everything. It just works.",
-    author: "Founder",
-    org: "Consulting Agency",
-    product: "Legacy CRM"
+    quote: "One platform for valuations, comps, and underwriting. It just works.",
+    author: "Senior Analyst",
+    org: "National Investment Group",
+    product: "Legacy RE"
+  },
+  {
+    quote: "The AI-powered condition scoring changed how we evaluate properties entirely.",
+    author: "VP of Acquisitions",
+    org: "Multifamily REIT",
+    product: "Legacy RE"
   }
 ];
 

@@ -105,7 +105,7 @@ export default function AboutPage() {
             </p>
             <p>
               We build tools and experiences that help operators, founders, and leaders
-              communicate with confidence and run their businesses with intention. VALORA,
+              communicate with confidence and run their businesses with intention. Legacy RE,
               Sportify, Business Now, and Legacy CRM are how we put this philosophy into action—software
               built for people who refuse to shrink.
             </p>

@@ -178,7 +178,7 @@ export default function MarketplacePage() {
           <div className="val-dash-header-content">
             <div>
               <div className="val-breadcrumb">
-                <Link href="/valora">VALORA</Link>
+                <Link href="/valora">Legacy RE</Link>
                 <span>/</span>
                 <span>Marketplace</span>
               </div>
@@ -349,7 +349,7 @@ export default function MarketplacePage() {
                     <span className="value">{formatCurrency(selectedListing.askingPrice)}</span>
                   </div>
                   <div className="price-estimate">
-                    <span className="label">VALORA Estimate</span>
+                    <span className="label">Legacy RE Estimate</span>
                     <span className="value">{formatCurrency(selectedListing.estimatedValue)}</span>
                   </div>
                 </div>

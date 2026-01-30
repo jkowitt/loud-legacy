@@ -22,7 +22,7 @@ interface InlineEditProps {
  * Usage:
  * <InlineEdit
  *   contentKey="homepage_hero_title"
- *   defaultValue="Welcome to VALORA"
+ *   defaultValue="Welcome to Legacy RE"
  *   section="homepage"
  *   as="h1"
  *   userRole={session?.user?.role}

@@ -136,7 +136,7 @@ export default function VALORAPropertiesPage() {
           <div className="val-page-header-content">
             <div>
               <div className="val-breadcrumb">
-                <Link href="/valora">VALORA</Link>
+                <Link href="/valora">Legacy RE</Link>
                 <span>/</span>
                 <Link href="/valora/dashboard">Dashboard</Link>
                 <span>/</span>

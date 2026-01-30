@@ -6,20 +6,19 @@ const Footer = () => {
       <div className="container footer-content">
         <div className="footer-grid">
           <div className="footer-section footer-brand">
-            <h3 className="footer-logo">Loud Legacy</h3>
+            <h3 className="footer-logo">Legacy RE</h3>
             <p className="footer-tagline">
-              Systems-driven business software that solves real operational problems.
+              AI-powered real estate intelligence. Built to Last.
             </p>
           </div>
 
           <div className="footer-section">
-            <h4 className="footer-title">Products</h4>
+            <h4 className="footer-title">Platform</h4>
             <ul className="footer-links">
-              <li><Link href="/valora">VALORA</Link></li>
-              <li><Link href="/sportify">Sportify</Link></li>
-              <li><Link href="/loud-works">Loud Works</Link></li>
-              <li><Link href="/business-now">Business Now</Link></li>
-              <li><Link href="/legacy-crm">Legacy CRM</Link></li>
+              <li><Link href="/valora">Legacy RE</Link></li>
+              <li><Link href="/valora/dashboard">Dashboard</Link></li>
+              <li><Link href="/valora/marketplace">Marketplace</Link></li>
+              <li><Link href="/valora/brokers">Broker Portal</Link></li>
             </ul>
           </div>
 

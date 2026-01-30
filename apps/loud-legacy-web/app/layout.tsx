@@ -4,23 +4,23 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Loud Legacy - Software for People Who Run Things",
+  title: "Legacy RE - Real Estate Intelligence Platform | Built to Last",
   description:
-    "One account, five connected tools. VALORA for real estate deals. Sportify for game days. Business Now for operations. Legacy CRM for relationships. Built by operators, for operators.",
-  keywords: "real estate underwriting, sports event management, business operations software, CRM, deal analysis, athletic department software, consulting tools",
+    "AI-powered real estate intelligence platform. Valuations, underwriting, and portfolio management in one system. Legacy RE. Built to Last.",
+  keywords: "real estate underwriting, property valuation, AI real estate, commercial real estate, deal analysis, portfolio management, comparable sales, cap rate analysis",
   icons: {
     icon: "/favicon.ico"
   },
   openGraph: {
-    title: "Loud Legacy - Your Business Runs on Too Many Apps",
-    description: "Stop duct-taping your business together. VALORA, Sportify, Business Now, and Legacy CRM—all connected, all yours.",
+    title: "Legacy RE. Built to Last.",
+    description: "AI-powered real estate intelligence platform combining valuations, underwriting, and portfolio management. Built for brokers, investors, and lenders.",
     type: "website",
-    siteName: "Loud Legacy",
+    siteName: "Legacy RE",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Loud Legacy - Software for Operators",
-    description: "One account, five connected tools. Built by operators, for operators.",
+    title: "Legacy RE. Built to Last.",
+    description: "AI-powered real estate intelligence. Valuations, underwriting, and portfolio management in one platform.",
   },
   robots: {
     index: true,

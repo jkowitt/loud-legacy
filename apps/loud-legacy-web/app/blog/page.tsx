@@ -27,7 +27,7 @@ const allPosts = [
     slug: "underwriting-multifamily-deals",
     title: "How to underwrite multifamily deals in 2026",
     excerpt: "A practical guide to evaluating multifamily properties in the current market.",
-    category: "VALORA",
+    category: "Legacy RE",
     date: "January 10, 2026",
     readTime: "12 min read",
   },
@@ -73,7 +73,7 @@ const allPosts = [
   },
 ];
 
-const categories = ["All", "Company", "VALORA", "Sportify", "Business Now", "Legacy CRM", "Loud Works"];
+const categories = ["All", "Company", "Legacy RE", "Sportify", "Business Now", "Legacy CRM", "Loud Works"];
 
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState("All");

@@ -107,7 +107,7 @@ const BID_PACKAGES: BidPackage[] = [
       "Full property analytics",
       "Email + SMS notifications",
       "Priority lead claiming (12hr window)",
-      "VALORA valuation reports",
+      "Legacy RE valuation reports",
       "Dedicated support",
     ],
     popular: true,
@@ -122,7 +122,7 @@ const BID_PACKAGES: BidPackage[] = [
       "Full property analytics",
       "Real-time notifications",
       "Instant lead claiming",
-      "Premium VALORA reports",
+      "Premium Legacy RE reports",
       "Account manager",
       "Custom territory",
       "API access",
@@ -176,7 +176,7 @@ export default function BrokerPortalPage() {
           <div className="val-dash-header-content">
             <div>
               <div className="val-breadcrumb">
-                <Link href="/valora">VALORA</Link>
+                <Link href="/valora">Legacy RE</Link>
                 <span>/</span>
                 <span>Broker Portal</span>
               </div>

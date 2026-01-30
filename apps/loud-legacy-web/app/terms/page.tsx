@@ -51,7 +51,7 @@ export default function TermsOfServicePage() {
             </p>
             <ul>
               <li>
-                <strong>VALORA:</strong> Real estate intelligence and property
+                <strong>Legacy RE:</strong> Real estate intelligence and property
                 valuation tools
               </li>
               <li>

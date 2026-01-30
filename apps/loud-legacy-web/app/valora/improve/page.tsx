@@ -174,7 +174,7 @@ export default function ImproveBuildingValuePage() {
           <div className="val-dash-header-content">
             <div>
               <div className="val-breadcrumb">
-                <Link href="/valora">VALORA</Link>
+                <Link href="/valora">Legacy RE</Link>
                 <span>/</span>
                 <span>Improve Building Value</span>
               </div>
