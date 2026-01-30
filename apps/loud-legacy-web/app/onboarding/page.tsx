@@ -23,7 +23,7 @@ const companySize = [
 ];
 
 const primaryProducts = [
-  { value: "valora", label: "VALORA", description: "Real estate analysis & underwriting" },
+  { value: "valora", label: "Legacy RE", description: "Real estate analysis & underwriting" },
   { value: "sportify", label: "Sportify", description: "Sports event management" },
   { value: "business-now", label: "Business Now", description: "Operations & consulting" },
   { value: "legacy-crm", label: "Legacy CRM", description: "Relationship management" },

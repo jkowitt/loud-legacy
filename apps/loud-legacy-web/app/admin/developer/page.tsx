@@ -75,7 +75,7 @@ const demoTables: DatabaseTable[] = [
 ];
 
 const demoPlatformSettings: PlatformSettings[] = [
-  { id: "1", name: "VALORA", slug: "valora", color: "#3B82F6", paymentRequired: false, trialDays: 7, betaEnabled: true },
+  { id: "1", name: "Legacy RE", slug: "valora", color: "#3B82F6", paymentRequired: false, trialDays: 7, betaEnabled: true },
   { id: "2", name: "Sportify", slug: "sportify", color: "#8B5CF6", paymentRequired: false, trialDays: 7, betaEnabled: true },
   { id: "3", name: "Business Now", slug: "business-now", color: "#2D9CDB", paymentRequired: false, trialDays: 7, betaEnabled: true },
   { id: "4", name: "Legacy CRM", slug: "legacy-crm", color: "#D4AF37", paymentRequired: false, trialDays: 0, betaEnabled: true },

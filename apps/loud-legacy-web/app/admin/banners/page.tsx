@@ -76,11 +76,11 @@ const demoBanners: BannerAd[] = [
   },
   {
     id: "banner-4",
-    name: "VALORA Premium",
+    name: "Legacy RE Premium",
     placement: "footer",
     imageUrl: "/banners/valora-premium.jpg",
     linkUrl: "/valora",
-    altText: "Discover VALORA premium features",
+    altText: "Discover Legacy RE premium features",
     isActive: true,
     impressions: 5430,
     clicks: 89,
@@ -99,7 +99,7 @@ const availablePages = [
   { value: "/legacy-crm", label: "Legacy CRM" },
   { value: "/legacy-crm/demo", label: "Legacy CRM Demo" },
   { value: "/sportify", label: "Sportify" },
-  { value: "/valora", label: "VALORA" },
+  { value: "/valora", label: "Legacy RE" },
 ];
 
 export default function BannersPage() {

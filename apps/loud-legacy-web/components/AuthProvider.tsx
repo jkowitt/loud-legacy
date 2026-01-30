@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: nextAuthSession.user.name || "User",
         role: ((nextAuthSession.user as any).role || "USER") as DemoUser["role"],
         avatar: (nextAuthSession.user.name || "U").substring(0, 2).toUpperCase(),
-        platforms: ["VALORA", "SPORTIFY", "BUSINESS_NOW", "LEGACY_CRM", "LOUD_WORKS"],
+        platforms: ["LEGACY_RE"],
         createdAt: new Date().toISOString(),
       }
     : null;

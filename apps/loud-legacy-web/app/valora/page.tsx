@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 
 export const metadata = {
-  title: "VALORA - AI-Powered Real Estate Intelligence Platform | Loud Legacy",
+  title: "Legacy RE - AI-Powered Real Estate Intelligence Platform | Built to Last",
   description: "Complete real estate valuation and underwriting platform with AI image recognition, sophisticated financial modeling, and portfolio management. Built for brokers, investors, lenders, and property owners.",
 };
 
@@ -67,18 +67,18 @@ export default function ValoraPage() {
     <main className="product-page">
       <Header />
 
-      <section className="product-hero" style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)" }}>
+      <section className="product-hero" style={{ background: "linear-gradient(135deg, #1B2A4A 0%, #2C3E5A 100%)" }}>
         <div className="container">
-          <Link href="/valora" className="product-hero-logo" aria-label="VALORA Home">
+          <Link href="/valora" className="product-hero-logo" aria-label="Legacy RE Home">
             <Image
-              src="/logos/valora.svg"
-              alt="VALORA"
-              width={200}
+              src="/logos/legacy-re.svg"
+              alt="Legacy RE"
+              width={280}
               height={70}
               priority
             />
           </Link>
-          <div className="badge">Enterprise Intelligence</div>
+          <div className="badge">Built to Last</div>
           <p className="tagline">
             AI-powered real estate intelligence platform combining computer vision,
             sophisticated underwriting, and portfolio management in one comprehensive system.
@@ -127,7 +127,7 @@ export default function ValoraPage() {
               </div>
               <div className="feature-card">
                 <h3>📍 Smart Geocoding</h3>
-                <p>Take a photo with your phone and VALORA automatically identifies the property location and initiates valuation workflow.</p>
+                <p>Take a photo with your phone and Legacy RE automatically identifies the property location and initiates valuation workflow.</p>
               </div>
               <div className="feature-card">
                 <h3>🎯 Address Input & Validation</h3>
@@ -247,7 +247,7 @@ export default function ValoraPage() {
               </div>
               <div className="feature-card">
                 <h3>🔌 API Access</h3>
-                <p>RESTful API for integrating VALORA data with your existing tools and workflows.</p>
+                <p>RESTful API for integrating Legacy RE data with your existing tools and workflows.</p>
               </div>
               <div className="feature-card">
                 <h3>📤 Bulk Operations</h3>
@@ -294,7 +294,7 @@ export default function ValoraPage() {
             Ready to Transform Your Real Estate Analysis?
           </h2>
           <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-            Join forward-thinking brokers, investors, and lenders using VALORA to make better decisions faster.
+            Join forward-thinking brokers, investors, and lenders using Legacy RE to make better decisions faster.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/dashboard" className="button button--primary" style={{ fontSize: '1.125rem', padding: '0.875rem 2rem' }}>

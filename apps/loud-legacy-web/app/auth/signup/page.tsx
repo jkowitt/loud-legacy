@@ -210,7 +210,7 @@ export default function SignUpPage() {
           <div className="auth-platforms">
             <span>Access all platforms:</span>
             <div className="auth-platform-icons">
-              <span className="auth-platform-tag">VALORA</span>
+              <span className="auth-platform-tag">Legacy RE</span>
               <span className="auth-platform-tag">Sportify</span>
               <span className="auth-platform-tag">Business Now</span>
               <span className="auth-platform-tag">Legacy CRM</span>

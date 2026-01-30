@@ -26,7 +26,7 @@ const pricingTiers = [
     description: "For individuals and small teams getting serious.",
     features: [
       "Everything in Free",
-      "VALORA (10 valuations/mo)",
+      "Legacy RE (10 valuations/mo)",
       "Sportify (5 events/mo)",
       "Up to 10 team members",
       "Email support",
@@ -41,7 +41,7 @@ const pricingTiers = [
     description: "For growing teams that need full product access.",
     features: [
       "Everything in Starter",
-      "VALORA (50 valuations/mo)",
+      "Legacy RE (50 valuations/mo)",
       "Sportify (10 events/mo)",
       "Business Now full suite",
       "Up to 25 team members",

@@ -13,21 +13,21 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="hero">
         <div className="container">
-          <div className="badge">One account. Five tools. Zero friction.</div>
-          <h1>Your business runs on<br/>too many apps.</h1>
+          <div className="badge">Legacy RE. Built to Last.</div>
+          <h1>Real estate intelligence<br/>built for operators.</h1>
           <p className="tagline">
-            VALORA for deals. Sportify for events. Business Now for ops. Legacy CRM for relationships.
-            All connected. All yours. Stop duct-taping—start building.
+            AI-powered valuations, underwriting, and portfolio management.
+            One platform. Every property type. Built to last.
           </p>
           <div className="hero-actions">
-            <Link href="/contact" className="button button--primary">
+            <Link href="/valora" className="button button--primary">
+              Explore Legacy RE
+            </Link>
+            <Link href="/contact" className="button button--secondary">
               Request Demo
             </Link>
-            <Link href="/pricing" className="button button--secondary">
-              View Pricing
-            </Link>
           </div>
-          <p className="hero-subtext">Free CRM included with every plan</p>
+          <p className="hero-subtext">Trusted by brokers, investors, and lenders</p>
         </div>
       </section>
 
@@ -46,8 +46,8 @@ export default function HomePage() {
           <h2>Why we build this way</h2>
           <p className="philosophy-intro">
             We got tired of bloated software that tries to do everything and ends up doing nothing well.
-            Each product here solves one problem really well. They share logins and play nice together,
-            but you can use just the one you need.
+            Legacy RE solves real estate intelligence really well—valuations, underwriting, and portfolio management
+            in one focused platform.
           </p>
           <div className="philosophy-grid">
             <div className="philosophy-card">
@@ -78,7 +78,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3>Built to last</h3>
-              <p>We&apos;re not chasing trends. These products get better over time.</p>
+              <p>We&apos;re not chasing trends. This platform gets better over time.</p>
             </div>
           </div>
         </div>
@@ -87,8 +87,8 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="cta-section">
         <div className="container">
-          <h2>Ready to consolidate your stack?</h2>
-          <p>Join operators who've simplified their workflows with Loud Legacy.</p>
+          <h2>Ready to transform your real estate analysis?</h2>
+          <p>Join operators who trust Legacy RE for smarter decisions, faster.</p>
           <div className="cta-actions">
             <Link href="/contact" className="button button--primary button--large">
               Request a Demo

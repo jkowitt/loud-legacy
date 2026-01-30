@@ -383,7 +383,7 @@ export default function LegacyCRMPage() {
           <div className="lcrm-demo-cta-box">
             <div className="lcrm-demo-cta-content">
               <h3>One platform. All your business tools.</h3>
-              <p>Legacy CRM works seamlessly with VALORA, Business Now, Sportify, and Loud Works.</p>
+              <p>Legacy CRM works seamlessly with Legacy RE, Business Now, Sportify, and Loud Works.</p>
             </div>
             <Link href="/dashboard" className="button lcrm-button-secondary lcrm-button-large">
               View All Platforms

@@ -573,7 +573,7 @@ export default function ValoraDashboard() {
           <div className="val-dash-header-content">
             <div>
               <div className="val-breadcrumb">
-                <Link href="/valora">VALORA</Link>
+                <Link href="/valora">Legacy RE</Link>
                 <span>/</span>
                 <span>Property Intelligence</span>
               </div>
@@ -1120,7 +1120,7 @@ export default function ValoraDashboard() {
           <div className="val-modal" onClick={(e) => e.stopPropagation()}>
             <div className="val-modal-header"><h3>List Property for Sale</h3><button onClick={() => setShowPromoteModal(false)}>×</button></div>
             <div className="val-modal-content">
-              <p>Make this property visible to buyers on the VALORA Marketplace.</p>
+              <p>Make this property visible to buyers on the Legacy RE Marketplace.</p>
               <div className="promote-form">
                 <label>Asking Price</label>
                 <input type="number" placeholder="Enter asking price" value={askingPrice} onChange={(e) => setAskingPrice(e.target.value)} />

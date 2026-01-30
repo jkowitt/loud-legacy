@@ -15,7 +15,7 @@ const inquiryTypes = [
 ];
 
 const products = [
-  { value: "valora", label: "VALORA" },
+  { value: "valora", label: "Legacy RE" },
   { value: "sportify", label: "Sportify" },
   { value: "business-now", label: "Business Now" },
   { value: "legacy-crm", label: "Legacy CRM" },

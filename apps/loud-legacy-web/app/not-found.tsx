@@ -32,7 +32,7 @@ export default function NotFound() {
                 <ul>
                   <li><Link href="/pricing">Pricing</Link></li>
                   <li><Link href="/about">About us</Link></li>
-                  <li><Link href="/valora">VALORA</Link></li>
+                  <li><Link href="/valora">Legacy RE</Link></li>
                   <li><Link href="/sportify">Sportify</Link></li>
                   <li><Link href="/business-now">Business Now</Link></li>
                   <li><Link href="/legacy-crm">Legacy CRM</Link></li>

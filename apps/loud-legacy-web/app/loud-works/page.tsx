@@ -359,7 +359,7 @@ export default function LoudWorksPage() {
               <h2>Better together</h2>
               <p>
                 Loud Works integrates seamlessly with the Loud Legacy ecosystem. Connect
-                workforce data to Sportify events, VALORA properties, and Legacy CRM relationships.
+                workforce data to Sportify events, Legacy RE properties, and Legacy CRM relationships.
               </p>
               <div className="lw-integration-features">
                 <div className="lw-integration-feature">
@@ -372,7 +372,7 @@ export default function LoudWorksPage() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20,6 9,17 4,12"/>
                   </svg>
-                  <span>Connect property teams to VALORA portfolios</span>
+                  <span>Connect property teams to Legacy RE portfolios</span>
                 </div>
                 <div className="lw-integration-feature">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -398,7 +398,7 @@ export default function LoudWorksPage() {
                     <Image src="/logos/sportify.svg" alt="Sportify" width={40} height={40} />
                   </div>
                   <div className="lw-hub-item lw-hub-item--2">
-                    <Image src="/logos/valora.svg" alt="VALORA" width={40} height={40} />
+                    <Image src="/logos/legacy-re.svg" alt="Legacy RE" width={40} height={40} />
                   </div>
                   <div className="lw-hub-item lw-hub-item--3">
                     <Image src="/logos/legacy-crm.svg" alt="Legacy CRM" width={40} height={40} />

@@ -26,53 +26,13 @@ interface Platform {
 // Platform-specific plans
 const platformPlans: Record<string, Platform> = {
   valora: {
-    name: "VALORA",
+    name: "Legacy RE",
     tagline: "Real Estate Intelligence",
-    color: "#3B82F6",
+    color: "#1B2A4A",
     tiers: [
-      { name: "Starter", price: 29, features: ["10 valuations/month", "Basic analytics", "Email support"] },
-      { name: "Professional", price: 79, features: ["50 valuations/month", "Advanced analytics", "API access", "Priority support"], popular: true },
-      { name: "Enterprise", price: 199, features: ["Unlimited valuations", "Custom integrations", "Dedicated support", "SLA guarantee"] },
-    ],
-  },
-  sportify: {
-    name: "Sportify",
-    tagline: "Event Operations",
-    color: "#8B5CF6",
-    tiers: [
-      { name: "Starter", price: 19, features: ["5 events/month", "Basic run of show", "Email support"] },
-      { name: "Professional", price: 49, features: ["20 events/month", "Full asset management", "Sponsor tracking", "Priority support"], popular: true },
-      { name: "Enterprise", price: 129, features: ["Unlimited events", "Multi-venue support", "Custom workflows", "Dedicated support"] },
-    ],
-  },
-  businessNow: {
-    name: "Business Now",
-    tagline: "Business Operations",
-    color: "#2D9CDB",
-    tiers: [
-      { name: "Starter", price: 0, features: ["Invoice generator", "Basic expense tracking", "5 team members"], free: true },
-      { name: "Professional", price: 39, features: ["All tools", "Financial reports", "25 team members", "Tax calculations"], popular: true },
-      { name: "Enterprise", price: 99, features: ["Unlimited everything", "Custom reports", "API access", "Dedicated support"] },
-    ],
-  },
-  legacyCRM: {
-    name: "Legacy CRM",
-    tagline: "Relationship Management",
-    color: "#D4AF37",
-    tiers: [
-      { name: "Free Forever", price: 0, features: ["Unlimited contacts", "Basic pipeline", "Activity tracking", "Email support"], free: true },
-      { name: "Professional", price: 29, features: ["Everything free", "Advanced automation", "Custom fields", "Integrations"], popular: true },
-      { name: "Enterprise", price: 79, features: ["Unlimited everything", "Custom workflows", "API access", "Dedicated support"] },
-    ],
-  },
-  loudWorks: {
-    name: "Loud Works",
-    tagline: "Workforce Management",
-    color: "#F97316",
-    tiers: [
-      { name: "Starter", price: 19, features: ["10 team members", "Basic scheduling", "Time tracking"] },
-      { name: "Professional", price: 49, features: ["50 team members", "Training modules", "Recruiting tools", "Analytics"], popular: true },
-      { name: "Enterprise", price: 129, features: ["Unlimited team", "Custom training", "Full recruiting suite", "Dedicated support"] },
+      { name: "Starter", price: 29, features: ["10 valuations/month", "Basic analytics", "Comparable sales", "Email support"] },
+      { name: "Professional", price: 79, features: ["50 valuations/month", "Advanced analytics", "Underwriting engine", "Rent roll & P&L", "API access", "Priority support"], popular: true },
+      { name: "Enterprise", price: 199, features: ["Unlimited valuations", "Portfolio management", "Custom integrations", "Team collaboration", "Dedicated support", "SLA guarantee"] },
     ],
   },
 };
@@ -80,56 +40,36 @@ const platformPlans: Record<string, Platform> = {
 // Bundle plans
 const bundlePlans = [
   {
-    id: "STARTER_BUNDLE",
-    name: "Starter Bundle",
-    price: 0,
-    description: "Get started with core tools",
+    id: "STARTER",
+    name: "Starter",
+    price: 29,
+    description: "Get started with Legacy RE",
     highlight: false,
-    includes: ["Legacy CRM (Free)", "Business Now Basics"],
+    includes: ["Legacy RE Starter"],
     features: [
-      "Unlimited CRM contacts",
-      "Basic invoicing",
-      "5 team members",
-      "Community support",
-    ],
-    cta: "Start Free",
-    trial: false,
-  },
-  {
-    id: "PROFESSIONAL_BUNDLE",
-    name: "Professional",
-    price: 99,
-    originalPrice: 147,
-    description: "Everything you need to grow",
-    highlight: true,
-    popular: true,
-    includes: ["VALORA Pro", "Sportify Pro", "Business Now Pro", "Legacy CRM Pro"],
-    features: [
-      "50 valuations/month",
-      "20 events/month",
-      "Full business suite",
-      "Advanced CRM",
-      "Priority support",
-      "API access",
+      "10 valuations/month",
+      "Basic analytics",
+      "Comparable sales",
+      "Email support",
     ],
     cta: "Start 7-Day Free Trial",
     trial: true,
   },
   {
-    id: "ALL_ACCESS",
-    name: "All-Access",
-    price: 199,
-    originalPrice: 347,
-    description: "Complete platform access",
-    highlight: false,
-    includes: ["All 5 Platforms", "Unlimited Usage"],
+    id: "PROFESSIONAL",
+    name: "Professional",
+    price: 79,
+    description: "Everything you need for serious analysis",
+    highlight: true,
+    popular: true,
+    includes: ["Legacy RE Pro"],
     features: [
-      "Unlimited valuations",
-      "Unlimited events",
-      "Full workforce tools",
-      "All CRM features",
-      "Cross-platform sync",
-      "White-label options",
+      "50 valuations/month",
+      "Advanced analytics",
+      "Underwriting engine",
+      "Rent roll & P&L",
+      "API access",
+      "Priority support",
     ],
     cta: "Start 7-Day Free Trial",
     trial: true,
@@ -137,12 +77,30 @@ const bundlePlans = [
   {
     id: "ENTERPRISE",
     name: "Enterprise",
+    price: 199,
+    description: "Complete platform access for teams",
+    highlight: false,
+    includes: ["Legacy RE Enterprise"],
+    features: [
+      "Unlimited valuations",
+      "Portfolio management",
+      "Custom integrations",
+      "Team collaboration",
+      "Dedicated support",
+      "SLA guarantee",
+    ],
+    cta: "Start 7-Day Free Trial",
+    trial: true,
+  },
+  {
+    id: "CUSTOM",
+    name: "Custom",
     price: null,
-    description: "Custom solutions for large teams",
+    description: "Custom solutions for large organizations",
     highlight: false,
     includes: ["Custom Configuration", "Dedicated Support"],
     features: [
-      "Everything in All-Access",
+      "Everything in Enterprise",
       "Unlimited team members",
       "Custom integrations",
       "On-premise option",
@@ -427,7 +385,7 @@ export default function PricingPage() {
             </div>
             <div className="beta-text">
               <h3>Join Our BETA Program</h3>
-              <p>Get free access to all platforms while we're in development. Your feedback shapes the future of Loud Legacy.</p>
+              <p>Get free access to Legacy RE while we're in development. Your feedback shapes the future of the platform.</p>
             </div>
             <Link href="/auth/signup?beta=true" className="beta-cta">
               Join BETA Free
@@ -460,7 +418,7 @@ export default function PricingPage() {
       <section className="pricing-cta-new">
         <div className="container">
           <h2>Ready to get started?</h2>
-          <p>Join thousands of operators building better businesses with Loud Legacy.</p>
+          <p>Join operators who trust Legacy RE for smarter real estate decisions.</p>
           <div className="cta-actions">
             <Link href="/auth/signup?beta=true" className="button button--primary">
               Start Free BETA Access

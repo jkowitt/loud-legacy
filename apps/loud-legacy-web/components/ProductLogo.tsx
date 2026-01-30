@@ -14,8 +14,8 @@ interface ProductLogoProps {
 
 const logoConfig: Record<ProductType, { src: string; alt: string; defaultLink: string }> = {
   valora: {
-    src: "/logos/valora.svg",
-    alt: "VALORA - Real Estate Intelligence",
+    src: "/logos/legacy-re.svg",
+    alt: "Legacy RE - Real Estate Intelligence",
     defaultLink: "/valora",
   },
   sportify: {

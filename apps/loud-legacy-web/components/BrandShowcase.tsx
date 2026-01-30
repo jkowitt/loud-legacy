@@ -1,43 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
-const brands = [
+const features = [
   {
-    name: "VALORA",
-    icon: "🏢",
-    description: "Real estate valuation, underwriting, and decision intelligence. Built for investors who need trust, transparency, and confidence in every deal.",
-    href: "/valora",
-    color: "#3B82F6",
-    gradient: "linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)",
-    tagline: "Enterprise Intelligence"
+    name: "AI-Powered Valuations",
+    icon: "🤖",
+    description: "Upload property photos and let AI automatically identify conditions, estimate values, and generate comprehensive reports across all property types.",
+    color: "#1B2A4A",
+    gradient: "linear-gradient(135deg, #1B2A4A 0%, #2C3E5A 100%)",
   },
   {
-    name: "Sportify",
-    icon: "🎯",
-    description: "Live event planning and execution for sports and entertainment. One operational record per event, zero missed cues.",
-    href: "/sportify",
-    color: "#8B5CF6",
-    gradient: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)",
-    tagline: "Operational Excellence"
-  },
-  {
-    name: "Business Now",
+    name: "Underwriting Engine",
     icon: "📊",
-    description: "Practical business operating toolkit. Move from reaction to intention with structure for execution.",
-    href: "/business-now",
-    color: "#10B981",
-    gradient: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-    tagline: "Structured Execution"
+    description: "Build comprehensive financial models with full customization, rent rolls, P&L statements, and real-time scenario analysis for smarter deals.",
+    color: "#D4A843",
+    gradient: "linear-gradient(135deg, #D4A843 0%, #B8922E 100%)",
   },
   {
-    name: "Legacy CRM",
-    icon: "🤝",
-    description: "Relationship and opportunity management focused on discipline, not volume. Built for success through follow-up and trust.",
-    href: "/legacy-crm",
-    color: "#F59E0B",
-    gradient: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
-    tagline: "Relationship Discipline"
+    name: "Market Intelligence",
+    icon: "🏘️",
+    description: "Access real-time comparable sales, market trends, cap rates, and neighborhood analytics to ground your valuations in reality.",
+    color: "#1B2A4A",
+    gradient: "linear-gradient(135deg, #1B2A4A 0%, #2C3E5A 100%)",
+  },
+  {
+    name: "Portfolio Management",
+    icon: "📚",
+    description: "Organize, track, and analyze all your property valuations in one centralized system with full version history and team collaboration.",
+    color: "#D4A843",
+    gradient: "linear-gradient(135deg, #D4A843 0%, #B8922E 100%)",
   },
 ];
 
@@ -45,30 +38,36 @@ export function BrandShowcase() {
   return (
     <section id="products" className="brand-showcase">
       <div className="container">
-        <h2>Four Products. One Philosophy.</h2>
+        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <Image
+            src="/logos/legacy-re-icon.svg"
+            alt="Legacy RE"
+            width={64}
+            height={64}
+            style={{ borderRadius: "12px" }}
+          />
+        </div>
+        <h2>Legacy RE. Built to Last.</h2>
         <p className="section-intro">
-          Each product solves a specific operational problem and delivers long-term leverage.
+          One platform for real estate intelligence—valuations, underwriting, and portfolio management.
         </p>
         <div className="brands-grid">
-          {brands.map((brand, index) => (
+          {features.map((feature, index) => (
             <Link
-              key={brand.name}
-              href={brand.href}
+              key={feature.name}
+              href="/valora"
               className="brand-card"
               style={{
-                borderTopColor: brand.color,
+                borderTopColor: feature.color,
                 animationDelay: `${index * 0.1}s`
               }}
             >
-              <div className="brand-icon-wrapper" style={{ background: brand.gradient }}>
-                <span style={{ fontSize: "2rem" }}>{brand.icon}</span>
+              <div className="brand-icon-wrapper" style={{ background: feature.gradient }}>
+                <span style={{ fontSize: "2rem" }}>{feature.icon}</span>
               </div>
-              <div className="brand-tagline" style={{ color: brand.color }}>
-                {brand.tagline}
-              </div>
-              <h3>{brand.name}</h3>
-              <p>{brand.description}</p>
-              <span className="explore-link" style={{ color: brand.color }}>
+              <h3>{feature.name}</h3>
+              <p>{feature.description}</p>
+              <span className="explore-link" style={{ color: feature.color }}>
                 Learn More →
               </span>
             </Link>

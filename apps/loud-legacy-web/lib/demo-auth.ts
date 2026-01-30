@@ -32,7 +32,7 @@ const DEMO_USER: DemoUser = {
   name: "Demo Admin",
   role: "SUPER_ADMIN",
   avatar: "DA",
-  platforms: ["VALORA", "SPORTIFY", "BUSINESS_NOW", "LEGACY_CRM", "LOUD_WORKS"],
+  platforms: ["LEGACY_RE", "SPORTIFY", "BUSINESS_NOW", "LEGACY_CRM", "LOUD_WORKS"],
   createdAt: new Date().toISOString(),
 };
 
