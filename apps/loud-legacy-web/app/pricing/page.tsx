@@ -267,20 +267,11 @@ export default function PricingPage() {
                   <p className="plan-description">{plan.description}</p>
 
                   <div className="plan-price-new">
-                    {plan.originalPrice && (
-                      <span className="original-price">${billingInterval === "yearly" ? getYearlyPrice(plan.originalPrice) : plan.originalPrice}</span>
-                    )}
                     <span className="current-price">{formatPrice(plan.price)}</span>
                     {plan.price !== null && plan.price > 0 && (
                       <span className="price-period">/{billingInterval === "yearly" ? "year" : "month"}</span>
                     )}
                   </div>
-
-                  {plan.originalPrice && (
-                    <div className="savings-badge">
-                      Save ${billingInterval === "yearly" ? getYearlyPrice(plan.originalPrice - plan.price!) : plan.originalPrice - plan.price!}/mo
-                    </div>
-                  )}
 
                   <div className="plan-includes">
                     <span className="includes-label">Includes:</span>
