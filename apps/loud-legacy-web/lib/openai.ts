@@ -164,6 +164,153 @@ Format as JSON with keys: visibleAddress, propertyType, features, locationClues`
 }
 
 /**
+ * Analyze property image and return specific improvement recommendations
+ * Uses GPT-4 Vision to examine the actual photo
+ */
+export async function analyzeImprovementsFromImage(imageUrl: string, area: string) {
+  try {
+    const openai = getOpenAIClient();
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert property inspector and real estate renovation consultant. You analyze property photos to identify specific issues and recommend improvements with accurate cost estimates and ROI projections. Always provide actionable, specific recommendations based on what you can actually see in the image.`,
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Analyze this property photo of the "${area}" area. Examine the image carefully and provide:
+
+1. An overall condition score from 0-100
+2. A condition rating: "excellent" (80-100), "good" (60-79), "fair" (40-59), or "poor" (0-39)
+3. A list of specific issues you can see (be specific about what you observe)
+4. A list of recommended improvements based on what you see
+
+For each improvement provide:
+- title: Short name of the improvement
+- description: Detailed description of what should be done, referencing what you see
+- estimatedCost: Object with "low" and "high" dollar amounts
+- potentialROI: Percentage ROI (e.g., 150 means 150% return)
+- priority: "high", "medium", or "low"
+- timeframe: Estimated completion time (e.g., "2-3 days")
+
+Also estimate the total potential value impact of all improvements combined.
+
+Return ONLY valid JSON with this structure:
+{
+  "overallScore": number,
+  "condition": "excellent" | "good" | "fair" | "poor",
+  "issues": ["string"],
+  "improvements": [{ "title": "", "description": "", "estimatedCost": { "low": 0, "high": 0 }, "potentialROI": 0, "priority": "", "timeframe": "" }],
+  "estimatedValueImpact": number
+}`,
+            },
+            {
+              type: "image_url",
+              image_url: { url: imageUrl },
+            },
+          ],
+        },
+      ],
+      max_tokens: 2000,
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('No response from OpenAI');
+    return JSON.parse(content);
+  } catch (error) {
+    console.error('Error analyzing improvements from image:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generate comparable property sales using AI analysis
+ * Provides realistic comps based on property details and location
+ */
+export async function analyzeComparables(propertyData: {
+  address: string;
+  city: string;
+  state: string;
+  propertyType: string;
+  sqft?: number;
+  beds?: number;
+  baths?: number;
+  yearBuilt?: number;
+  units?: number;
+  purchasePrice?: number;
+}) {
+  try {
+    const openai = getOpenAIClient();
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a real estate comparable sales analyst. Given a subject property, generate realistic comparable sales that would be used in a professional appraisal. Comps should be nearby properties with similar characteristics that sold recently. Use realistic addresses, prices, and metrics for the given market area. Base your analysis on typical market data for the location and property type.`,
+        },
+        {
+          role: "user",
+          content: `Generate 5-7 comparable sales for this subject property:
+
+Address: ${propertyData.address}, ${propertyData.city}, ${propertyData.state}
+Property Type: ${propertyData.propertyType}
+Square Feet: ${propertyData.sqft || 'Unknown'}
+Beds: ${propertyData.beds || 'N/A'}
+Baths: ${propertyData.baths || 'N/A'}
+Year Built: ${propertyData.yearBuilt || 'Unknown'}
+Units: ${propertyData.units || '1'}
+${propertyData.purchasePrice ? `Listed/Purchase Price: $${propertyData.purchasePrice.toLocaleString()}` : ''}
+
+For each comp provide:
+- address: A realistic nearby street address (use real street name patterns for ${propertyData.city}, ${propertyData.state})
+- distance: Distance from subject (e.g., "0.3 mi")
+- salePrice: Recent sale price in dollars
+- saleDate: Recent sale date (within last 6 months, format YYYY-MM-DD)
+- sqft: Square footage
+- pricePerSqft: Price per square foot (calculated)
+- propertyType: Same as subject
+- yearBuilt: Year built
+- beds: Number of bedrooms (if residential)
+- baths: Number of bathrooms (if residential)
+- units: Number of units (if multifamily)
+- capRate: Cap rate percentage (if income property)
+- adjustments: Brief note on how this comp compares to subject (e.g., "Superior location, inferior condition")
+
+Also provide a market summary with:
+- avgPricePerSqft: Average price per sqft across comps
+- medianSalePrice: Median sale price
+- suggestedValue: Your estimated fair market value for the subject
+- valueRange: { low: number, high: number }
+- confidence: Confidence level 0-100
+- marketTrend: "appreciating", "stable", or "declining"
+- keyInsights: Array of 3-5 market insight strings
+
+Return ONLY valid JSON:
+{
+  "comps": [{ ... }],
+  "marketSummary": { "avgPricePerSqft": 0, "medianSalePrice": 0, "suggestedValue": 0, "valueRange": { "low": 0, "high": 0 }, "confidence": 0, "marketTrend": "", "keyInsights": [""] }
+}`,
+        },
+      ],
+      max_tokens: 3000,
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('No response from OpenAI');
+    return JSON.parse(content);
+  } catch (error) {
+    console.error('Error analyzing comparables:', error);
+    throw error;
+  }
+}
+
+/**
  * Analyze market trends and provide insights
  */
 export async function analyzeMarketTrends(marketData: {
