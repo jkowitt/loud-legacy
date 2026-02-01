@@ -6,6 +6,8 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/upload
  * Upload files (images, documents)
