@@ -4,11 +4,20 @@
 
 Go to: **Netlify Dashboard** → **Site settings** → **Environment variables**
 
-### 1. DATABASE_URL ✓
-**Status:** Already set (you mentioned Neon variable is in Netlify)
+### 1. DATABASE_URL
+**Provider:** Google Cloud SQL (PostgreSQL)
+**Get it:** https://console.cloud.google.com/sql/instances
 ```
-postgresql://username:password@host.neon.tech/dbname?sslmode=require
+postgresql://postgres:YOUR_PASSWORD@CLOUD_SQL_PUBLIC_IP:5432/legacyre?sslmode=require
 ```
+
+**Setup steps:**
+1. Create a Cloud SQL PostgreSQL 15 instance
+2. Set a strong password for the `postgres` user
+3. Under **Connections**, enable **Public IP**
+4. Add Netlify's IP range to **Authorized Networks** (or `0.0.0.0/0` for serverless)
+5. Connect and create the database: `CREATE DATABASE legacyre;`
+6. Run `npx prisma db push` to create tables
 
 ### 2. NEXTAUTH_SECRET ⚠️
 **Status:** Needs to be set
@@ -41,18 +50,32 @@ Or use this pre-generated one:
 Without this, AI analysis will show mock data.
 
 ### 5. NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-**For:** Property maps and GPS geocoding
+**For:** Property maps, address autocomplete, Street View photos, distance calculations, and nearby amenities
 **Get it:** https://console.cloud.google.com/google/maps-apis
 **Format:** `AIza...`
 
-**Enable these APIs:**
-- Maps JavaScript API
-- Geocoding API
+**Enable these APIs in Google Cloud Console:**
+- Maps JavaScript API (interactive maps)
+- Places API (address autocomplete, nearby amenities)
+- Geocoding API (address-to-coordinates and reverse)
+- Street View Static API (property photos from street level)
+- Distance Matrix API (driving distance between comps)
+- Geometry library (loaded automatically)
 
 **Set restrictions:**
 - HTTP referrers: `https://your-site.netlify.app/*`
+- For API routes (Distance Matrix, Nearby): also add your server IP or use no restriction for server-side keys
 
-Without this, maps will show mock/demo mode.
+**Features powered by this key:**
+- `AddressAutocomplete` – Google Places address search with auto-fill of city/state/zip
+- `StreetView` – Automatic street-level property photos on marketplace cards and map tab
+- `PropertyMap` – Interactive map with subject property and comp markers (real geocoding)
+- `NearbyAmenities` – Schools, transit, grocery, healthcare, parks near the property
+- `/api/distance-matrix` – Driving distance/time between subject and comp properties
+- `/api/nearby` – Neighbourhood amenity data for valuation reports
+- `/api/geocode` – Reverse geocoding from camera GPS coordinates
+
+Without this, all features fall back to mock/demo data.
 
 ### 6. OPENAI_API_KEY (Optional)
 **For:** Additional AI features (if used)
@@ -117,7 +140,7 @@ netlify env:list
 
 2. **Wait for build to complete** (2-3 minutes)
 
-3. **Create test account** using SQL in Neon console (see URGENT_TEST_ACCOUNT_SETUP.md)
+3. **Create test account** using SQL in Google Cloud SQL Console (see URGENT_TEST_ACCOUNT_SETUP.md)
 
 4. **Test login** at `https://your-site.netlify.app/auth/signin`
 
@@ -130,7 +153,7 @@ netlify env:list
 - Check `DATABASE_URL` is correct
 
 ### Login fails with "Invalid credentials":
-- Test account doesn't exist yet - run SQL in Neon console
+- Test account doesn't exist yet - run SQL in Google Cloud SQL Console
 - Check database connection by running: `SELECT * FROM "User" LIMIT 1;`
 
 ### Redirects to wrong URL after login:

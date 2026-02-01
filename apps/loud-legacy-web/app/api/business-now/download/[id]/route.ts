@@ -3,6 +3,8 @@ import { getResourceById } from "@/lib/business-now-resources";
 import { promises as fs } from "fs";
 import path from "path";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/business-now/download/[id]
 // Serves the actual file for download
 export async function GET(

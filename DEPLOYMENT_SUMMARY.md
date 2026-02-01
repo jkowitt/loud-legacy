@@ -55,14 +55,14 @@ This deployment includes a fully functional VALORA platform with AI-powered prop
 - **Deployment:** Netlify serverless functions
 
 ### Backend
-- **Database:** PostgreSQL (Neon/hosted)
+- **Database:** PostgreSQL (Google Cloud SQL/hosted)
 - **ORM:** Prisma 5.23+
 - **Auth:** NextAuth.js with JWT
 - **API:** RESTful endpoints
 
 ### Infrastructure
 - **Hosting:** Netlify
-- **Database:** Neon (serverless PostgreSQL)
+- **Database:** Google Cloud SQL (managed PostgreSQL)
 - **File Storage:** Local (upgradeable to S3)
 - **AI:** OpenAI API (optional)
 
@@ -72,14 +72,17 @@ This deployment includes a fully functional VALORA platform with AI-powered prop
 
 ### For Netlify Dashboard:
 ```
-DATABASE_URL       = postgresql://neondb_owner:npg_2bHkKQlRE8sx@ep-late-mouse-ahud1v4a-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require
-NEXTAUTH_SECRET    = 4w1lZlQZQlk+x4McELDzeEoQnA0EWagOeiD0blx2cGw=
+DATABASE_URL       = postgresql://postgres:YOUR_PASSWORD@CLOUD_SQL_IP:5432/legacyre?sslmode=require
+NEXTAUTH_SECRET    = (generate with: openssl rand -base64 32)
 NEXTAUTH_URL       = https://your-site.netlify.app
 ```
 
-### Optional (for AI features):
+### Optional (for full functionality):
 ```
-OPENAI_API_KEY     = your-openai-api-key
+ANTHROPIC_API_KEY                = your-anthropic-key
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY  = your-google-maps-key
+GOOGLE_CLIENT_ID                 = your-oauth-client-id
+GOOGLE_CLIENT_SECRET             = your-oauth-client-secret
 ```
 
 ---

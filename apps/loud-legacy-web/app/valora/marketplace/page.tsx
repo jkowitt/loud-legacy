@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
+import StreetView from "@/components/StreetView";
 
 // Sample marketplace listings
 const SAMPLE_LISTINGS = [
@@ -282,9 +283,11 @@ export default function MarketplacePage() {
             {sortedListings.map(listing => (
               <div key={listing.id} className="val-mkt-card" onClick={() => setSelectedListing(listing)}>
                 <div className="val-mkt-card-image">
-                  <div className="val-mkt-card-placeholder">
-                    <span className="property-icon">{listing.propertyIcon}</span>
-                  </div>
+                  <StreetView
+                    address={`${listing.address}, ${listing.city}, ${listing.state} ${listing.zipCode}`}
+                    height={180}
+                    showControls={false}
+                  />
                   {listing.daysOnMarket <= 7 && <span className="val-mkt-new-badge">New</span>}
                   <span className="val-mkt-type-badge">{listing.propertyType}</span>
                 </div>
@@ -337,9 +340,11 @@ export default function MarketplacePage() {
             </div>
             <div className="val-mkt-detail-content">
               <div className="val-mkt-detail-image">
-                <div className="val-mkt-card-placeholder large">
-                  <span className="property-icon">{selectedListing.propertyIcon}</span>
-                </div>
+                <StreetView
+                  address={`${selectedListing.address}, ${selectedListing.city}, ${selectedListing.state} ${selectedListing.zipCode}`}
+                  height={300}
+                  multiAngle
+                />
               </div>
               <div className="val-mkt-detail-info">
                 <p className="location">{selectedListing.city}, {selectedListing.state} {selectedListing.zipCode}</p>

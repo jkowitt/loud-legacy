@@ -27,6 +27,27 @@ interface DatabaseTable {
   size: string;
 }
 
+interface ColumnInfo {
+  name: string;
+  type: string;
+}
+
+interface BrowseState {
+  table: string;
+  columns: ColumnInfo[];
+  rows: Record<string, any>[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  search: string;
+  sort: string;
+  dir: "asc" | "desc";
+  loading: boolean;
+}
+
+type DbView = "browse" | "query";
+
 interface PlatformSettings {
   id: string;
   name: string;
@@ -61,17 +82,17 @@ const demoAPIKeys: APIKey[] = [
   { id: "3", name: "Read-Only Key", key: "ro_sk_live_xxxxxxxxxxxxxxxxxxxxxxxx", permissions: ["read"], createdAt: new Date(Date.now() - 86400000 * 15).toISOString(), isActive: false },
 ];
 
-const demoTables: DatabaseTable[] = [
-  { name: "User", rowCount: 1247, size: "2.4 MB" },
-  { name: "Organization", rowCount: 89, size: "156 KB" },
-  { name: "Valuation", rowCount: 3421, size: "8.7 MB" },
-  { name: "Property", rowCount: 2156, size: "4.2 MB" },
-  { name: "CRMLead", rowCount: 5678, size: "3.1 MB" },
-  { name: "CRMDeal", rowCount: 1234, size: "1.8 MB" },
-  { name: "Subscription", rowCount: 456, size: "245 KB" },
-  { name: "Payment", rowCount: 2341, size: "1.2 MB" },
-  { name: "ActivityLog", rowCount: 45672, size: "12.4 MB" },
-  { name: "MediaAsset", rowCount: 892, size: "523 KB" },
+const FALLBACK_TABLES: DatabaseTable[] = [
+  { name: "User", rowCount: 0, size: "—" },
+  { name: "Organization", rowCount: 0, size: "—" },
+  { name: "Valuation", rowCount: 0, size: "—" },
+  { name: "Property", rowCount: 0, size: "—" },
+  { name: "CRMLead", rowCount: 0, size: "—" },
+  { name: "CRMDeal", rowCount: 0, size: "—" },
+  { name: "Subscription", rowCount: 0, size: "—" },
+  { name: "Payment", rowCount: 0, size: "—" },
+  { name: "ActivityLog", rowCount: 0, size: "—" },
+  { name: "MediaAsset", rowCount: 0, size: "—" },
 ];
 
 const demoPlatformSettings: PlatformSettings[] = [
@@ -94,11 +115,28 @@ export default function DeveloperPage() {
   const [activeTab, setActiveTab] = useState<"database" | "api" | "logs" | "env" | "webhooks" | "settings">("settings");
   const [logs, setLogs] = useState<LogEntry[]>(demoLogs);
   const [apiKeys, setApiKeys] = useState<APIKey[]>(demoAPIKeys);
-  const [tables] = useState<DatabaseTable[]>(demoTables);
+  const [tables, setTables] = useState<DatabaseTable[]>(FALLBACK_TABLES);
+  const [tablesLoading, setTablesLoading] = useState(false);
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [queryResult, setQueryResult] = useState<any[] | null>(null);
+  const [queryError, setQueryError] = useState<string | null>(null);
   const [sqlQuery, setSqlQuery] = useState("SELECT * FROM \"User\" LIMIT 10;");
   const [isQuerying, setIsQuerying] = useState(false);
+  const [dbView, setDbView] = useState<DbView>("browse");
+  const [browse, setBrowse] = useState<BrowseState>({
+    table: "",
+    columns: [],
+    rows: [],
+    page: 1,
+    pageSize: 25,
+    total: 0,
+    totalPages: 0,
+    search: "",
+    sort: "id",
+    dir: "desc",
+    loading: false,
+  });
   const [logFilter, setLogFilter] = useState<string>("all");
   const [showNewKeyModal, setShowNewKeyModal] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
@@ -128,21 +166,103 @@ export default function DeveloperPage() {
     }
   }, [toast]);
 
+  // Fetch live table list from database
+  const fetchTables = async () => {
+    setTablesLoading(true);
+    try {
+      const res = await fetch("/api/admin/database/tables");
+      const data = await res.json();
+      if (data.success) {
+        setTables(data.tables);
+        setDbConnected(true);
+      } else {
+        setDbConnected(false);
+        setTables(FALLBACK_TABLES);
+      }
+    } catch {
+      setDbConnected(false);
+      setTables(FALLBACK_TABLES);
+    } finally {
+      setTablesLoading(false);
+    }
+  };
+
+  // Browse a table with pagination
+  const browseTable = async (
+    table: string,
+    page = 1,
+    search = "",
+    sort = "id",
+    dir: "asc" | "desc" = "desc"
+  ) => {
+    setBrowse((prev) => ({ ...prev, loading: true, table }));
+    try {
+      const params = new URLSearchParams({
+        table,
+        page: String(page),
+        pageSize: String(browse.pageSize),
+        sort,
+        dir,
+        ...(search ? { search } : {}),
+      });
+      const res = await fetch(`/api/admin/database/browse?${params}`);
+      const data = await res.json();
+      if (data.success) {
+        setBrowse({
+          table,
+          columns: data.columns,
+          rows: data.rows,
+          page: data.pagination.page,
+          pageSize: data.pagination.pageSize,
+          total: data.pagination.total,
+          totalPages: data.pagination.totalPages,
+          search,
+          sort,
+          dir,
+          loading: false,
+        });
+      } else {
+        setToast({ message: data.error || "Failed to browse table", type: "error" });
+        setBrowse((prev) => ({ ...prev, loading: false }));
+      }
+    } catch {
+      setToast({ message: "Network error loading table data", type: "error" });
+      setBrowse((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  // Execute SQL query via API
   const runQuery = async () => {
     setIsQuerying(true);
-    // Simulate query execution
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Demo results based on table
-    const demoResults = [
-      { id: "cuid1", email: "admin@loud-legacy.com", name: "Admin User", role: "SUPER_ADMIN", createdAt: new Date().toISOString() },
-      { id: "cuid2", email: "john@example.com", name: "John Doe", role: "USER", createdAt: new Date().toISOString() },
-      { id: "cuid3", email: "jane@example.com", name: "Jane Smith", role: "ADMIN", createdAt: new Date().toISOString() },
-    ];
-    setQueryResult(demoResults);
-    setIsQuerying(false);
-    setToast({ message: "Query executed successfully", type: "success" });
+    setQueryError(null);
+    try {
+      const res = await fetch("/api/admin/database/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sql: sqlQuery }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQueryResult(data.rows);
+        setToast({ message: `Query returned ${data.rowCount} row${data.rowCount !== 1 ? "s" : ""}`, type: "success" });
+      } else {
+        setQueryError(data.detail || data.error || "Query failed");
+        setQueryResult(null);
+      }
+    } catch {
+      setQueryError("Network error executing query");
+      setQueryResult(null);
+    } finally {
+      setIsQuerying(false);
+    }
   };
+
+  // Load tables when database tab is first opened
+  useEffect(() => {
+    if (activeTab === "database" && dbConnected === null) {
+      fetchTables();
+    }
+  }, [activeTab]);
 
   const createAPIKey = () => {
     const newKey: APIKey = {
@@ -504,113 +624,417 @@ export default function DeveloperPage() {
 
       {/* Database Tab */}
       {activeTab === "database" && (
-        <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: "1.5rem" }}>
-          {/* Tables List */}
-          <div className="admin-card">
-            <h3 style={{ margin: "0 0 1rem", fontSize: "1rem", fontWeight: 600 }}>Database Tables</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-              {tables.map((table) => (
-                <button
-                  key={table.name}
-                  onClick={() => {
-                    setSelectedTable(table.name);
-                    setSqlQuery(`SELECT * FROM "${table.name}" LIMIT 10;`);
-                  }}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.75rem",
-                    background: selectedTable === table.name ? "rgba(59, 130, 246, 0.1)" : "transparent",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    transition: "background 0.2s",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 500, color: "var(--admin-text)" }}>{table.name}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--admin-text-secondary)" }}>
-                      {table.rowCount.toLocaleString()} rows
-                    </div>
-                  </div>
-                  <span style={{ fontSize: "0.75rem", color: "var(--admin-text-secondary)" }}>{table.size}</span>
-                </button>
-              ))}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          {/* Connection status bar */}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "0.75rem 1rem",
+            background: dbConnected === true ? "rgba(34, 197, 94, 0.1)" : dbConnected === false ? "rgba(239, 68, 68, 0.1)" : "var(--admin-bg)",
+            border: `1px solid ${dbConnected === true ? "rgba(34, 197, 94, 0.3)" : dbConnected === false ? "rgba(239, 68, 68, 0.3)" : "var(--admin-border)"}`,
+            borderRadius: "8px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div style={{
+                width: "10px",
+                height: "10px",
+                borderRadius: "50%",
+                background: dbConnected === true ? "#22c55e" : dbConnected === false ? "#ef4444" : "#94a3b8",
+                boxShadow: dbConnected === true ? "0 0 6px rgba(34, 197, 94, 0.5)" : "none",
+              }} />
+              <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--admin-text)" }}>
+                {dbConnected === null ? "Checking connection..." : dbConnected ? "Connected to PostgreSQL" : "Database not connected"}
+              </span>
+              {dbConnected && (
+                <span style={{ fontSize: "0.8125rem", color: "var(--admin-text-secondary)" }}>
+                  {tables.length} table{tables.length !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                className={`admin-btn ${dbView === "browse" ? "admin-btn-primary" : "admin-btn-secondary"}`}
+                style={{ padding: "0.375rem 0.75rem", fontSize: "0.8125rem" }}
+                onClick={() => setDbView("browse")}
+              >
+                Browse
+              </button>
+              <button
+                className={`admin-btn ${dbView === "query" ? "admin-btn-primary" : "admin-btn-secondary"}`}
+                style={{ padding: "0.375rem 0.75rem", fontSize: "0.8125rem" }}
+                onClick={() => setDbView("query")}
+              >
+                SQL Query
+              </button>
+              <button
+                className="admin-btn admin-btn-secondary"
+                style={{ padding: "0.375rem 0.75rem", fontSize: "0.8125rem" }}
+                onClick={fetchTables}
+                disabled={tablesLoading}
+              >
+                {tablesLoading ? "Loading..." : "Refresh"}
+              </button>
             </div>
           </div>
 
-          {/* Query Editor */}
-          <div className="admin-card">
-            <div style={{ marginBottom: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                <label style={{ fontWeight: 600, color: "var(--admin-text)" }}>SQL Query</label>
-                <span style={{ fontSize: "0.75rem", color: "var(--admin-text-secondary)" }}>
-                  Read-only access • Prisma PostgreSQL
-                </span>
-              </div>
-              <textarea
-                value={sqlQuery}
-                onChange={(e) => setSqlQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  minHeight: "120px",
-                  padding: "1rem",
-                  fontFamily: "monospace",
-                  fontSize: "0.875rem",
-                  border: "1px solid var(--admin-border)",
-                  borderRadius: "8px",
-                  background: "#1E293B",
-                  color: "#E2E8F0",
-                  resize: "vertical",
-                }}
-                placeholder="Enter SQL query..."
-              />
+          <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: "1.5rem" }}>
+            {/* Tables sidebar */}
+            <div className="admin-card" style={{ maxHeight: "75vh", overflowY: "auto" }}>
+              <h3 style={{ margin: "0 0 1rem", fontSize: "1rem", fontWeight: 600 }}>Tables</h3>
+              {tablesLoading ? (
+                <div style={{ padding: "2rem 0", textAlign: "center", color: "var(--admin-text-secondary)", fontSize: "0.875rem" }}>
+                  Loading tables...
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                  {tables.map((table) => (
+                    <button
+                      key={table.name}
+                      onClick={() => {
+                        setSelectedTable(table.name);
+                        if (dbView === "browse") {
+                          browseTable(table.name);
+                        } else {
+                          setSqlQuery(`SELECT * FROM "${table.name}" LIMIT 25;`);
+                        }
+                      }}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "0.625rem 0.75rem",
+                        background: selectedTable === table.name ? "rgba(27, 42, 74, 0.1)" : "transparent",
+                        border: selectedTable === table.name ? "1px solid rgba(27, 42, 74, 0.25)" : "1px solid transparent",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "all 0.15s",
+                        color: "var(--admin-text)",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: selectedTable === table.name ? 600 : 500, fontSize: "0.875rem" }}>{table.name}</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--admin-text-secondary)" }}>
+                          {table.rowCount.toLocaleString()} rows
+                        </div>
+                      </div>
+                      <span style={{ fontSize: "0.7rem", color: "var(--admin-text-secondary)", fontFamily: "monospace" }}>{table.size}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1.5rem" }}>
-              <button onClick={runQuery} className="admin-btn admin-btn-primary" disabled={isQuerying}>
-                {isQuerying ? "Running..." : "Run Query"}
-              </button>
-              <button onClick={() => setQueryResult(null)} className="admin-btn admin-btn-secondary">
-                Clear Results
-              </button>
-            </div>
+            {/* Main content area */}
+            <div className="admin-card" style={{ minHeight: "400px" }}>
+              {dbView === "browse" ? (
+                /* ── Browse Mode ────────────────────────────────── */
+                browse.table ? (
+                  <div>
+                    {/* Table header with search and pagination */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem" }}>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700 }}>{browse.table}</h3>
+                        <span style={{ fontSize: "0.8125rem", color: "var(--admin-text-secondary)" }}>
+                          {browse.total.toLocaleString()} total row{browse.total !== 1 ? "s" : ""}
+                          {browse.columns.length > 0 && ` · ${browse.columns.length} columns`}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                        <input
+                          type="text"
+                          placeholder="Search rows..."
+                          value={browse.search}
+                          onChange={(e) => setBrowse((prev) => ({ ...prev, search: e.target.value }))}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") browseTable(browse.table, 1, browse.search, browse.sort, browse.dir);
+                          }}
+                          style={{
+                            padding: "0.375rem 0.75rem",
+                            border: "1px solid var(--admin-border)",
+                            borderRadius: "6px",
+                            fontSize: "0.8125rem",
+                            background: "var(--admin-bg)",
+                            color: "var(--admin-text)",
+                            width: "200px",
+                          }}
+                        />
+                        <button
+                          className="admin-btn admin-btn-secondary"
+                          style={{ padding: "0.375rem 0.75rem", fontSize: "0.8125rem" }}
+                          onClick={() => browseTable(browse.table, 1, browse.search, browse.sort, browse.dir)}
+                        >
+                          Search
+                        </button>
+                      </div>
+                    </div>
 
-            {/* Query Results */}
-            {queryResult && (
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-                  <h4 style={{ margin: 0, fontSize: "0.9375rem" }}>Results ({queryResult.length} rows)</h4>
-                  <button className="admin-btn admin-btn-secondary" style={{ padding: "0.375rem 0.75rem", fontSize: "0.8125rem" }}>
-                    Export CSV
-                  </button>
+                    {browse.loading ? (
+                      <div style={{ padding: "3rem 0", textAlign: "center", color: "var(--admin-text-secondary)" }}>
+                        Loading rows...
+                      </div>
+                    ) : browse.rows.length === 0 ? (
+                      <div style={{ padding: "3rem 0", textAlign: "center", color: "var(--admin-text-secondary)" }}>
+                        No rows found{browse.search ? ` matching "${browse.search}"` : ""}
+                      </div>
+                    ) : (
+                      <>
+                        {/* Data table */}
+                        <div style={{ overflowX: "auto", border: "1px solid var(--admin-border)", borderRadius: "8px", marginBottom: "1rem" }}>
+                          <table className="admin-table" style={{ margin: 0, fontSize: "0.8125rem" }}>
+                            <thead>
+                              <tr>
+                                {browse.columns.map((col) => (
+                                  <th
+                                    key={col.name}
+                                    style={{ whiteSpace: "nowrap", cursor: "pointer", userSelect: "none" }}
+                                    onClick={() => {
+                                      const newDir = browse.sort === col.name && browse.dir === "asc" ? "desc" : "asc";
+                                      browseTable(browse.table, browse.page, browse.search, col.name, newDir);
+                                    }}
+                                  >
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                                      {col.name}
+                                      {browse.sort === col.name && (
+                                        <span style={{ fontSize: "0.7rem" }}>{browse.dir === "asc" ? " \u25B2" : " \u25BC"}</span>
+                                      )}
+                                      <span style={{
+                                        fontSize: "0.65rem",
+                                        color: "var(--admin-text-secondary)",
+                                        fontWeight: 400,
+                                        marginLeft: "0.25rem",
+                                      }}>
+                                        {col.type}
+                                      </span>
+                                    </div>
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {browse.rows.map((row, i) => (
+                                <tr key={i}>
+                                  {browse.columns.map((col) => {
+                                    const val = row[col.name];
+                                    let display: string;
+                                    if (val === null || val === undefined) {
+                                      display = "NULL";
+                                    } else if (typeof val === "object") {
+                                      display = JSON.stringify(val);
+                                    } else {
+                                      display = String(val);
+                                    }
+                                    // Truncate long values
+                                    const truncated = display.length > 80 ? display.slice(0, 77) + "..." : display;
+                                    return (
+                                      <td
+                                        key={col.name}
+                                        title={display.length > 80 ? display : undefined}
+                                        style={{
+                                          fontFamily: "monospace",
+                                          fontSize: "0.8125rem",
+                                          maxWidth: "300px",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                          whiteSpace: "nowrap",
+                                          color: val === null || val === undefined ? "#94a3b8" : "var(--admin-text)",
+                                          fontStyle: val === null || val === undefined ? "italic" : "normal",
+                                        }}
+                                      >
+                                        {truncated}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Pagination */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "0.8125rem", color: "var(--admin-text-secondary)" }}>
+                            Showing {((browse.page - 1) * browse.pageSize) + 1}–{Math.min(browse.page * browse.pageSize, browse.total)} of {browse.total.toLocaleString()}
+                          </span>
+                          <div style={{ display: "flex", gap: "0.375rem" }}>
+                            <button
+                              className="admin-btn admin-btn-secondary"
+                              style={{ padding: "0.25rem 0.625rem", fontSize: "0.8125rem" }}
+                              disabled={browse.page <= 1}
+                              onClick={() => browseTable(browse.table, 1, browse.search, browse.sort, browse.dir)}
+                            >
+                              First
+                            </button>
+                            <button
+                              className="admin-btn admin-btn-secondary"
+                              style={{ padding: "0.25rem 0.625rem", fontSize: "0.8125rem" }}
+                              disabled={browse.page <= 1}
+                              onClick={() => browseTable(browse.table, browse.page - 1, browse.search, browse.sort, browse.dir)}
+                            >
+                              Prev
+                            </button>
+                            <span style={{
+                              padding: "0.25rem 0.75rem",
+                              fontSize: "0.8125rem",
+                              fontWeight: 600,
+                              color: "var(--admin-text)",
+                              display: "flex",
+                              alignItems: "center",
+                            }}>
+                              {browse.page} / {browse.totalPages}
+                            </span>
+                            <button
+                              className="admin-btn admin-btn-secondary"
+                              style={{ padding: "0.25rem 0.625rem", fontSize: "0.8125rem" }}
+                              disabled={browse.page >= browse.totalPages}
+                              onClick={() => browseTable(browse.table, browse.page + 1, browse.search, browse.sort, browse.dir)}
+                            >
+                              Next
+                            </button>
+                            <button
+                              className="admin-btn admin-btn-secondary"
+                              style={{ padding: "0.25rem 0.625rem", fontSize: "0.8125rem" }}
+                              disabled={browse.page >= browse.totalPages}
+                              onClick={() => browseTable(browse.table, browse.totalPages, browse.search, browse.sort, browse.dir)}
+                            >
+                              Last
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: "300px", color: "var(--admin-text-secondary)" }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48" style={{ marginBottom: "1rem", opacity: 0.5 }}>
+                      <ellipse cx="12" cy="6" rx="8" ry="3" />
+                      <path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6" />
+                      <path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6" />
+                    </svg>
+                    <p style={{ margin: 0, fontSize: "0.9375rem", fontWeight: 500 }}>Select a table to browse</p>
+                    <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem" }}>Click any table on the left to view its rows</p>
+                  </div>
+                )
+              ) : (
+                /* ── Query Mode ─────────────────────────────────── */
+                <div>
+                  <div style={{ marginBottom: "1rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                      <label style={{ fontWeight: 600, color: "var(--admin-text)" }}>SQL Query</label>
+                      <span style={{ fontSize: "0.75rem", color: "var(--admin-text-secondary)" }}>
+                        Read-only (SELECT only) · PostgreSQL · SUPER_ADMIN required
+                      </span>
+                    </div>
+                    <textarea
+                      value={sqlQuery}
+                      onChange={(e) => setSqlQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runQuery();
+                      }}
+                      style={{
+                        width: "100%",
+                        minHeight: "140px",
+                        padding: "1rem",
+                        fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+                        fontSize: "0.875rem",
+                        lineHeight: 1.5,
+                        border: "1px solid var(--admin-border)",
+                        borderRadius: "8px",
+                        background: "#1E293B",
+                        color: "#E2E8F0",
+                        resize: "vertical",
+                        tabSize: 2,
+                      }}
+                      placeholder="SELECT * FROM &quot;User&quot; LIMIT 10;"
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1.5rem", alignItems: "center" }}>
+                    <button onClick={runQuery} className="admin-btn admin-btn-primary" disabled={isQuerying || !sqlQuery.trim()}>
+                      {isQuerying ? "Running..." : "Run Query"}
+                    </button>
+                    <button onClick={() => { setQueryResult(null); setQueryError(null); }} className="admin-btn admin-btn-secondary">
+                      Clear
+                    </button>
+                    <span style={{ fontSize: "0.75rem", color: "var(--admin-text-secondary)", marginLeft: "auto" }}>
+                      Ctrl+Enter to run
+                    </span>
+                  </div>
+
+                  {/* Query Error */}
+                  {queryError && (
+                    <div style={{
+                      padding: "0.75rem 1rem",
+                      background: "rgba(239, 68, 68, 0.1)",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      borderRadius: "8px",
+                      marginBottom: "1rem",
+                      fontFamily: "monospace",
+                      fontSize: "0.8125rem",
+                      color: "#ef4444",
+                      whiteSpace: "pre-wrap",
+                    }}>
+                      {queryError}
+                    </div>
+                  )}
+
+                  {/* Query Results */}
+                  {queryResult && queryResult.length > 0 && (
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                        <h4 style={{ margin: 0, fontSize: "0.9375rem" }}>Results ({queryResult.length} row{queryResult.length !== 1 ? "s" : ""})</h4>
+                      </div>
+                      <div style={{ overflowX: "auto", border: "1px solid var(--admin-border)", borderRadius: "8px" }}>
+                        <table className="admin-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr>
+                              {Object.keys(queryResult[0] || {}).map((key) => (
+                                <th key={key} style={{ whiteSpace: "nowrap" }}>{key}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {queryResult.map((row, i) => (
+                              <tr key={i}>
+                                {Object.entries(row).map(([, val]: [string, any], j) => {
+                                  const display = val === null ? "NULL" : typeof val === "object" ? JSON.stringify(val) : String(val);
+                                  const truncated = display.length > 100 ? display.slice(0, 97) + "..." : display;
+                                  return (
+                                    <td
+                                      key={j}
+                                      title={display.length > 100 ? display : undefined}
+                                      style={{
+                                        fontFamily: "monospace",
+                                        fontSize: "0.8125rem",
+                                        maxWidth: "300px",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        color: val === null ? "#94a3b8" : "var(--admin-text)",
+                                        fontStyle: val === null ? "italic" : "normal",
+                                      }}
+                                    >
+                                      {truncated}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {queryResult && queryResult.length === 0 && (
+                    <div style={{ padding: "2rem", textAlign: "center", color: "var(--admin-text-secondary)", fontSize: "0.875rem" }}>
+                      Query returned 0 rows
+                    </div>
+                  )}
                 </div>
-                <div style={{ overflowX: "auto", border: "1px solid var(--admin-border)", borderRadius: "8px" }}>
-                  <table className="admin-table" style={{ margin: 0 }}>
-                    <thead>
-                      <tr>
-                        {Object.keys(queryResult[0] || {}).map((key) => (
-                          <th key={key} style={{ whiteSpace: "nowrap" }}>{key}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {queryResult.map((row, i) => (
-                        <tr key={i}>
-                          {Object.values(row).map((val: any, j) => (
-                            <td key={j} style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
-                              {typeof val === "object" ? JSON.stringify(val) : String(val)}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}

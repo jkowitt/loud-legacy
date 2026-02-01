@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+export const dynamic = 'force-dynamic';
+
 const PLATFORMS = ["VALORA", "BUSINESS_NOW", "LEGACY_CRM", "HUB", "VENUEVR", "LOUD_WORKS", "SPORTIFY"];
 const DEMO_EMAIL = "demo@loud-legacy.com";
 const DEMO_PASSWORD = "demo123";

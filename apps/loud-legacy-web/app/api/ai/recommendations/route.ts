@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { generatePropertyRecommendations } from '@/lib/openai';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/ai/recommendations
  * Generate AI-powered property improvement recommendations

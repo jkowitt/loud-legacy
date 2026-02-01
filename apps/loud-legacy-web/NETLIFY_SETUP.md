@@ -2,7 +2,7 @@
 
 ## Test Account Creation
 
-Since your Neon database credentials are configured in Netlify, you can create the test account after deployment.
+Since your Google Cloud SQL database credentials are configured in Netlify, you can create the test account after deployment.
 
 ### Option 1: Netlify CLI (Recommended)
 
@@ -31,24 +31,11 @@ Add this to your `netlify.toml`:
 
 **Note:** This will run the seed on every build. To run it only once, remove it after the first successful deployment.
 
-### Option 3: Manual via Netlify Console
+### Option 3: Direct SQL via Cloud SQL Console
 
-1. Go to your Netlify site dashboard
-2. Navigate to **Deploys** > **Deploy settings** > **Build & deploy**
-3. Add a **Build hook** or use the **Netlify CLI**
-4. SSH into your deployment or use a serverless function:
-
-```bash
-# In Netlify Functions
-cd /var/task
-npm run seed
-```
-
-### Option 4: Direct SQL via Neon Console
-
-1. Go to [Neon Console](https://console.neon.tech/)
-2. Open your database
-3. Run the SQL from `create-test-user.sql`:
+1. Go to [Google Cloud SQL Console](https://console.cloud.google.com/sql/instances)
+2. Open your instance → **Cloud Shell** or connect via `psql`
+3. Run the SQL:
 
 ```sql
 INSERT INTO "User" (id, email, name, password, role, "emailVerified", "createdAt", "updatedAt")
@@ -73,14 +60,41 @@ ON CONFLICT (email) DO UPDATE SET
 Make sure these are set in Netlify:
 
 ### Required:
-- `DATABASE_URL` - Your Neon PostgreSQL connection string ✓ (already set)
+- `DATABASE_URL` - Google Cloud SQL PostgreSQL connection string
+  - Format: `postgresql://postgres:PASSWORD@PUBLIC_IP:5432/legacyre?sslmode=require`
 - `NEXTAUTH_SECRET` - Generate with `openssl rand -base64 32`
 - `NEXTAUTH_URL` - Your Netlify site URL (e.g., `https://your-site.netlify.app`)
 
 ### Optional (for full functionality):
 - `ANTHROPIC_API_KEY` - For AI building image analysis
-- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` - For maps and geocoding
-- `OPENAI_API_KEY` - For AI features
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` - For maps, Street View, Places, Distance Matrix
+- `GOOGLE_CLIENT_ID` - For Google Sign-In
+- `GOOGLE_CLIENT_SECRET` - For Google Sign-In
+
+## Google Cloud SQL Setup for Netlify
+
+1. **Create instance** at https://console.cloud.google.com/sql/instances
+   - PostgreSQL 15
+   - Choose a region close to your users
+   - Set a strong password
+
+2. **Enable Public IP** under Connections
+
+3. **Authorize Netlify** under Connections → Authorized Networks:
+   - Add `0.0.0.0/0` for serverless (Netlify does not have fixed IPs)
+   - For tighter security, use Cloud SQL Proxy or a VPN
+
+4. **Create the database:**
+   ```bash
+   psql "postgresql://postgres:PASSWORD@PUBLIC_IP:5432/postgres?sslmode=require" \
+     -c "CREATE DATABASE legacyre;"
+   ```
+
+5. **Push the schema:**
+   ```bash
+   DATABASE_URL="postgresql://postgres:PASSWORD@PUBLIC_IP:5432/legacyre?sslmode=require" \
+     npx prisma db push
+   ```
 
 ## Test Account Credentials
 
@@ -96,29 +110,27 @@ Login at: `https://your-site.netlify.app/auth/signin`
 
 Test the account by:
 1. Logging in at `/auth/signin`
-2. Accessing `/dashboard/cms` (requires SUPER_ADMIN)
-3. Accessing `/dashboard/media` (requires SUPER_ADMIN)
-4. Creating a new valuation at `/dashboard/valuations/new`
+2. Accessing `/admin` (requires SUPER_ADMIN)
+3. Creating a new valuation at `/valora/dashboard`
 
 ## Troubleshooting
 
 ### Seed fails with "Prisma not initialized"
 ```bash
-netlify functions:invoke --name build
-# This will trigger prisma generate
+npx prisma generate
 npm run seed
 ```
 
 ### User already exists
-The seed script uses `upsert`, so it's safe to run multiple times. It will update the password if the user exists.
+The seed script uses `upsert`, so it's safe to run multiple times.
 
 ### Can't connect to database
-Verify `DATABASE_URL` in Netlify environment variables:
-1. Go to **Site settings** > **Environment variables**
-2. Check `DATABASE_URL` is set correctly
-3. Ensure it includes `?sslmode=require` for Neon
+1. Go to **Google Cloud SQL** → your instance → **Connections**
+2. Verify **Public IP** is enabled
+3. Check your IP is in **Authorized Networks**
+4. Verify `DATABASE_URL` includes `?sslmode=require`
 
 ### Authentication not working
-1. Check `NEXTAUTH_SECRET` is set
-2. Check `NEXTAUTH_URL` matches your deployment URL
-3. Enable debug mode temporarily in `lib/auth.ts`
+1. Check `NEXTAUTH_SECRET` is set in Netlify env vars
+2. Check `NEXTAUTH_URL` matches your deployment URL exactly
+3. Redeploy after changing env vars

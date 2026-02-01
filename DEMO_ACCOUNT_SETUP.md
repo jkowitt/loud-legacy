@@ -14,10 +14,10 @@ This guide will help you set up and test the demo account across all LOUD Legacy
 
 ## Step 1: Create Demo Account in Database
 
-### Option A: Using Neon Console (Recommended)
+### Option A: Using Google Cloud SQL Console (Recommended)
 
-1. Go to your [Neon Console](https://console.neon.tech/)
-2. Select your project: `neondb`
+1. Go to your [Google Cloud SQL Console](https://console.cloud.google.com/sql/instances)
+2. Select your project: `legacyre`
 3. Click on "SQL Editor"
 4. Copy and paste the entire contents of `CREATE_TEST_ACCOUNT_ALL_PLATFORMS.sql`
 5. Click "Run" to execute the SQL
@@ -26,7 +26,7 @@ This guide will help you set up and test the demo account across all LOUD Legacy
 ### Option B: Using psql Command Line
 
 ```bash
-psql "postgresql://neondb_owner:npg_2bHkKQlRE8sx@ep-late-mouse-ahud1v4a-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require" -f CREATE_TEST_ACCOUNT_ALL_PLATFORMS.sql
+psql "postgresql://postgres:YOUR_PASSWORD@CLOUD_SQL_IP:5432/legacyre?sslmode=require" -f CREATE_TEST_ACCOUNT_ALL_PLATFORMS.sql
 ```
 
 ---
@@ -187,7 +187,7 @@ Access at: http://localhost:3003
 
 **Solution:**
 ```sql
--- Run in Neon Console to grant access
+-- Run in Google Cloud SQL Console to grant access
 INSERT INTO "PlatformAccess" ("id", "userId", "platform", "enabled", "createdAt")
 SELECT
   gen_random_uuid(),
@@ -266,7 +266,7 @@ After following all steps, verify:
 
 ## Database Schema Verification
 
-Run this query in Neon Console to verify the demo account setup:
+Run this query in Google Cloud SQL Console to verify the demo account setup:
 
 ```sql
 SELECT

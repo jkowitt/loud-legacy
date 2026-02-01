@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { geocodePropertyFromImage } from '@/lib/openai';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/ai/geocode
  * Extract property information and location from image

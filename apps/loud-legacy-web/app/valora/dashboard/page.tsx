@@ -4,6 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
+import AddressAutocomplete, { type PlaceResult } from "@/components/AddressAutocomplete";
+import StreetView from "@/components/StreetView";
+import NearbyAmenities from "@/components/NearbyAmenities";
+import PropertyMap from "@/components/PropertyMap";
 
 // Property Types
 const PROPERTY_TYPES = [
@@ -166,6 +170,9 @@ export default function ValoraDashboard() {
   const [zipCode, setZipCode] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [showPropertyTypes, setShowPropertyTypes] = useState(false);
+
+  // Coordinates from Places autocomplete
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   // Property Details State
   const [sqft, setSqft] = useState("");
@@ -624,11 +631,21 @@ export default function ValoraDashboard() {
             <div className="val-input-card">
               <h3>Property Information</h3>
 
-              {/* Address Input */}
+              {/* Address Input – Google Places Autocomplete */}
               <div className="val-form-section">
                 <label>Property Address <span className="optional">(optional for underwriting)</span></label>
-                <input type="text" placeholder="Street address" value={address} onChange={(e) => setAddress(e.target.value)} className="val-input" />
-                <div className="val-input-row">
+                <AddressAutocomplete
+                  defaultValue={address}
+                  placeholder="Start typing an address..."
+                  onSelect={(place: PlaceResult) => {
+                    setAddress(place.address);
+                    if (place.components.city) setCity(place.components.city);
+                    if (place.components.stateShort) setState(place.components.stateShort);
+                    if (place.components.zip) setZipCode(place.components.zip);
+                    if (place.lat && place.lng) setCoordinates({ lat: place.lat, lng: place.lng });
+                  }}
+                />
+                <div className="val-input-row" style={{ marginTop: "0.5rem" }}>
                   <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="val-input" />
                   <input type="text" placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="val-input small" />
                   <input type="text" placeholder="ZIP" value={zipCode} onChange={(e) => setZipCode(e.target.value)} className="val-input small" />
@@ -1086,19 +1103,48 @@ export default function ValoraDashboard() {
                     </div>
                   )}
 
-                  {/* Map Tab */}
+                  {/* Map Tab – Google Maps, Street View, Amenities */}
                   {activeTab === "map" && (
                     <div className="val-map-content">
-                      <div className="val-map-placeholder">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48"><circle cx="12" cy="10" r="3" /><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 7 8 11.7z" /></svg>
-                        <h4>Interactive Map</h4>
-                        <p>View property location, nearby comps, and area amenities</p>
-                        <div className="map-legend">
+                      {/* Street View */}
+                      {address && (
+                        <div style={{ marginBottom: "1rem" }}>
+                          <h4 style={{ margin: "0 0 0.5rem", fontSize: "0.9375rem", fontWeight: 600 }}>Street View</h4>
+                          <StreetView
+                            address={`${address}, ${city}, ${state} ${zipCode}`}
+                            location={coordinates || undefined}
+                            height={280}
+                            multiAngle
+                          />
+                        </div>
+                      )}
+
+                      {/* Interactive Map with Comps */}
+                      <div style={{ marginBottom: "1rem" }}>
+                        <h4 style={{ margin: "0 0 0.5rem", fontSize: "0.9375rem", fontWeight: 600 }}>Property Map</h4>
+                        <PropertyMap
+                          address={`${address}, ${city}, ${state} ${zipCode}`}
+                          location={coordinates || undefined}
+                          propertyValue={valuation?.estimatedValue}
+                          comparables={comps.map(c => ({
+                            address: c.address,
+                            salePrice: c.salePrice,
+                            distance: c.distance,
+                          }))}
+                          height={350}
+                        />
+                        <div className="map-legend" style={{ marginTop: "0.5rem" }}>
                           <div className="legend-item"><span className="dot subject"></span><span>Subject Property</span></div>
                           <div className="legend-item"><span className="dot comp"></span><span>Comparable Sales ({comps.length})</span></div>
                         </div>
-                        <p className="map-note">Map integration available with API key</p>
                       </div>
+
+                      {/* Nearby Amenities */}
+                      {coordinates && (
+                        <div style={{ marginTop: "1rem", padding: "1rem", background: "var(--bg-secondary, #f8fafc)", borderRadius: "8px" }}>
+                          <NearbyAmenities lat={coordinates.lat} lng={coordinates.lng} />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

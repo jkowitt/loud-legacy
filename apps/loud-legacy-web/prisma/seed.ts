@@ -10,10 +10,10 @@ async function main() {
   const hashedPassword = await bcrypt.hash('demo123', 10);
 
   const testUser = await prisma.user.upsert({
-    where: { email: 'demo@valora.com' },
+    where: { email: 'demo@legacyre.com' },
     update: {},
     create: {
-      email: 'demo@valora.com',
+      email: 'demo@legacyre.com',
       name: 'Demo Admin',
       password: hashedPassword,
       role: 'SUPER_ADMIN', // Full admin privileges including CMS editing
@@ -22,7 +22,7 @@ async function main() {
   });
 
   console.log('✅ Created test admin account:');
-  console.log('   Email: demo@valora.com');
+  console.log('   Email: demo@legacyre.com');
   console.log('   Password: demo123');
   console.log('   Role: SUPER_ADMIN (full CMS & site editing capabilities)');
 
@@ -47,7 +47,7 @@ async function main() {
   }
 
   console.log('✅ Granted access to all platforms:');
-  console.log('   - VALORA (Real Estate Valuation)');
+  console.log('   - Legacy RE (Real Estate Valuation)');
   console.log('   - BUSINESS_NOW (Business Management)');
   console.log('   - LEGACY_CRM (Customer Relationship Management)');
   console.log('   - HUB (Central Dashboard)');
@@ -60,7 +60,7 @@ async function main() {
     create: {
       name: 'Demo Organization',
       slug: 'demo-org',
-      description: 'Demo organization for testing VALORA platform',
+      description: 'Demo organization for testing Legacy RE platform',
       planType: 'PROFESSIONAL',
     },
   });
@@ -236,7 +236,7 @@ async function main() {
       },
       {
         key: 'footer_copyright',
-        value: '© 2026 VALORA. All rights reserved.',
+        value: '© 2026 Legacy RE. All rights reserved.',
         type: 'TEXT',
         section: 'footer',
         updatedBy: testUser.id,
@@ -265,7 +265,7 @@ async function main() {
   console.log('\n🎉 Database seeded successfully!');
   console.log('\n📝 Test Account Credentials:');
   console.log('   URL: http://localhost:3007/auth/signin');
-  console.log('   Email: demo@valora.com');
+  console.log('   Email: demo@legacyre.com');
   console.log('   Password: demo123');
   console.log('   Role: SUPER_ADMIN (Can edit site, manage CMS, add photos)');
   console.log('\n💡 This account has full permissions to:');

@@ -4,6 +4,8 @@ import Stripe from "stripe";
 import { stripe, getPlanByPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: NextRequest) {

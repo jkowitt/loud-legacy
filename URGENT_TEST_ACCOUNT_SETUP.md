@@ -5,8 +5,8 @@ Server can't test features without the test account existing in the database fir
 
 ## Solution: 3-Minute Setup
 
-### Step 1: Open Neon Console
-1. Go to: **https://console.neon.tech/**
+### Step 1: Open Google Cloud SQL Console
+1. Go to: **https://console.cloud.google.com/sql/instances**
 2. Login to your account
 3. Select your **loud-legacy** database
 
@@ -83,7 +83,7 @@ After logging in, you should be able to:
 ### Check Environment Variables in Netlify:
 
 **Required:**
-- `DATABASE_URL` - Your Neon connection string ✓
+- `DATABASE_URL` - Your Google Cloud SQL connection string ✓
 - `NEXTAUTH_SECRET` - Run: `openssl rand -base64 32`
 - `NEXTAUTH_URL` - Your site URL (e.g., `https://your-site.netlify.app`)
 
@@ -93,7 +93,7 @@ After logging in, you should be able to:
 
 ### Check Database Connection:
 
-Run this in Neon SQL Editor to verify user exists:
+Run this in Cloud SQL console or psql to verify user exists:
 ```sql
 SELECT id, email, name, role, "emailVerified"
 FROM "User"

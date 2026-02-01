@@ -9,6 +9,8 @@ import {
   Opportunity,
 } from "@/lib/legacy-crm";
 
+export const dynamic = 'force-dynamic';
+
 // In-memory demo data that can be modified during session
 let sessionContacts = [...demoContacts];
 let sessionInteractions = [...demoInteractions];

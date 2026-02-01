@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { stripe, PLANS, ADDONS, type PlanKey, type AddonKey, type BillingInterval } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     if (!stripe) {

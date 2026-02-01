@@ -39,8 +39,8 @@ https://your-site.netlify.app/auth/signin
 
 If the serverless function doesn't work:
 
-### Via Neon Console (Direct SQL)
-1. Login to [Neon Console](https://console.neon.tech/)
+### Via Google Cloud SQL Console (Direct SQL)
+1. Login to [Google Cloud SQL Console](https://console.cloud.google.com/sql/instances)
 2. Open SQL Editor
 3. Run the SQL from `create-test-user.sql`
 
