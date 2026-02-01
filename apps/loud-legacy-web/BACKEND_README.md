@@ -401,7 +401,7 @@ vercel --prod
 
 ### Database (Recommended Services)
 - **Supabase** - Free tier with PostgreSQL
-- **Neon** - Serverless PostgreSQL
+- **Google Cloud SQL** - Managed PostgreSQL
 - **Railway** - Easy PostgreSQL hosting
 - **AWS RDS** - Production PostgreSQL
 

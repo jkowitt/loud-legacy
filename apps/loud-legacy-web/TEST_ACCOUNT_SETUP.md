@@ -8,7 +8,7 @@
 
 ## Issue: Database Connectivity
 
-The current environment cannot reach the Neon PostgreSQL database due to network restrictions. This is why the test account cannot be created automatically.
+The current environment cannot reach the Google Cloud SQL PostgreSQL database due to network restrictions. This is why the test account cannot be created automatically.
 
 ## Solution Options
 
@@ -16,7 +16,7 @@ The current environment cannot reach the Neon PostgreSQL database due to network
 
 If you're deploying to Netlify, the database will be accessible from there. To create the test user:
 
-1. **Access your database** directly via Neon console or psql
+1. **Access your database** directly via Google Cloud SQL Console or psql
 2. **Run this SQL command:**
 
 ```sql

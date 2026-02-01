@@ -4,11 +4,20 @@
 
 Go to: **Netlify Dashboard** → **Site settings** → **Environment variables**
 
-### 1. DATABASE_URL ✓
-**Status:** Already set (you mentioned Neon variable is in Netlify)
+### 1. DATABASE_URL
+**Provider:** Google Cloud SQL (PostgreSQL)
+**Get it:** https://console.cloud.google.com/sql/instances
 ```
-postgresql://username:password@host.neon.tech/dbname?sslmode=require
+postgresql://postgres:YOUR_PASSWORD@CLOUD_SQL_PUBLIC_IP:5432/legacyre?sslmode=require
 ```
+
+**Setup steps:**
+1. Create a Cloud SQL PostgreSQL 15 instance
+2. Set a strong password for the `postgres` user
+3. Under **Connections**, enable **Public IP**
+4. Add Netlify's IP range to **Authorized Networks** (or `0.0.0.0/0` for serverless)
+5. Connect and create the database: `CREATE DATABASE legacyre;`
+6. Run `npx prisma db push` to create tables
 
 ### 2. NEXTAUTH_SECRET ⚠️
 **Status:** Needs to be set
@@ -131,7 +140,7 @@ netlify env:list
 
 2. **Wait for build to complete** (2-3 minutes)
 
-3. **Create test account** using SQL in Neon console (see URGENT_TEST_ACCOUNT_SETUP.md)
+3. **Create test account** using SQL in Google Cloud SQL Console (see URGENT_TEST_ACCOUNT_SETUP.md)
 
 4. **Test login** at `https://your-site.netlify.app/auth/signin`
 
@@ -144,7 +153,7 @@ netlify env:list
 - Check `DATABASE_URL` is correct
 
 ### Login fails with "Invalid credentials":
-- Test account doesn't exist yet - run SQL in Neon console
+- Test account doesn't exist yet - run SQL in Google Cloud SQL Console
 - Check database connection by running: `SELECT * FROM "User" LIMIT 1;`
 
 ### Redirects to wrong URL after login:

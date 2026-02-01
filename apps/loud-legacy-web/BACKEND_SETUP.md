@@ -45,7 +45,7 @@ GRANT ALL PRIVILEGES ON DATABASE valora_db TO valora_user;
 ### Option B: Hosted Database (Recommended for Production)
 
 **Free Options:**
-- **Neon**: https://neon.tech (serverless PostgreSQL)
+- **Google Cloud SQL**: https://console.cloud.google.com/sql/instances (managed PostgreSQL)
 - **Supabase**: https://supabase.com (includes auth & storage)
 - **Railway**: https://railway.app (includes PostgreSQL)
 - **Heroku Postgres**: https://www.heroku.com/postgres (free tier)

@@ -28,7 +28,7 @@ Access: All 5 platforms
 
 ## 📊 Database Architecture
 
-### Central PostgreSQL Database (Neon)
+### Central PostgreSQL Database (Google Cloud SQL)
 Located at: `apps/loud-legacy-web/prisma/schema.prisma`
 
 #### Core Models (Shared)
@@ -463,7 +463,7 @@ Each platform deploys independently:
 
 [build.environment]
   NODE_VERSION = "20"
-  DATABASE_URL = "$DATABASE_URL"          # Shared Neon database
+  DATABASE_URL = "$DATABASE_URL"          # Shared Google Cloud SQL database
   NEXTAUTH_SECRET = "$NEXTAUTH_SECRET"
   STRIPE_SECRET_KEY = "$STRIPE_SECRET_KEY"
   STRIPE_WEBHOOK_SECRET = "$STRIPE_WEBHOOK_SECRET_BUSINESS_NOW"
@@ -472,7 +472,7 @@ Each platform deploys independently:
 ### Environment Variables Required
 
 **Shared across all platforms:**
-- `DATABASE_URL` - Neon PostgreSQL connection
+- `DATABASE_URL` - Google Cloud SQL PostgreSQL connection
 - `NEXTAUTH_SECRET` - JWT secret
 - `NEXTAUTH_URL` - Platform-specific URL
 

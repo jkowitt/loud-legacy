@@ -7,7 +7,7 @@
 **Symptom:** "Invalid credentials" error
 
 **Check:**
-Run this in Neon SQL Editor:
+Run this in Cloud SQL console or psql:
 ```sql
 SELECT email, role, password, "emailVerified"
 FROM "User"
@@ -111,7 +111,7 @@ VALUES (
 
 ### Step 1: Verify Database User
 ```sql
--- Run in Neon Console
+-- Run in Google Cloud SQL Console
 SELECT * FROM "User" WHERE email = 'demo@valora.com';
 ```
 
@@ -130,7 +130,7 @@ SELECT * FROM "User" WHERE email = 'demo@valora.com';
 Go to **Netlify** → **Site settings** → **Environment variables**
 
 **Must have:**
-- [x] `DATABASE_URL` - Your Neon connection string
+- [x] `DATABASE_URL` - Your Google Cloud SQL connection string
 - [ ] `NEXTAUTH_SECRET` - A random 32+ character string
 - [ ] `NEXTAUTH_URL` - Your site URL (https://...)
 
@@ -181,7 +181,7 @@ Go to **Netlify** → **Functions** → **Logs**
 
 ## Quick Verification Script
 
-Run this in Neon to verify everything:
+Run this in Google Cloud SQL Console to verify everything:
 
 ```sql
 -- 1. Check user exists

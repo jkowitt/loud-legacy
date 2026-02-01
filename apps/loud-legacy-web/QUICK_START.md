@@ -1,24 +1,36 @@
-# VALORA Quick Start Guide
+# Legacy RE Quick Start Guide
 
-## 🚀 Super Fast Setup (5 minutes)
+## Super Fast Setup (5 minutes)
 
 ### Step 1: Get a Database (Choose One)
 
-**Option A: Neon (Easiest - Serverless PostgreSQL)**
-1. Go to https://neon.tech
-2. Sign up (free)
-3. Create a project
-4. Copy the connection string
+**Option A: Google Cloud SQL (Recommended)**
+1. Go to https://console.cloud.google.com/sql/instances
+2. Click **Create Instance** → **PostgreSQL**
+3. Choose PostgreSQL 15, set a password, pick a region
+4. Under **Connections**, enable **Public IP** and add your IP to Authorized Networks
+5. Copy the Public IP address
+
+Your `DATABASE_URL` will be:
+```
+postgresql://postgres:YOUR_PASSWORD@PUBLIC_IP:5432/legacyre?sslmode=require
+```
+
+Create the database:
+```bash
+# Connect via Cloud Shell or psql
+psql "postgresql://postgres:YOUR_PASSWORD@PUBLIC_IP:5432/postgres?sslmode=require" -c "CREATE DATABASE legacyre;"
+```
 
 **Option B: Local PostgreSQL**
 ```bash
 # macOS
 brew install postgresql@15
 brew services start postgresql@15
-psql postgres -c "CREATE DATABASE valora_db;"
+psql postgres -c "CREATE DATABASE legacyre;"
 
 # Your DATABASE_URL will be:
-# postgresql://localhost:5432/valora_db
+# postgresql://localhost:5432/legacyre
 ```
 
 ### Step 2: Run Setup Script
@@ -47,7 +59,7 @@ Visit: http://localhost:3007
 
 ---
 
-## 📋 Essential Commands
+## Essential Commands
 
 ```bash
 # Development
@@ -68,23 +80,23 @@ npx prisma migrate deploy      # Apply migrations (production)
 
 ---
 
-## 🔧 Environment Variables (.env.local)
+## Environment Variables (.env.local)
 
 **Minimum Required:**
 ```bash
-DATABASE_URL="postgresql://user:pass@host:5432/db"
+DATABASE_URL="postgresql://postgres:password@CLOUD_SQL_IP:5432/legacyre?sslmode=require"
 NEXTAUTH_SECRET="your-random-secret-32-chars"
 NEXTAUTH_URL="http://localhost:3007"
 ```
 
 **Optional (AI Features):**
 ```bash
-OPENAI_API_KEY="sk-proj-your-key"
+ANTHROPIC_API_KEY="sk-ant-api-your-key"
 ```
 
 ---
 
-## 🌐 Netlify Deployment
+## Netlify Deployment
 
 ### 1. Set Environment Variables in Netlify
 
@@ -92,32 +104,37 @@ Go to: **Site settings → Environment → Add variable**
 
 Add these:
 ```
-DATABASE_URL       = your-production-database-url
+DATABASE_URL       = postgresql://postgres:password@CLOUD_SQL_IP:5432/legacyre?sslmode=require
 NEXTAUTH_SECRET    = same-as-local-or-generate-new
 NEXTAUTH_URL       = https://your-site.netlify.app
 ```
 
 Optional:
 ```
-OPENAI_API_KEY     = your-openai-key
+ANTHROPIC_API_KEY             = your-anthropic-key
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = your-google-maps-key
 ```
 
-### 2. Deploy
+### 2. Authorize Netlify IPs
+
+In Google Cloud SQL → your instance → **Connections** → **Authorized Networks**, add:
+- `0.0.0.0/0` (for Netlify serverless — restrict further in production)
+
+### 3. Deploy
 ```bash
 git push origin main
 ```
 
-Netlify automatically deploys on push!
+Netlify automatically deploys on push.
 
 ---
 
-## ✅ Verification Checklist
+## Verification Checklist
 
 After setup, test these:
 
 - [ ] Visit http://localhost:3007 - Site loads
-- [ ] Visit /dashboard - Dashboard accessible (no login required)
-- [ ] Visit /dashboard/valuations/new - Can access form
+- [ ] Visit /valora/dashboard - Dashboard accessible
 - [ ] Create a valuation - Calculations work
 - [ ] Visit /auth/signin - Login page loads
 - [ ] Sign in with demo@valora.com - Authentication works
@@ -125,16 +142,22 @@ After setup, test these:
 
 ---
 
-## 🐛 Common Issues
+## Common Issues
 
 ### "Can't reach database server"
 ```bash
 # Check DATABASE_URL in .env.local
 cat .env.local | grep DATABASE_URL
 
+# For Cloud SQL: ensure your IP is in Authorized Networks
+# Go to: https://console.cloud.google.com/sql/instances → Connections
+
 # Test database connection
 npx prisma db push
 ```
+
+### "SSL connection error"
+Make sure your DATABASE_URL ends with `?sslmode=require` for Cloud SQL.
 
 ### "Prisma Client not generated"
 ```bash
@@ -143,16 +166,12 @@ npx prisma generate
 
 ### "Port 3007 already in use"
 ```bash
-# Kill process on port 3007
 lsof -ti:3007 | xargs kill -9
-
-# Or use a different port
 npm run dev -- -p 3008
 ```
 
 ### Build fails
 ```bash
-# Clear build cache
 rm -rf .next node_modules
 npm install
 npm run build
@@ -160,29 +179,31 @@ npm run build
 
 ---
 
-## 📖 Full Documentation
+## Full Documentation
 
 - **Backend Setup**: See `BACKEND_SETUP.md`
 - **Database Schema**: See `prisma/schema.prisma`
+- **Environment Variables**: See `ENVIRONMENT_VARIABLES_CHECKLIST.md`
 
 ---
 
-## 🎯 What You Get
+## What You Get
 
-✅ **Working dashboard** at /dashboard
-✅ **Valuation calculator** at /dashboard/valuations/new
-✅ **Authentication system** at /auth/signin
-✅ **API endpoints** at /api/*
-✅ **Database** with Prisma ORM
-✅ **AI integration** (optional)
-✅ **Demo mode** (no login required)
+- **Working dashboard** at /valora/dashboard
+- **Underwriting workspace** with rent rolls, P&L, and scenario analysis
+- **Authentication system** at /auth/signin
+- **API endpoints** at /api/*
+- **Database** with Prisma ORM on Google Cloud SQL
+- **AI building analysis** (with Anthropic API key)
+- **Google Maps integration** (with Google Maps API key)
+- **Demo mode** (no login required)
 
 ---
 
-## 💡 Tips
+## Tips
 
 - Use `npx prisma studio` to view/edit database visually
 - Demo mode works without database (mock data)
 - API routes require database for persistence
-- OpenAI key is optional (AI features work in demo mode)
-- Start with free Neon database for testing
+- Start with a small Cloud SQL instance (db-f1-micro is ~$7/month)
+- Scale up the instance as needed without changing code

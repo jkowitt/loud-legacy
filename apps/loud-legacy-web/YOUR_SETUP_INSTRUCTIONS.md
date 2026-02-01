@@ -2,7 +2,7 @@
 
 ## ✅ What's Already Done
 
-1. **Database configured** - Your Neon PostgreSQL connection is in `.env.local`
+1. **Database configured** - Your Google Cloud SQL PostgreSQL connection is in `.env.local`
 2. **Secrets generated** - `NEXTAUTH_SECRET` is set
 3. **Dependencies installed** - All npm packages ready
 4. **Environment ready** - `.env.local` is configured
@@ -74,7 +74,7 @@ Go to: **Netlify → Site settings → Environment**
 Add these variables:
 
 ```
-DATABASE_URL       = postgresql://neondb_owner:npg_2bHkKQlRE8sx@ep-late-mouse-ahud1v4a-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL       = postgresql://postgres:YOUR_PASSWORD@CLOUD_SQL_IP:5432/legacyre?sslmode=require
 NEXTAUTH_SECRET    = 4w1lZlQZQlk+x4McELDzeEoQnA0EWagOeiD0blx2cGw=
 NEXTAUTH_URL       = https://your-site.netlify.app
 ```
@@ -115,8 +115,8 @@ Netlify will automatically deploy!
 
 - Run `npx prisma studio` anytime to view your database visually
 - Demo mode works without authentication for exploring UI
-- All data persists in your Neon database
-- Free Neon tier is perfect for development
+- All data persists in your Google Cloud SQL database
+- Google Cloud SQL free trial is perfect for development
 
 ## ❓ Questions?
 

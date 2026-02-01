@@ -44,7 +44,7 @@
 - NextAuth 4.24.5
 - Anthropic SDK (Claude)
 - Google Maps API
-- PostgreSQL (Neon)
+- PostgreSQL (Google Cloud SQL)
 
 ---
 
@@ -183,7 +183,7 @@
 
 ## 🗄️ Database Architecture
 
-### Shared Database (PostgreSQL on Neon)
+### Shared Database (PostgreSQL on Google Cloud SQL)
 **Location:** `apps/loud-legacy-web/prisma/schema.prisma`
 
 **Core Models (Shared across all platforms):**
@@ -325,7 +325,7 @@ const hasAccess = user.platformAccess.some(
 
 ### SQL to Grant Test Account Access to All Platforms
 
-Run this in Neon Console:
+Run this in Google Cloud SQL Console:
 
 ```sql
 -- File: CREATE_TEST_ACCOUNT_ALL_PLATFORMS.sql (already created)
@@ -461,7 +461,7 @@ Password: demo123
 2. ✅ Create signin pages for all platforms
 3. ✅ Create Hub platform with platform switcher
 4. ✅ Create comprehensive documentation
-5. 🔴 Run SQL to create demo account in Neon database
+5. 🔴 Run SQL to create demo account in Google Cloud SQL database
 6. 🔴 Test login on all platforms
 7. 🔴 Add Stripe integration to all 4 platforms
 
@@ -508,7 +508,7 @@ Password: demo123
 ---
 
 **Last Updated:** January 14, 2026
-**Next Action:** Run CREATE_TEST_ACCOUNT_ALL_PLATFORMS.sql in Neon Console
+**Next Action:** Run CREATE_TEST_ACCOUNT_ALL_PLATFORMS.sql in Google Cloud SQL Console
 **Test Account:** demo@valora.com / demo123
 **Platforms Ready:** 4 of 5 (80%)
 **Payment Integration:** 0 of 4 (0%)

@@ -231,7 +231,7 @@ npm run db:studio
 See `BACKEND_README.md` for detailed production deployment instructions.
 
 Quick checklist:
-- [ ] Set up production database (Supabase, Neon, Railway)
+- [ ] Set up production database (Google Cloud SQL, Supabase, Railway)
 - [ ] Configure all environment variables
 - [ ] Run migrations: `npm run db:migrate`
 - [ ] Build: `npm run build`
