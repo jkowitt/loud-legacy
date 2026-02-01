@@ -5,6 +5,8 @@ import { getResourceById } from "@/lib/business-now-resources";
 import { promises as fs } from "fs";
 import path from "path";
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/business-now/download
 // Handles resource downloads with access control
 export async function POST(request: NextRequest) {

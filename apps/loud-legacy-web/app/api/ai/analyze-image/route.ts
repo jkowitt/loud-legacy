@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { analyzePropertyImage } from '@/lib/openai';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/ai/analyze-image
  * Analyze property image for condition, wear and tear

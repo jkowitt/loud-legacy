@@ -1,12 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  // Static export for Netlify drag & drop
-  // output: 'export', // Removed for API routes support
   images: {
     unoptimized: true,
-    domains: ['localhost', 'cdn.loud-legacy.com'],
     remotePatterns: [
       {
         protocol: 'https',

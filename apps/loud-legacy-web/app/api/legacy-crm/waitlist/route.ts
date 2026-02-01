@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { WaitlistEntry } from "@/lib/legacy-crm";
 
+export const dynamic = 'force-dynamic';
+
 // In-memory storage for demo (would be database in production)
 const waitlist: WaitlistEntry[] = [];
 

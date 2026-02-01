@@ -31,15 +31,12 @@ if ! grep -q 'import "./globals.css"' app/layout.tsx; then
     exit 1
 fi
 
-# Check for common Next.js export issues
-if grep -q "output: 'export'" next.config.mjs; then
-    echo "✓ Static export configured"
-
-    # Verify netlify.toml doesn't have conflicting redirects
-    if grep -q "to = \"/index.html\"" ../../netlify.toml 2>/dev/null; then
-        echo "⚠️  WARNING: SPA redirect detected in netlify.toml"
-        echo "This may conflict with Next.js static export!"
-    fi
+# Verify SSR mode (not static export) for API route support
+if grep -q "^[[:space:]]*output: 'export'" next.config.mjs; then
+    echo "⚠️  WARNING: Static export is enabled. API routes will NOT work!"
+    echo "Remove output: 'export' from next.config.mjs for full SSR support."
+else
+    echo "✓ SSR mode configured (API routes supported)"
 fi
 
 echo "✅ All verifications passed!"

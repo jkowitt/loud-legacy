@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 // In-memory storage for content changes (would use database in production)
 const contentChanges: Map<string, {
   path: string;

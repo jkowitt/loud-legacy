@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/database/browse?table=User&page=1&pageSize=25&sort=createdAt&dir=desc&search=term
  *

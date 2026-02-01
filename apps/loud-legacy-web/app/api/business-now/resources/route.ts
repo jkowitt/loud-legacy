@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { allResources, guides, templates, Resource } from "@/lib/business-now-resources";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/business-now/resources
 // Returns all resources with user's access level
 export async function GET(request: NextRequest) {
