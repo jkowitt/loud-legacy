@@ -41,18 +41,32 @@ Or use this pre-generated one:
 Without this, AI analysis will show mock data.
 
 ### 5. NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-**For:** Property maps and GPS geocoding
+**For:** Property maps, address autocomplete, Street View photos, distance calculations, and nearby amenities
 **Get it:** https://console.cloud.google.com/google/maps-apis
 **Format:** `AIza...`
 
-**Enable these APIs:**
-- Maps JavaScript API
-- Geocoding API
+**Enable these APIs in Google Cloud Console:**
+- Maps JavaScript API (interactive maps)
+- Places API (address autocomplete, nearby amenities)
+- Geocoding API (address-to-coordinates and reverse)
+- Street View Static API (property photos from street level)
+- Distance Matrix API (driving distance between comps)
+- Geometry library (loaded automatically)
 
 **Set restrictions:**
 - HTTP referrers: `https://your-site.netlify.app/*`
+- For API routes (Distance Matrix, Nearby): also add your server IP or use no restriction for server-side keys
 
-Without this, maps will show mock/demo mode.
+**Features powered by this key:**
+- `AddressAutocomplete` – Google Places address search with auto-fill of city/state/zip
+- `StreetView` – Automatic street-level property photos on marketplace cards and map tab
+- `PropertyMap` – Interactive map with subject property and comp markers (real geocoding)
+- `NearbyAmenities` – Schools, transit, grocery, healthcare, parks near the property
+- `/api/distance-matrix` – Driving distance/time between subject and comp properties
+- `/api/nearby` – Neighbourhood amenity data for valuation reports
+- `/api/geocode` – Reverse geocoding from camera GPS coordinates
+
+Without this, all features fall back to mock/demo data.
 
 ### 6. OPENAI_API_KEY (Optional)
 **For:** Additional AI features (if used)
