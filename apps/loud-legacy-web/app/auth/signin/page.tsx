@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn as nextAuthSignIn } from "next-auth/react";
 import { useAuth } from "@/components/AuthProvider";
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const justRegistered = searchParams.get("registered") === "true";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +66,12 @@ export default function SignInPage() {
             <h1>Welcome to Loud Legacy</h1>
             <p>Sign in to access all your business tools</p>
           </div>
+
+          {justRegistered && (
+            <div className="auth-success">
+              Account created! Sign in with your credentials or Google to get started.
+            </div>
+          )}
 
           {error && <div className="auth-error">{error}</div>}
 

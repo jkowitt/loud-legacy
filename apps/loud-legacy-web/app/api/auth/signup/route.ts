@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         role: 'USER',
+        emailVerified: new Date(),
       },
       select: {
         id: true,
@@ -64,21 +65,42 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Grant free BETA access to all platforms
+    const platforms = ['VALORA', 'BUSINESS_NOW', 'LEGACY_CRM', 'HUB', 'VENUEVR', 'LOUD_WORKS'] as const;
+    for (const platform of platforms) {
+      await prisma.platformAccess.upsert({
+        where: {
+          userId_platform: {
+            userId: user.id,
+            platform,
+          },
+        },
+        update: { enabled: true },
+        create: {
+          userId: user.id,
+          platform,
+          enabled: true,
+        },
+      });
+    }
+
     // Log activity
     await prisma.activityLog.create({
       data: {
         userId: user.id,
-        action: 'user_registered',
+        action: 'beta_user_registered',
         entityType: 'user',
         entityId: user.id,
         details: {
           email: user.email,
+          isBeta: true,
+          platformsGranted: platforms.length,
         },
       },
     });
 
     return NextResponse.json(
-      { user },
+      { user, beta: true },
       { status: 201 }
     );
   } catch (error: unknown) {
