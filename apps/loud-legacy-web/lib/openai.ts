@@ -24,7 +24,7 @@ export async function analyzePropertyImage(imageUrl: string) {
   try {
     const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "user",
@@ -78,7 +78,7 @@ export async function generatePropertyRecommendations(propertyData: {
   try {
     const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -123,7 +123,7 @@ export async function geocodePropertyFromImage(imageUrl: string) {
   try {
     const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "user",
@@ -322,7 +322,7 @@ export async function analyzeMarketTrends(marketData: {
   try {
     const openai = getOpenAIClient();
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",

@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { analyzeImprovementsFromImage } from "@/lib/openai";
 
 export const dynamic = 'force-dynamic';
@@ -105,10 +103,8 @@ const FALLBACK_ANALYSES: Record<string, {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Allow both NextAuth sessions and demo mode (no session)
+    // AI analysis doesn't require user-specific DB data
 
     const body = await request.json();
     const { imageUrl, imageBase64, area } = body;

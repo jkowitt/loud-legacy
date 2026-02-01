@@ -9,83 +9,73 @@ export const dynamic = 'force-dynamic';
 /**
  * POST /api/ai/recommendations
  * Generate AI-powered property improvement recommendations
+ * Supports both authenticated (saves to DB) and demo mode
  */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
-    const { propertyId } = body;
+    const { propertyId, propertyType, condition, yearBuilt, squareFeet, issues: directIssues } = body;
 
-    if (!propertyId) {
-      return NextResponse.json(
-        { error: 'Property ID is required' },
-        { status: 400 }
-      );
-    }
+    let recIssues: string[] = directIssues || [];
+    let recPropertyType = propertyType || 'residential';
+    let recCondition = condition || 75;
+    let recYearBuilt = yearBuilt;
+    let recSquareFeet = squareFeet;
 
-    // Fetch property data
-    const property = await prisma.property.findUnique({
-      where: { id: propertyId },
-      include: {
-        images: true,
-      },
-    });
+    // If propertyId provided and user is authenticated, fetch from DB
+    if (propertyId && session?.user) {
+      const property = await prisma.property.findUnique({
+        where: { id: propertyId },
+        include: { images: true },
+      });
 
-    if (!property) {
-      return NextResponse.json(
-        { error: 'Property not found' },
-        { status: 404 }
-      );
-    }
+      if (property) {
+        recPropertyType = property.propertyType || recPropertyType;
+        recCondition = property.aiConditionScore || recCondition;
+        recYearBuilt = property.yearBuilt || recYearBuilt;
+        recSquareFeet = property.squareFeet || recSquareFeet;
 
-    // Parse existing issues
-    let issues: string[] = [];
-    if (property.aiWearTearNotes) {
-      try {
-        const parsed = JSON.parse(property.aiWearTearNotes);
-        issues = Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        issues = [];
+        if (property.aiWearTearNotes) {
+          try {
+            const parsed = JSON.parse(property.aiWearTearNotes);
+            recIssues = Array.isArray(parsed) ? parsed : recIssues;
+          } catch {
+            // keep directIssues
+          }
+        }
       }
     }
 
     // Generate recommendations
     const recommendations = await generatePropertyRecommendations({
-      propertyType: property.propertyType,
-      condition: property.aiConditionScore || 75,
-      yearBuilt: property.yearBuilt || undefined,
-      squareFeet: property.squareFeet || undefined,
-      issues,
+      propertyType: recPropertyType,
+      condition: recCondition,
+      yearBuilt: recYearBuilt || undefined,
+      squareFeet: recSquareFeet || undefined,
+      issues: recIssues,
     });
 
-    // Save recommendations to property
-    await prisma.property.update({
-      where: { id: propertyId },
-      data: {
-        aiRecommendations: JSON.stringify(recommendations),
-      },
-    });
-
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: (session.user as any).id,
-        action: 'generated_property_recommendations',
-        entityType: 'property',
-        entityId: propertyId,
-        details: {
-          recommendationsCount: recommendations.length,
-        },
-      },
-    });
+    // Save to DB if authenticated and propertyId provided
+    if (session?.user && propertyId) {
+      try {
+        await prisma.property.update({
+          where: { id: propertyId },
+          data: { aiRecommendations: JSON.stringify(recommendations) },
+        });
+        await prisma.activityLog.create({
+          data: {
+            userId: (session.user as any).id,
+            action: 'generated_property_recommendations',
+            entityType: 'property',
+            entityId: propertyId,
+            details: { recommendationsCount: recommendations.length },
+          },
+        });
+      } catch {
+        // DB save is optional, don't fail the request
+      }
+    }
 
     return NextResponse.json({
       success: true,
