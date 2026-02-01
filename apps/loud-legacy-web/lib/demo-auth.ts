@@ -5,7 +5,7 @@
  * Falls through to NextAuth when a real DB is connected.
  *
  * Demo Account:
- *   Email: demo@loud-legacy.com
+ *   Email: demo@legacyre.com
  *   Password: demo123
  *   Role: SUPER_ADMIN (full access to all platforms + inline editing)
  */
@@ -28,7 +28,7 @@ export interface DemoSession {
 
 const DEMO_USER: DemoUser = {
   id: "demo-user-001",
-  email: "demo@loud-legacy.com",
+  email: "demo@legacyre.com",
   name: "Demo Admin",
   role: "SUPER_ADMIN",
   avatar: "DA",
@@ -37,7 +37,7 @@ const DEMO_USER: DemoUser = {
 };
 
 const DEMO_CREDENTIALS = {
-  email: "demo@loud-legacy.com",
+  email: "demo@legacyre.com",
   password: "demo123",
 };
 
