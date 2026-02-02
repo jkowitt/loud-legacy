@@ -27,6 +27,8 @@ interface Improvement {
   description: string;
   estimatedCost: { low: number; high: number };
   potentialROI: number;
+  costBasis?: string;
+  valueRationale?: string;
   priority: "high" | "medium" | "low";
   timeframe: string;
 }
@@ -75,6 +77,8 @@ export default function ImproveBuildingValuePage() {
           description: imp.description ?? '',
           estimatedCost: imp.estimatedCost ?? { low: 0, high: 0 },
           potentialROI: imp.potentialROI ?? 100,
+          costBasis: (imp.costBasis as string) || undefined,
+          valueRationale: (imp.valueRationale as string) || undefined,
           priority: imp.priority ?? 'medium',
           timeframe: imp.timeframe ?? 'TBD',
         })),
@@ -322,7 +326,7 @@ export default function ImproveBuildingValuePage() {
                             <h5>{improvement.title}</h5>
                             <span className={`priority-badge ${improvement.priority}`}>{improvement.priority}</span>
                           </div>
-                          <p>{improvement.description}</p>
+                          <p style={{ lineHeight: 1.6 }}>{improvement.description}</p>
                           <div className="recommendation-metrics">
                             <div className="metric">
                               <span className="label">Est. Cost</span>
@@ -333,10 +337,28 @@ export default function ImproveBuildingValuePage() {
                               <span className="value positive">{improvement.potentialROI}%</span>
                             </div>
                             <div className="metric">
+                              <span className="label">Value Add</span>
+                              <span className="value positive">{formatCurrency(Math.round((improvement.estimatedCost.low * improvement.potentialROI) / 100))}</span>
+                            </div>
+                            <div className="metric">
                               <span className="label">Timeframe</span>
                               <span className="value">{improvement.timeframe}</span>
                             </div>
                           </div>
+                          {/* Calculation breakdown */}
+                          <div style={{ marginTop: "0.625rem", padding: "0.5rem 0.625rem", background: "rgba(27,42,74,0.04)", borderRadius: "6px", fontSize: "0.76rem", color: "#475569", lineHeight: 1.5 }}>
+                            <strong style={{ color: "#1B2A4A" }}>Calculation:</strong> {formatCurrency(improvement.estimatedCost.low)} investment x {improvement.potentialROI}% ROI = <strong style={{ color: "#22C55E" }}>{formatCurrency(Math.round((improvement.estimatedCost.low * improvement.potentialROI) / 100))}</strong> value add | Net gain: <strong>{formatCurrency(Math.round((improvement.estimatedCost.low * improvement.potentialROI) / 100) - improvement.estimatedCost.low)}</strong>
+                          </div>
+                          {improvement.costBasis && (
+                            <div style={{ marginTop: "0.375rem", padding: "0.5rem 0.625rem", background: "rgba(27,42,74,0.02)", borderRadius: "6px", fontSize: "0.74rem", color: "#64748b", lineHeight: 1.5 }}>
+                              <strong style={{ color: "#475569" }}>Cost Basis:</strong> {improvement.costBasis}
+                            </div>
+                          )}
+                          {improvement.valueRationale && (
+                            <div style={{ marginTop: "0.375rem", padding: "0.5rem 0.625rem", background: "rgba(34,197,94,0.04)", borderRadius: "6px", fontSize: "0.74rem", color: "#64748b", lineHeight: 1.5 }}>
+                              <strong style={{ color: "#16A34A" }}>Value Rationale:</strong> {improvement.valueRationale}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
