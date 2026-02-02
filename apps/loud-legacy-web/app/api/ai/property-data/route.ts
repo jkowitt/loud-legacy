@@ -1,0 +1,254 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Property Data Enrichment API
+ * Uses OpenAI to estimate tax rates, insurance costs, closing costs,
+ * maintenance reserves, and area statistics for a given property.
+ */
+
+interface PropertyDataRequest {
+  address?: string;
+  city: string;
+  state: string;
+  zipCode?: string;
+  propertyType: string;
+  sqft?: number;
+  yearBuilt?: number;
+  purchasePrice?: number;
+  units?: number;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body: PropertyDataRequest = await request.json();
+    const { city, state, zipCode, propertyType, sqft, yearBuilt, purchasePrice, units } = body;
+
+    if (!city || !state) {
+      return NextResponse.json({ error: "City and state are required" }, { status: 400 });
+    }
+
+    // Try OpenAI-powered enrichment
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const OpenAI = (await import('openai')).default;
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+        const today = new Date().toISOString().split('T')[0];
+        const estimatedValue = purchasePrice || (sqft ? sqft * 200 : 400000);
+
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a real estate data analyst with deep knowledge of property tax rates, insurance costs, operating expenses, and market statistics across the United States. Provide accurate, location-specific estimates based on current data as of ${today}. Base your estimates on the specific city, state, and property type provided.`,
+            },
+            {
+              role: "user",
+              content: `Provide detailed property cost estimates and area statistics for this property:
+
+Location: ${city}, ${state} ${zipCode || ""}
+Property Type: ${propertyType}
+Square Feet: ${sqft || "Unknown"}
+Year Built: ${yearBuilt || "Unknown"}
+Estimated Value: $${estimatedValue.toLocaleString()}
+Units: ${units || 1}
+
+Provide ALL of the following data points with realistic, location-specific values:
+
+1. Property Tax:
+   - effectiveTaxRate: Annual property tax rate as a percentage of assessed value for ${city}, ${state} (e.g., 1.25 for 1.25%)
+   - annualTaxEstimate: Estimated annual property tax in dollars
+   - assessmentRatio: What percentage of market value the property is typically assessed at (e.g., 85 for 85%)
+   - taxJurisdiction: Name of the taxing jurisdiction
+   - taxTrend: "increasing", "stable", or "decreasing"
+
+2. Insurance:
+   - annualPremiumEstimate: Estimated annual insurance premium in dollars
+   - perSqftRate: Insurance cost per square foot
+   - coverageRecommendation: Brief description of recommended coverage
+   - floodZoneRisk: "low", "moderate", or "high"
+
+3. Closing Costs:
+   - buyerClosingCostPercent: Typical buyer closing cost as percentage of purchase price
+   - sellerClosingCostPercent: Typical seller closing cost as percentage
+   - titleInsurance: Estimated title insurance cost
+   - transferTax: Estimated transfer/deed tax
+   - totalEstimatedClosingCosts: Total estimated closing costs in dollars
+
+4. Maintenance & Reserves:
+   - annualMaintenancePerSqft: Annual maintenance cost per square foot
+   - annualMaintenanceTotal: Total annual maintenance estimate
+   - capexReservePercent: Recommended capital expenditure reserve as % of rental income
+   - replacementReservePerUnit: Annual replacement reserve per unit
+
+5. Operating Expense Benchmarks:
+   - propertyTaxAnnual: Annual property tax estimate (same as above)
+   - insuranceAnnual: Annual insurance estimate (same as above)
+   - utilitiesAnnual: Estimated annual utilities (water, sewer, electric for common areas)
+   - repairsMaintenanceAnnual: Annual repairs and maintenance estimate
+   - propertyManagementPercent: Typical property management fee as % of gross rent
+   - propertyManagementAnnual: Estimated annual property management fee
+   - landscapingAnnual: Annual landscaping estimate
+   - trashRemovalAnnual: Annual trash removal estimate
+   - professionalFeesAnnual: Annual professional fees (legal, accounting)
+   - reservesAnnual: Recommended annual reserves
+
+6. Area Statistics:
+   - medianHomePrice: Median home/property price in the area
+   - medianRentPerSqft: Median rent per square foot per month
+   - averageCapRate: Average cap rate for this property type in the area
+   - populationGrowth: Annual population growth rate percentage
+   - employmentGrowthRate: Annual employment growth rate
+   - averageDaysOnMarket: Average days on market for this property type
+   - vacancyRate: Area vacancy rate percentage
+   - rentGrowthRate: Annual rent growth rate percentage
+
+7. currentMortgageRates:
+   - conventional30: Current 30-year fixed rate
+   - conventional15: Current 15-year fixed rate
+   - commercial: Current commercial rate
+   - bridge: Current bridge loan rate
+
+Return ONLY valid JSON matching the structure described above. Use realistic values specific to ${city}, ${state}.`,
+            },
+          ],
+          max_tokens: 2500,
+          response_format: { type: "json_object" },
+        });
+
+        const content = response.choices[0]?.message?.content;
+        if (!content) throw new Error("No response from OpenAI");
+
+        const data = JSON.parse(content);
+
+        return NextResponse.json({
+          success: true,
+          source: "openai",
+          ...data,
+          meta: {
+            location: `${city}, ${state}${zipCode ? ` ${zipCode}` : ""}`,
+            propertyType,
+            estimatedValue,
+            generatedAt: today,
+          },
+        });
+      } catch (aiError) {
+        console.error("OpenAI property data enrichment failed, using fallback:", aiError);
+      }
+    }
+
+    // Fallback estimates when OpenAI is not available
+    const estimatedValue = purchasePrice || (sqft ? sqft * 200 : 400000);
+    const estSqft = sqft || 2000;
+    const estUnits = units || 1;
+
+    // Tax rate varies by state - use rough averages
+    const stateTaxRates: Record<string, number> = {
+      NJ: 2.21, IL: 2.07, NH: 1.86, CT: 2.14, WI: 1.68,
+      TX: 1.60, NE: 1.63, OH: 1.56, PA: 1.58, IA: 1.57,
+      NY: 1.72, MI: 1.54, MN: 1.12, KS: 1.41, SD: 1.28,
+      MA: 1.23, FL: 0.86, WA: 0.93, CA: 0.73, GA: 0.92,
+      NC: 0.77, TN: 0.64, AZ: 0.62, SC: 0.57, NV: 0.53,
+      CO: 0.51, AL: 0.41, HI: 0.28, DEFAULT: 1.07,
+    };
+    const taxRate = stateTaxRates[state] || stateTaxRates.DEFAULT;
+    const annualTax = Math.round(estimatedValue * (taxRate / 100));
+
+    // Insurance estimates
+    const insurancePerSqft = propertyType === "commercial" ? 1.50
+      : propertyType === "industrial" ? 1.20
+      : propertyType === "multifamily" ? 1.10
+      : 0.90;
+    const annualInsurance = Math.round(estSqft * insurancePerSqft);
+
+    // Closing costs
+    const closingCostPct = state === "NY" || state === "NJ" ? 4.5
+      : state === "CA" || state === "WA" ? 3.0
+      : 3.5;
+
+    // Maintenance
+    const maintenancePerSqft = propertyType === "commercial" ? 2.50
+      : propertyType === "industrial" ? 1.50
+      : 2.00;
+
+    // Operating expenses
+    const mgmtPct = propertyType === "single-family" ? 8 : 6;
+    const monthlyRentEstimate = estSqft * 1.20;
+    const mgmtAnnual = Math.round(monthlyRentEstimate * 12 * (mgmtPct / 100));
+
+    const fallbackData = {
+      propertyTax: {
+        effectiveTaxRate: taxRate,
+        annualTaxEstimate: annualTax,
+        assessmentRatio: 85,
+        taxJurisdiction: `${city} County`,
+        taxTrend: "stable",
+      },
+      insurance: {
+        annualPremiumEstimate: annualInsurance,
+        perSqftRate: insurancePerSqft,
+        coverageRecommendation: `Standard ${propertyType} property coverage with liability`,
+        floodZoneRisk: "low",
+      },
+      closingCosts: {
+        buyerClosingCostPercent: closingCostPct,
+        sellerClosingCostPercent: closingCostPct - 0.5,
+        titleInsurance: Math.round(estimatedValue * 0.005),
+        transferTax: Math.round(estimatedValue * 0.01),
+        totalEstimatedClosingCosts: Math.round(estimatedValue * (closingCostPct / 100)),
+      },
+      maintenanceReserves: {
+        annualMaintenancePerSqft: maintenancePerSqft,
+        annualMaintenanceTotal: Math.round(estSqft * maintenancePerSqft),
+        capexReservePercent: 5,
+        replacementReservePerUnit: Math.round(250 * 12 / estUnits),
+      },
+      operatingExpenseBenchmarks: {
+        propertyTaxAnnual: annualTax,
+        insuranceAnnual: annualInsurance,
+        utilitiesAnnual: Math.round(estSqft * 1.80),
+        repairsMaintenanceAnnual: Math.round(estSqft * maintenancePerSqft),
+        propertyManagementPercent: mgmtPct,
+        propertyManagementAnnual: mgmtAnnual,
+        landscapingAnnual: Math.round(estSqft * 0.35),
+        trashRemovalAnnual: Math.round(estUnits * 600),
+        professionalFeesAnnual: Math.round(2500 + estUnits * 200),
+        reservesAnnual: Math.round(estSqft * 0.50),
+      },
+      areaStatistics: {
+        medianHomePrice: Math.round(estimatedValue * 0.95),
+        medianRentPerSqft: 1.20,
+        averageCapRate: propertyType === "commercial" ? 6.5 : propertyType === "multifamily" ? 5.8 : 5.2,
+        populationGrowth: 1.2,
+        employmentGrowthRate: 1.8,
+        averageDaysOnMarket: 45,
+        vacancyRate: 5.5,
+        rentGrowthRate: 3.2,
+      },
+      currentMortgageRates: {
+        conventional30: 7.125,
+        conventional15: 6.625,
+        commercial: 7.50,
+        bridge: 10.25,
+      },
+    };
+
+    return NextResponse.json({
+      success: true,
+      source: "fallback",
+      ...fallbackData,
+      meta: {
+        location: `${city}, ${state}`,
+        propertyType,
+        estimatedValue,
+        generatedAt: new Date().toISOString().split('T')[0],
+      },
+    });
+  } catch (error) {
+    console.error("Error in property-data API:", error);
+    return NextResponse.json({ error: "Failed to enrich property data" }, { status: 500 });
+  }
+}
