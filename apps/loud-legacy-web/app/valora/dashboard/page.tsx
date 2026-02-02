@@ -110,6 +110,9 @@ interface CompProperty {
   googleValidated?: boolean;
   lat?: number;
   lng?: number;
+  daysAgo?: number;
+  recencyScore?: number;
+  recencyLabel?: string;
 }
 
 // Improvement Item Interface
@@ -379,6 +382,9 @@ export default function ValoraDashboard() {
             googleValidated: (c.googleValidated as boolean) || false,
             lat: c.lat as number | undefined,
             lng: c.lng as number | undefined,
+            daysAgo: c.daysAgo as number | undefined,
+            recencyScore: c.recencyScore as number | undefined,
+            recencyLabel: (c.recencyLabel as string) || undefined,
           }));
         }
         if (compsData.marketSummary) {
@@ -1304,11 +1310,13 @@ export default function ValoraDashboard() {
                     <div className="val-comps-content">
                       <div className="val-comps-header">
                         <h4>Comparable Sales</h4>
-                        <span>{comps.length} properties {comps.some(c => c.googleValidated) ? "- distances verified via Google Maps" : "nearby"}</span>
+                        <span>{comps.length} properties {comps.some(c => c.googleValidated) ? "- distances verified via Google Maps" : "nearby"} &bull; 6-month lookback</span>
                       </div>
                       <div className="val-comps-table">
                         <div className="val-comps-row header"><span>Address</span><span>Distance</span><span>Sale Price</span><span>Date</span><span>Sq Ft</span><span>$/SF</span></div>
-                        {comps.map(comp => (
+                        {comps.map(comp => {
+                          const recColor = (comp.recencyScore ?? 80) >= 80 ? "#16A34A" : (comp.recencyScore ?? 80) >= 55 ? "#F59E0B" : "#EF4444";
+                          return (
                           <div key={comp.id} className="val-comps-row" style={{ flexDirection: "column", gap: "0.25rem" }}>
                             <div style={{ display: "grid", gridTemplateColumns: "2fr 0.8fr 1fr 0.8fr 0.8fr 0.6fr", gap: "0.5rem", alignItems: "center", width: "100%" }}>
                               <span className="address" style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
@@ -1319,17 +1327,31 @@ export default function ValoraDashboard() {
                               </span>
                               <span>{comp.distance}</span>
                               <span className="price">{formatCurrency(comp.salePrice)}</span>
-                              <span>{comp.saleDate}</span>
+                              <span style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                                <span>{comp.saleDate}</span>
+                                {comp.daysAgo !== undefined && (
+                                  <span style={{ fontSize: "0.65rem", color: recColor, fontWeight: 600 }}>
+                                    {comp.daysAgo}d ago &bull; {comp.recencyLabel}
+                                  </span>
+                                )}
+                              </span>
                               <span>{comp.sqft.toLocaleString()}</span>
                               <span>${comp.pricePerSqft}</span>
                             </div>
                             {comp.adjustments && (
-                              <div style={{ fontSize: "0.72rem", color: "#64748b", paddingLeft: "0.25rem", fontStyle: "italic" }}>
-                                Adjustments: {comp.adjustments}
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.72rem", color: "#64748b", paddingLeft: "0.25rem" }}>
+                                <span style={{ fontStyle: "italic" }}>Adjustments: {comp.adjustments}</span>
+                                {comp.recencyScore !== undefined && (
+                                  <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "1px 6px", borderRadius: "4px", background: recColor + "12", color: recColor, fontSize: "0.6rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: recColor, display: "inline-block" }}></span>
+                                    Recency {comp.recencyScore}/100
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <div className="val-comps-summary">
                         <div className="summary-item"><span>Average Sale Price</span><span>{formatCurrency(comps.reduce((a, b) => a + b.salePrice, 0) / comps.length)}</span></div>
