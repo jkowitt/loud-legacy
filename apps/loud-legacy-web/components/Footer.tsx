@@ -8,7 +8,7 @@ const Footer = () => {
           <div className="footer-section footer-brand">
             <h3 className="footer-logo">Legacy RE</h3>
             <p className="footer-tagline">
-              AI-powered real estate intelligence. Built to Last.
+              Smart property analysis. Built to Last.
             </p>
           </div>
 

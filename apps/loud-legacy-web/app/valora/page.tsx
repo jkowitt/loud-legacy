@@ -5,8 +5,8 @@ import Footer from "@/components/Footer";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 
 export const metadata = {
-  title: "Legacy RE - AI-Powered Real Estate Intelligence Platform | Built to Last",
-  description: "Complete real estate valuation and underwriting platform with AI image recognition, sophisticated financial modeling, and portfolio management. Built for brokers, investors, lenders, and property owners.",
+  title: "Legacy RE - Smart Property Analysis for Real Estate Pros",
+  description: "Analyze any property in minutes. Get AI-powered valuations, real comparable sales, financial projections, and improvement recommendations. Free during beta.",
 };
 
 // Property Type Icons
@@ -80,8 +80,7 @@ export default function ValoraPage() {
           </Link>
           <div className="badge" style={{ background: '#1B2A4A', color: '#D4A843' }}>Built to Last</div>
           <p className="tagline" style={{ color: '#1E293B' }}>
-            AI-powered real estate intelligence platform combining computer vision,
-            sophisticated underwriting, and portfolio management in one comprehensive system.
+            Know what a property is worth, what it costs to own, and how to make it worth more — all from one place.
           </p>
           <div className="hero-actions">
             <Link href="/valora/dashboard" className="button button--primary" style={{ background: '#1B2A4A', color: '#D4A843' }}>
@@ -114,144 +113,144 @@ export default function ValoraPage() {
       {/* Collapsible Feature Sections */}
       <section id="features" className="product-section">
         <div className="container">
-          <h2 style={{ marginBottom: '2rem' }}>Comprehensive Feature Set</h2>
+          <h2 style={{ marginBottom: '2rem' }}>What You Can Do</h2>
 
           <CollapsibleSection title="AI-Powered Property Intelligence" icon="🤖" defaultOpen={true}>
             <p style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>
-              Advanced computer vision and machine learning to accelerate valuations and identify property insights.
+              Upload photos or enter an address — our AI does the rest. Get property condition scores, value estimates, and improvement ideas automatically.
             </p>
             <div className="features-grid">
               <div className="feature-card">
                 <h3>📸 AI Image Recognition</h3>
-                <p>Upload property photos and let AI automatically identify wear and tear, structural issues, and condition ratings.</p>
+                <p>Upload a photo of any property. AI spots issues, rates condition, and suggests improvements with cost estimates.</p>
               </div>
               <div className="feature-card">
                 <h3>📍 Smart Geocoding</h3>
-                <p>Take a photo with your phone and Legacy RE automatically identifies the property location and initiates valuation workflow.</p>
+                <p>Snap a photo on-site and Legacy RE figures out where you are and starts the analysis for you.</p>
               </div>
               <div className="feature-card">
                 <h3>🎯 Address Input & Validation</h3>
-                <p>Enter any property address and instantly access property data, tax records, and comparable sales.</p>
+                <p>Type in any address. We pull in tax rates, insurance estimates, comparable sales, and market data for that area.</p>
               </div>
               <div className="feature-card">
                 <h3>💡 AI Recommendations</h3>
-                <p>Get intelligent suggestions on how to improve property value based on property type and market conditions.</p>
+                <p>Get a list of specific upgrades that add value — with cost breakdowns, ROI projections, and contractor-ready action items.</p>
               </div>
             </div>
           </CollapsibleSection>
 
-          <CollapsibleSection title="Sophisticated Underwriting Engine" icon="📊">
+          <CollapsibleSection title="Financial Analysis & Underwriting" icon="📊">
             <p style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>
-              Build comprehensive financial models with full customization and real-time scenario analysis.
+              Run the numbers on any deal. See your cash flow, returns, and risk — updated in real time as you adjust assumptions.
             </p>
             <div className="features-grid">
               <div className="feature-card">
                 <h3>📊 Customizable P&L Models</h3>
-                <p>Add, remove, or toggle any line item. Create templates for different property types or customize for each deal.</p>
+                <p>Build a profit and loss statement with every expense category pre-filled from local area data. Edit anything to match your deal.</p>
               </div>
               <div className="feature-card">
                 <h3>💰 Dynamic Financial Modeling</h3>
-                <p>Model rent growth, expense escalation, refinancing scenarios, and exit strategies with instant updates.</p>
+                <p>Change the rent, vacancy, or interest rate and watch your cash flow, cap rate, and returns update instantly.</p>
               </div>
               <div className="feature-card">
                 <h3>🔬 Scenario Analysis</h3>
-                <p>Create multiple scenarios (base, best, worst case) and compare side-by-side to understand risk profiles.</p>
+                <p>Compare conservative, base, and optimistic scenarios side by side. See how different assumptions change your bottom line.</p>
               </div>
               <div className="feature-card">
                 <h3>📈 Sensitivity Testing</h3>
-                <p>Identify which variables have the greatest impact on deal performance with automated analysis.</p>
+                <p>Find out which numbers matter most. See how a 1% rate change or 5% rent increase impacts your returns.</p>
               </div>
             </div>
           </CollapsibleSection>
 
           <CollapsibleSection title="Market Intelligence & Comparables" icon="🏘️">
             <p style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>
-              Access real-time market data and comparable sales to ground your valuations in reality.
+              See what similar properties actually sold for, how far away they are, and how fresh the data is. Real comps, not guesses.
             </p>
             <div className="features-grid">
               <div className="feature-card">
                 <h3>🏘️ On-Market Valuations</h3>
-                <p>View properties currently for sale with asking prices, days on market, and seller information.</p>
+                <p>Browse properties listed for sale with asking prices, days on market, and seller details.</p>
               </div>
               <div className="feature-card">
                 <h3>📋 Comparable Sales Database</h3>
-                <p>Search recent sales by property type, location, size, and sale date to support your assumptions.</p>
+                <p>Find recent sales near your property — filtered by type, size, and date. Each comp shows distance, recency score, and price adjustments.</p>
               </div>
               <div className="feature-card">
                 <h3>🗺️ Market Reports</h3>
-                <p>Automated reports showing trends in cap rates, rent growth, vacancy rates, and absorption.</p>
+                <p>Track cap rates, rent trends, vacancy rates, and population growth for any area. Data updates automatically.</p>
               </div>
             </div>
           </CollapsibleSection>
 
           <CollapsibleSection title="Portfolio & Valuation Management" icon="📚">
             <p style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>
-              Organize, track, and analyze all your property valuations in one centralized system.
+              Save every analysis you run. Come back to compare, update, or share with your team.
             </p>
             <div className="features-grid">
               <div className="feature-card">
                 <h3>📚 Valuation History Database</h3>
-                <p>Every valuation you create is automatically saved with full version history and supporting documentation.</p>
+                <p>Every property you analyze is saved automatically. Go back to any analysis to review, update, or export.</p>
               </div>
               <div className="feature-card">
                 <h3>🔒 Private Valuations</h3>
-                <p>Save valuations as drafts or private entries that are only visible to you and your team.</p>
+                <p>Keep your work private or share it when you're ready. You control who sees what.</p>
               </div>
               <div className="feature-card">
                 <h3>📊 Portfolio Dashboard</h3>
-                <p>Roll up all your valuations showing total value, IRR, cash-on-cash returns, and concentration risk.</p>
+                <p>See all your properties in one view — total value, returns, and performance at a glance.</p>
               </div>
               <div className="feature-card">
                 <h3>🔍 Search & Filter</h3>
-                <p>Quickly find past valuations by property address, date, property type, or custom tags.</p>
+                <p>Find any past analysis by address, date, property type, or custom tags.</p>
               </div>
             </div>
           </CollapsibleSection>
 
           <CollapsibleSection title="Team Collaboration & Admin Controls" icon="👥">
             <p style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>
-              Built for teams with enterprise-grade security, permissions, and workflow management.
+              Invite your team, control who can view or edit, and set up approval workflows for quality control.
             </p>
             <div className="features-grid">
               <div className="feature-card">
                 <h3>👥 Team Management</h3>
-                <p>Invite team members, assign roles (Admin, Analyst, Viewer), and control access to valuations.</p>
+                <p>Add team members and assign roles — Admin, Analyst, or Viewer. Everyone sees only what they should.</p>
               </div>
               <div className="feature-card">
                 <h3>🔐 Account Signup & SSO</h3>
-                <p>Secure account creation with email verification, 2FA, and SSO integration for enterprises.</p>
+                <p>Sign up with email or Google. Enterprise teams can use single sign-on.</p>
               </div>
               <div className="feature-card">
                 <h3>⚙️ Admin Dashboard</h3>
-                <p>Manage team members, monitor activity, set permissions from one central dashboard.</p>
+                <p>Manage your team, review activity, and adjust permissions from one place.</p>
               </div>
               <div className="feature-card">
                 <h3>📋 Workflow Approval</h3>
-                <p>Set up approval workflows so junior analysts can create valuations that require senior review.</p>
+                <p>Junior analysts create valuations, seniors review and approve. Keep quality consistent across your team.</p>
               </div>
             </div>
           </CollapsibleSection>
 
           <CollapsibleSection title="Developer & Content Management" icon="⚙️">
             <p style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>
-              Technical capabilities for power users and enterprise deployments.
+              For power users who want deeper access to data and customization.
             </p>
             <div className="features-grid">
               <div className="feature-card">
                 <h3>💻 Backend Database Access</h3>
-                <p>Direct database access for owners to run custom queries, create reports, and integrate with other systems.</p>
+                <p>Run custom queries against your data for advanced reporting and integrations.</p>
               </div>
               <div className="feature-card">
                 <h3>📝 Admin CMS</h3>
-                <p>Content management system to edit text, update assumptions, and modify platform content without code.</p>
+                <p>Update text and settings across the platform without touching code.</p>
               </div>
               <div className="feature-card">
                 <h3>🔌 API Access</h3>
-                <p>RESTful API for integrating Legacy RE data with your existing tools and workflows.</p>
+                <p>Connect Legacy RE data to your existing tools and workflows via our REST API.</p>
               </div>
               <div className="feature-card">
                 <h3>📤 Bulk Operations</h3>
-                <p>Import/export multiple valuations, batch update properties, and automated data syncing.</p>
+                <p>Import and export valuations in bulk. Batch-update properties and sync data automatically.</p>
               </div>
             </div>
           </CollapsibleSection>
@@ -261,27 +260,27 @@ export default function ValoraPage() {
       {/* User Types */}
       <section className="product-section" style={{ background: 'var(--bg-secondary)' }}>
         <div className="container">
-          <h2 style={{ textAlign: 'center', marginBottom: '3rem' }}>Built For Real Estate Professionals</h2>
+          <h2 style={{ textAlign: 'center', marginBottom: '3rem' }}>Who It's For</h2>
           <div className="features-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
             <div className="feature-card valora-user-card">
               <div className="valora-user-icon">{UserTypeIcons.brokers}</div>
               <h3>Brokers</h3>
-              <p>Create professional valuations for client pitches, support pricing recommendations, and win more listings.</p>
+              <p>Build valuations for client meetings, back up your pricing, and win more listings.</p>
             </div>
             <div className="feature-card valora-user-card">
               <div className="valora-user-icon">{UserTypeIcons.owners}</div>
               <h3>Property Owners</h3>
-              <p>Track property performance, understand market value changes, and make data-driven decisions about your assets.</p>
+              <p>Understand what your property is worth, track changes over time, and find ways to add value.</p>
             </div>
             <div className="feature-card valora-user-card">
               <div className="valora-user-icon">{UserTypeIcons.investors}</div>
               <h3>Investors</h3>
-              <p>Underwrite deals faster, model multiple scenarios, and identify the best opportunities in your pipeline.</p>
+              <p>Analyze deals faster, compare scenarios, and find the best opportunities in your pipeline.</p>
             </div>
             <div className="feature-card valora-user-card">
               <div className="valora-user-icon">{UserTypeIcons.lenders}</div>
               <h3>Lenders</h3>
-              <p>Standardize underwriting, assess borrower assumptions, and make confident lending decisions backed by data.</p>
+              <p>Standardize how you review deals, verify borrower assumptions, and make confident lending decisions.</p>
             </div>
           </div>
         </div>
@@ -291,10 +290,10 @@ export default function ValoraPage() {
       <section className="product-section">
         <div className="container" style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem' }}>
-            Ready to Transform Your Real Estate Analysis?
+            Ready to Try It?
           </h2>
           <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-            Join forward-thinking brokers, investors, and lenders using Legacy RE to make better decisions faster.
+            Join brokers, investors, and lenders who use Legacy RE to make smarter property decisions. Free during beta.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/valora/dashboard" className="button button--primary" style={{ fontSize: '1.125rem', padding: '0.875rem 2rem' }}>

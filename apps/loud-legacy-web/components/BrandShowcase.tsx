@@ -7,28 +7,28 @@ const features = [
   {
     name: "AI-Powered Valuations",
     icon: "🤖",
-    description: "Upload property photos and let AI automatically identify conditions, estimate values, and generate comprehensive reports across all property types.",
+    description: "Upload property photos or enter an address. AI scores the condition, estimates value, and suggests improvements — with cost breakdowns and ROI for each.",
     color: "#1B2A4A",
     gradient: "linear-gradient(135deg, #1B2A4A 0%, #2C3E5A 100%)",
   },
   {
     name: "Underwriting Engine",
     icon: "📊",
-    description: "Build comprehensive financial models with full customization, rent rolls, P&L statements, and real-time scenario analysis for smarter deals.",
+    description: "See your cash flow, cap rate, and returns instantly. Expenses auto-fill from local area data. Change any assumption and watch the numbers update in real time.",
     color: "#D4A843",
     gradient: "linear-gradient(135deg, #D4A843 0%, #B8922E 100%)",
   },
   {
     name: "Market Intelligence",
     icon: "🏘️",
-    description: "Access real-time comparable sales, market trends, cap rates, and neighborhood analytics to ground your valuations in reality.",
+    description: "Find real comparable sales near your property with distance, recency scores, and price adjustments. Track cap rates, vacancy, and rent trends for any area.",
     color: "#1B2A4A",
     gradient: "linear-gradient(135deg, #1B2A4A 0%, #2C3E5A 100%)",
   },
   {
     name: "Portfolio Management",
     icon: "📚",
-    description: "Organize, track, and analyze all your property valuations in one centralized system with full version history and team collaboration.",
+    description: "Save every analysis. Come back to review, update, or share with your team. See all your properties in one dashboard.",
     color: "#D4A843",
     gradient: "linear-gradient(135deg, #D4A843 0%, #B8922E 100%)",
   },
@@ -49,7 +49,7 @@ export function BrandShowcase() {
         </div>
         <h2>Legacy RE. Built to Last.</h2>
         <p className="section-intro">
-          One platform for real estate intelligence—valuations, underwriting, and portfolio management.
+          One platform to analyze properties, run the numbers, and find what adds value.
         </p>
         <div className="brands-grid">
           {features.map((feature, index) => (

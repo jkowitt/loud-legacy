@@ -4,23 +4,23 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Legacy RE - Real Estate Intelligence Platform | Built to Last",
+  title: "Legacy RE - Smart Property Analysis | Built to Last",
   description:
-    "AI-powered real estate intelligence platform. Valuations, underwriting, and portfolio management in one system. Legacy RE. Built to Last.",
+    "Analyze any property in minutes with AI. Get valuations, comparable sales, financial projections, and improvement plans. Legacy RE. Built to Last.",
   keywords: "real estate underwriting, property valuation, AI real estate, commercial real estate, deal analysis, portfolio management, comparable sales, cap rate analysis",
   icons: {
     icon: "/favicon.ico"
   },
   openGraph: {
     title: "Legacy RE. Built to Last.",
-    description: "AI-powered real estate intelligence platform combining valuations, underwriting, and portfolio management. Built for brokers, investors, and lenders.",
+    description: "Analyze any property in minutes. AI-powered valuations, real comps, and financial projections for brokers, investors, and lenders.",
     type: "website",
     siteName: "Legacy RE",
   },
   twitter: {
     card: "summary_large_image",
     title: "Legacy RE. Built to Last.",
-    description: "AI-powered real estate intelligence. Valuations, underwriting, and portfolio management in one platform.",
+    description: "Analyze any property in minutes. AI-powered valuations, comps, and financial projections.",
   },
   robots: {
     index: true,

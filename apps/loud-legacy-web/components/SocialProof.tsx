@@ -9,19 +9,19 @@ const stats = [
 
 const testimonials = [
   {
-    quote: "The underwriting process that used to take our team 3 days now takes 4 hours.",
+    quote: "What used to take our team 3 days now takes about 4 hours. The comps and underwriting flow together seamlessly.",
     author: "Managing Partner",
     org: "Regional CRE Firm",
     product: "Legacy RE"
   },
   {
-    quote: "One platform for valuations, comps, and underwriting. It just works.",
+    quote: "Valuations, comps, and underwriting in one place. I stopped switching between spreadsheets and it just works.",
     author: "Senior Analyst",
     org: "National Investment Group",
     product: "Legacy RE"
   },
   {
-    quote: "The AI-powered condition scoring changed how we evaluate properties entirely.",
+    quote: "The AI condition scoring changed how we look at properties. We catch things we used to miss in walkthroughs.",
     author: "VP of Acquisitions",
     org: "Multifamily REIT",
     product: "Legacy RE"

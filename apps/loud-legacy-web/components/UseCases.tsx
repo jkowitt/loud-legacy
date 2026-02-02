@@ -4,25 +4,25 @@ const useCases = [
   {
     title: "Commercial Real Estate",
     audience: "Investors, Analysts, Underwriters",
-    description: "Underwrite deals faster with AI-powered valuations, automated comps, and sophisticated financial modeling.",
+    description: "Analyze deals in hours instead of days. Get AI-powered valuations, automated comps, and financial projections that update in real time.",
     products: ["Legacy RE"],
-    example: "A regional firm reduced their underwriting time from 3 days to 4 hours per property.",
+    example: "A regional firm cut their deal analysis time from 3 days to 4 hours per property.",
     color: "#1B2A4A"
   },
   {
     title: "Brokerage & Advisory",
     audience: "Brokers, Advisors, Appraisers",
-    description: "Create professional valuations for client pitches, support pricing recommendations, and win more listings.",
+    description: "Build professional valuations for client meetings, back up your pricing with real data, and win more listings.",
     products: ["Legacy RE"],
-    example: "A brokerage team increased listing presentations by 40% using AI-powered market intelligence.",
+    example: "A brokerage team increased their listing presentations by 40% using market data from Legacy RE.",
     color: "#D4A843"
   },
   {
     title: "Lending & Capital Markets",
     audience: "Lenders, Credit Analysts, Portfolio Managers",
-    description: "Standardize underwriting, assess borrower assumptions, and make confident lending decisions backed by data.",
+    description: "Review deals consistently, verify borrower assumptions against market data, and make lending decisions with confidence.",
     products: ["Legacy RE"],
-    example: "A lending team standardized underwriting across 200+ annual loan applications with consistent analysis.",
+    example: "A lending team standardized underwriting across 200+ loan applications per year.",
     color: "#1B2A4A"
   }
 ];
