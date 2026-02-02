@@ -5,106 +5,35 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const properties = [
-  {
-    id: 1,
-    name: "Riverside Office Tower",
-    type: "Office",
-    address: "123 River Dr, Austin, TX",
-    sqft: 185000,
-    units: 12,
-    occupancy: 94,
-    noi: 2850000,
-    capRate: 6.2,
-    value: 45967742,
-    acquired: "Mar 2021",
-    status: "stabilized",
-    image: "🏢"
-  },
-  {
-    id: 2,
-    name: "Eastside Apartments",
-    type: "Multifamily",
-    address: "456 Oak Ave, Dallas, TX",
-    sqft: 220000,
-    units: 180,
-    occupancy: 97,
-    noi: 3200000,
-    capRate: 5.8,
-    value: 55172414,
-    acquired: "Jun 2020",
-    status: "stabilized",
-    image: "🏨"
-  },
-  {
-    id: 3,
-    name: "Harbor Industrial Park",
-    type: "Industrial",
-    address: "789 Port Blvd, Houston, TX",
-    sqft: 450000,
-    units: 8,
-    occupancy: 100,
-    noi: 4100000,
-    capRate: 6.8,
-    value: 60294118,
-    acquired: "Sep 2022",
-    status: "stabilized",
-    image: "🏭"
-  },
-  {
-    id: 4,
-    name: "Westgate Retail Center",
-    type: "Retail",
-    address: "321 Main St, San Antonio, TX",
-    sqft: 125000,
-    units: 24,
-    occupancy: 88,
-    noi: 1650000,
-    capRate: 7.2,
-    value: 22916667,
-    acquired: "Jan 2023",
-    status: "lease-up",
-    image: "🏬"
-  },
-  {
-    id: 5,
-    name: "Tech Campus Phase 1",
-    type: "Office",
-    address: "555 Innovation Way, Austin, TX",
-    sqft: 320000,
-    units: 6,
-    occupancy: 82,
-    noi: 4800000,
-    capRate: 5.5,
-    value: 87272727,
-    acquired: "Dec 2021",
-    status: "stabilized",
-    image: "🏢"
-  },
-  {
-    id: 6,
-    name: "Lakeside Medical Plaza",
-    type: "Medical Office",
-    address: "888 Health Pkwy, Plano, TX",
-    sqft: 95000,
-    units: 15,
-    occupancy: 100,
-    noi: 1900000,
-    capRate: 6.0,
-    value: 31666667,
-    acquired: "Feb 2022",
-    status: "stabilized",
-    image: "🏥"
-  },
-];
+interface Property {
+  id: number;
+  name: string;
+  type: string;
+  address: string;
+  sqft: number;
+  units: number;
+  occupancy: number;
+  noi: number;
+  capRate: number;
+  value: number;
+  acquired: string;
+  status: string;
+  image: string;
+}
 
-const tenants = [
-  { id: 1, name: "TechCorp Inc.", property: "Riverside Office Tower", sqft: 45000, rent: 52, lease_end: "Dec 2026", status: "current" },
-  { id: 2, name: "Global Finance LLC", property: "Riverside Office Tower", sqft: 32000, rent: 48, lease_end: "Mar 2025", status: "expiring" },
-  { id: 3, name: "Healthcare Partners", property: "Lakeside Medical Plaza", sqft: 28000, rent: 42, lease_end: "Jun 2027", status: "current" },
-  { id: 4, name: "Amazon Distribution", property: "Harbor Industrial Park", sqft: 180000, rent: 12, lease_end: "Sep 2028", status: "current" },
-  { id: 5, name: "Retail Brand Co.", property: "Westgate Retail Center", sqft: 15000, rent: 38, lease_end: "Jan 2024", status: "expiring" },
-];
+const properties: Property[] = [];
+
+interface Tenant {
+  id: number;
+  name: string;
+  property: string;
+  sqft: number;
+  rent: number;
+  lease_end: string;
+  status: string;
+}
+
+const tenants: Tenant[] = [];
 
 export default function VALORAPropertiesPage() {
   const [selectedType, setSelectedType] = useState("all");
@@ -118,7 +47,9 @@ export default function VALORAPropertiesPage() {
   const totalValue = properties.reduce((sum, p) => sum + p.value, 0);
   const totalSqft = properties.reduce((sum, p) => sum + p.sqft, 0);
   const totalNOI = properties.reduce((sum, p) => sum + p.noi, 0);
-  const avgOccupancy = Math.round(properties.reduce((sum, p) => sum + p.occupancy, 0) / properties.length);
+  const avgOccupancy = properties.length > 0
+    ? Math.round(properties.reduce((sum, p) => sum + p.occupancy, 0) / properties.length)
+    : 0;
 
   const formatCurrency = (value: number) => {
     if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
@@ -242,7 +173,21 @@ export default function VALORAPropertiesPage() {
       {/* Properties Grid/Table */}
       <section className="val-properties-section">
         <div className="container">
-          {viewMode === "grid" ? (
+          {filteredProperties.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "4rem 2rem" }}>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>No Properties in Portfolio</h3>
+              <p style={{ color: "#888", marginTop: "0.5rem" }}>
+                Properties will appear here as you add them to your portfolio.
+              </p>
+              <Link
+                href="/valora/dashboard"
+                className="val-btn primary"
+                style={{ marginTop: "1.5rem", display: "inline-block" }}
+              >
+                Analyze a Property
+              </Link>
+            </div>
+          ) : viewMode === "grid" ? (
             <div className="val-properties-grid">
               {filteredProperties.map((property) => (
                 <div
@@ -334,7 +279,11 @@ export default function VALORAPropertiesPage() {
                 <span>Lease End</span>
                 <span>Status</span>
               </div>
-              {tenants.map((tenant) => (
+              {tenants.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "2rem" }}>
+                  <p style={{ color: "#888" }}>No tenants to display. Tenants will appear here once properties are added.</p>
+                </div>
+              ) : tenants.map((tenant) => (
                 <div key={tenant.id} className="val-tenant-row">
                   <span className="val-tenant-name">{tenant.name}</span>
                   <span className="val-tenant-property">{tenant.property}</span>

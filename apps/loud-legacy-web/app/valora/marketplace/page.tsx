@@ -7,113 +7,27 @@ import Footer from "@/components/Footer";
 import StreetView from "@/components/StreetView";
 
 // Sample marketplace listings
-const SAMPLE_LISTINGS = [
-  {
-    id: "1",
-    address: "425 Oak Valley Drive",
-    city: "Austin",
-    state: "TX",
-    zipCode: "78701",
-    propertyType: "Multifamily",
-    propertyIcon: "🏢",
-    askingPrice: 2450000,
-    estimatedValue: 2380000,
-    units: 12,
-    sqft: 9600,
-    yearBuilt: 1998,
-    capRate: 6.2,
-    noi: 151900,
-    occupancy: 92,
-    daysOnMarket: 14,
-    seller: "Private Owner",
-    images: ["/placeholder-property.jpg"],
-    highlights: ["Value-Add Opportunity", "Below Market Rents", "Strong Location"],
-  },
-  {
-    id: "2",
-    address: "1200 Commerce Street",
-    city: "Dallas",
-    state: "TX",
-    zipCode: "75201",
-    propertyType: "Office",
-    propertyIcon: "🏛️",
-    askingPrice: 5800000,
-    estimatedValue: 5650000,
-    units: 1,
-    sqft: 28000,
-    yearBuilt: 2005,
-    capRate: 7.1,
-    noi: 411800,
-    occupancy: 88,
-    daysOnMarket: 28,
-    seller: "Investment Group",
-    images: ["/placeholder-property.jpg"],
-    highlights: ["Class A Building", "Parking Included", "Recent Renovations"],
-  },
-  {
-    id: "3",
-    address: "890 Industrial Parkway",
-    city: "Houston",
-    state: "TX",
-    zipCode: "77001",
-    propertyType: "Industrial",
-    propertyIcon: "🏭",
-    askingPrice: 3200000,
-    estimatedValue: 3150000,
-    units: 1,
-    sqft: 45000,
-    yearBuilt: 2010,
-    capRate: 7.8,
-    noi: 249600,
-    occupancy: 100,
-    daysOnMarket: 7,
-    seller: "Private Owner",
-    images: ["/placeholder-property.jpg"],
-    highlights: ["NNN Lease", "5 Years Remaining", "Credit Tenant"],
-  },
-  {
-    id: "4",
-    address: "567 Retail Plaza",
-    city: "San Antonio",
-    state: "TX",
-    zipCode: "78201",
-    propertyType: "Retail",
-    propertyIcon: "🛒",
-    askingPrice: 1850000,
-    estimatedValue: 1900000,
-    units: 6,
-    sqft: 12000,
-    yearBuilt: 2001,
-    capRate: 6.5,
-    noi: 120250,
-    occupancy: 83,
-    daysOnMarket: 45,
-    seller: "Trust",
-    images: ["/placeholder-property.jpg"],
-    highlights: ["High Traffic Location", "National Tenants", "Price Reduced"],
-  },
-  {
-    id: "5",
-    address: "234 Sunrise Apartments",
-    city: "Fort Worth",
-    state: "TX",
-    zipCode: "76101",
-    propertyType: "Multifamily",
-    propertyIcon: "🏢",
-    askingPrice: 4100000,
-    estimatedValue: 4250000,
-    units: 24,
-    sqft: 19200,
-    yearBuilt: 1985,
-    capRate: 5.9,
-    noi: 241900,
-    occupancy: 96,
-    daysOnMarket: 3,
-    seller: "Private Owner",
-    images: ["/placeholder-property.jpg"],
-    highlights: ["Fully Renovated", "Stabilized Asset", "New Listing"],
-  },
-];
+const SAMPLE_LISTINGS: {
+  id: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  propertyType: string;
+  propertyIcon: string;
+  askingPrice: number;
+  estimatedValue: number;
+  units: number;
+  sqft: number;
+  yearBuilt: number;
+  capRate: number;
+  noi: number;
+  occupancy: number;
+  daysOnMarket: number;
+  seller: string;
+  images: string[];
+  highlights: string[];
+}[] = [];
 
 const PROPERTY_TYPES = [
   { id: "all", name: "All Types" },
@@ -218,11 +132,11 @@ export default function MarketplacePage() {
               <span className="stat-label">Active Listings</span>
             </div>
             <div className="val-mkt-stat">
-              <span className="stat-value">{formatCurrency(listings.reduce((sum, l) => sum + l.askingPrice, 0) / listings.length)}</span>
+              <span className="stat-value">{listings.length > 0 ? formatCurrency(listings.reduce((sum, l) => sum + l.askingPrice, 0) / listings.length) : "$0"}</span>
               <span className="stat-label">Avg. Price</span>
             </div>
             <div className="val-mkt-stat">
-              <span className="stat-value">{(listings.reduce((sum, l) => sum + l.capRate, 0) / listings.length).toFixed(1)}%</span>
+              <span className="stat-value">{listings.length > 0 ? (listings.reduce((sum, l) => sum + l.capRate, 0) / listings.length).toFixed(1) : "0.0"}%</span>
               <span className="stat-label">Avg. Cap Rate</span>
             </div>
             <div className="val-mkt-stat">
@@ -280,6 +194,21 @@ export default function MarketplacePage() {
 
           {/* Listings Grid */}
           <div className="val-mkt-grid">
+            {sortedListings.length === 0 && (
+              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "4rem 2rem" }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" width="48" height="48" style={{ margin: "0 auto 1rem" }}>
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                <h3 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#1B2A4A", marginBottom: "0.5rem" }}>No Properties Listed Yet</h3>
+                <p style={{ fontSize: "0.875rem", color: "#64748b", maxWidth: "400px", margin: "0 auto 1.5rem", lineHeight: 1.6 }}>
+                  The marketplace is empty. Properties will appear here when sellers list them for sale through their dashboard.
+                </p>
+                <Link href="/valora/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.625rem 1.25rem", background: "#1B2A4A", color: "#D4A843", borderRadius: "8px", fontSize: "0.875rem", fontWeight: 600, textDecoration: "none" }}>
+                  Analyze a Property
+                </Link>
+              </div>
+            )}
             {sortedListings.map(listing => (
               <div key={listing.id} className="val-mkt-card" onClick={() => setSelectedListing(listing)}>
                 <div className="val-mkt-card-image">

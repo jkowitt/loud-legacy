@@ -26,63 +26,7 @@ interface BidPackage {
   popular?: boolean;
 }
 
-const SAMPLE_LEADS: BrokerLead[] = [
-  {
-    id: "1",
-    propertyType: "Multifamily",
-    location: "Austin, TX",
-    estimatedValue: 2450000,
-    leadType: "seller",
-    status: "available",
-    postedDate: "2024-02-20",
-    details: "12-unit apartment complex. Owner motivated to sell within 60 days.",
-    contactPreference: "Phone",
-  },
-  {
-    id: "2",
-    propertyType: "Office",
-    location: "Dallas, TX",
-    estimatedValue: 5800000,
-    leadType: "buyer",
-    status: "available",
-    postedDate: "2024-02-19",
-    details: "Investment group seeking Class A/B office properties. 1031 exchange buyer.",
-    contactPreference: "Email",
-  },
-  {
-    id: "3",
-    propertyType: "Industrial",
-    location: "Houston, TX",
-    estimatedValue: 3200000,
-    leadType: "seller",
-    status: "claimed",
-    postedDate: "2024-02-18",
-    details: "45,000 SF warehouse with NNN tenant. 5 years remaining on lease.",
-    contactPreference: "Phone",
-  },
-  {
-    id: "4",
-    propertyType: "Retail",
-    location: "San Antonio, TX",
-    estimatedValue: 1850000,
-    leadType: "refinance",
-    status: "available",
-    postedDate: "2024-02-17",
-    details: "Strip center looking to refinance. Current rate 7.2%, seeking better terms.",
-    contactPreference: "Email",
-  },
-  {
-    id: "5",
-    propertyType: "Multifamily",
-    location: "Fort Worth, TX",
-    estimatedValue: 4100000,
-    leadType: "buyer",
-    status: "available",
-    postedDate: "2024-02-21",
-    details: "Private investor seeking 20+ unit properties. Pre-approved for $5M.",
-    contactPreference: "Phone",
-  },
-];
+const SAMPLE_LEADS: BrokerLead[] = [];
 
 const BID_PACKAGES: BidPackage[] = [
   {
@@ -220,7 +164,7 @@ export default function BrokerPortalPage() {
               <span className="stat-label">Available Leads</span>
             </div>
             <div className="val-broker-stat">
-              <span className="stat-value">{formatCurrency(leads.reduce((sum, l) => sum + l.estimatedValue, 0) / leads.length)}</span>
+              <span className="stat-value">{formatCurrency(leads.length > 0 ? leads.reduce((sum, l) => sum + l.estimatedValue, 0) / leads.length : 0)}</span>
               <span className="stat-label">Avg. Deal Size</span>
             </div>
             <div className="val-broker-stat">
@@ -263,6 +207,12 @@ export default function BrokerPortalPage() {
               <span>{filteredLeads.length} leads matching filters</span>
             </div>
             <div className="val-broker-leads-list">
+              {filteredLeads.length === 0 && (
+                <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
+                  <h4 style={{ margin: "0 0 0.5rem" }}>No Broker Leads Available</h4>
+                  <p style={{ margin: 0, color: "#6b7280" }}>Leads will appear here as property owners submit listings.</p>
+                </div>
+              )}
               {filteredLeads.map(lead => (
                 <div key={lead.id} className={`val-broker-lead-card ${lead.status === "claimed" || claimedLeads.includes(lead.id) ? "claimed" : ""}`}>
                   <div className="lead-header">
