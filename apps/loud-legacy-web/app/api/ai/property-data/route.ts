@@ -228,12 +228,7 @@ Return ONLY valid JSON matching the structure described above. Use realistic val
         vacancyRate: 5.5,
         rentGrowthRate: 3.2,
       },
-      currentMortgageRates: {
-        conventional30: 7.125,
-        conventional15: 6.625,
-        commercial: 7.50,
-        bridge: 10.25,
-      },
+      currentMortgageRates: await getLiveRates(),
     };
 
     return NextResponse.json({
@@ -251,4 +246,31 @@ Return ONLY valid JSON matching the structure described above. Use realistic val
     console.error("Error in property-data API:", error);
     return NextResponse.json({ error: "Failed to enrich property data" }, { status: 500 });
   }
+}
+
+/**
+ * Fetch live mortgage rates from the /api/interest-rates endpoint (internal call).
+ * Falls back to static defaults if the fetch fails.
+ */
+async function getLiveRates(): Promise<{ conventional30: number; conventional15: number; commercial: number; bridge: number }> {
+  const defaults = { conventional30: 6.875, conventional15: 6.125, commercial: 7.50, bridge: 10.25 };
+  try {
+    // Use the same host since this is a server-side internal call
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/interest-rates`, { signal: AbortSignal.timeout(5000) });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.conventional30) {
+        return {
+          conventional30: data.conventional30,
+          conventional15: data.conventional15 || defaults.conventional15,
+          commercial: data.commercial || defaults.commercial,
+          bridge: data.bridge || defaults.bridge,
+        };
+      }
+    }
+  } catch {
+    // Silently fall back to defaults
+  }
+  return defaults;
 }

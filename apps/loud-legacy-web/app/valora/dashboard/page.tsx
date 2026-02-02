@@ -227,14 +227,18 @@ interface PropertyEnrichmentData {
   };
 }
 
-// Current Interest Rates (simulated real-time)
-const CURRENT_RATES = {
-  conventional30: 7.125,
-  conventional15: 6.625,
+// Default rates used before live data loads
+const DEFAULT_RATES = {
+  conventional30: 6.875,
+  conventional15: 6.125,
   commercial: 7.50,
   bridge: 10.25,
-  sba504: 6.875,
-  lastUpdated: new Date().toLocaleString(),
+  sba504: 6.75,
+  fedFundsRate: null as number | null,
+  prime: null as number | null,
+  treasury10yr: null as number | null,
+  lastUpdated: "",
+  source: "loading...",
 };
 
 // Default Operating Expenses by Category
@@ -286,7 +290,7 @@ export default function ValoraDashboard() {
   const [underwriting, setUnderwriting] = useState<UnderwritingData | null>(null);
   const [purchasePrice, setPurchasePrice] = useState("");
   const [downPaymentPercent, setDownPaymentPercent] = useState("25");
-  const [interestRate, setInterestRate] = useState(CURRENT_RATES.commercial.toString());
+  const [interestRate, setInterestRate] = useState(DEFAULT_RATES.commercial.toString());
   const [loanTerm, setLoanTerm] = useState("30");
   const [grossRent, setGrossRent] = useState("");
   const [vacancyRate, setVacancyRate] = useState("5");
@@ -323,11 +327,50 @@ export default function ValoraDashboard() {
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichmentLoaded, setEnrichmentLoaded] = useState(false);
 
+  // Live Interest Rates State
+  const [liveRates, setLiveRates] = useState(DEFAULT_RATES);
+  const [ratesLoading, setRatesLoading] = useState(true);
+
   // Marketplace State
   const [isPublic, setIsPublic] = useState(false);
   const [askingPrice, setAskingPrice] = useState("");
   const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [promoteSuccess, setPromoteSuccess] = useState(false);
+
+  // Fetch real-time interest rates on page load
+  useEffect(() => {
+    const fetchLiveRates = async () => {
+      setRatesLoading(true);
+      try {
+        const res = await fetch('/api/interest-rates');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success || data.conventional30) {
+            setLiveRates({
+              conventional30: data.conventional30 || DEFAULT_RATES.conventional30,
+              conventional15: data.conventional15 || DEFAULT_RATES.conventional15,
+              commercial: data.commercial || DEFAULT_RATES.commercial,
+              bridge: data.bridge || DEFAULT_RATES.bridge,
+              sba504: data.sba504 || DEFAULT_RATES.sba504,
+              fedFundsRate: data.fedFundsRate ?? null,
+              prime: data.prime ?? null,
+              treasury10yr: data.treasury10yr ?? null,
+              lastUpdated: data.lastUpdated || new Date().toISOString().split('T')[0],
+              source: data.source || "live",
+            });
+            // Auto-update the interest rate input if user hasn't changed it yet
+            if (interestRate === DEFAULT_RATES.commercial.toString() && data.commercial) {
+              setInterestRate(data.commercial.toString());
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch live rates:", err);
+      }
+      setRatesLoading(false);
+    };
+    fetchLiveRates();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check if property type is NOT single-family (shows underwriting workspace)
   const isIncomeProperty = propertyType && propertyType !== "single-family" && propertyType !== "land";
@@ -778,7 +821,7 @@ export default function ValoraDashboard() {
       noi,
       cashFlow: cf,
       capRate: price > 0 ? (noi / price) * 100 : 0,
-      cashOnCash: downPmt > 0 ? (cf / downPmt) * 100 : 0,
+      cashOnCash: totalCashRequired > 0 ? (cf / totalCashRequired) * 100 : 0,
       dscr: annualDebt > 0 ? noi / annualDebt : 0,
       grm: gross > 0 ? price / gross : 0,
       closingCosts: closingCosts,
@@ -902,14 +945,198 @@ export default function ValoraDashboard() {
     setAnalysisComplete(false); setCurrentWorkspaceId(null); setWorkspaceName(""); setNotes("");
     setPurchasePrice(""); setGrossRent(""); setActiveTab("underwriting");
     setRentRoll([]); setExpenses(DEFAULT_EXPENSES); setIsPublic(false); setAskingPrice("");
-    setDownPaymentPercent("25"); setInterestRate(CURRENT_RATES.commercial.toString()); setLoanTerm("30");
+    setDownPaymentPercent("25"); setInterestRate(liveRates.commercial.toString()); setLoanTerm("30");
     setVacancyRate("5"); setOperatingExpenseRatio("35");
     setEnrichmentData(null); setEnrichmentLoaded(false); setCoordinates(null);
   };
 
-  // Export Report
-  const exportReport = (format: "pdf" | "excel") => {
-    alert(`Exporting ${format.toUpperCase()} report...`);
+  // Build summary rows used by both the on-screen table and exports
+  const buildSummaryRows = (): Array<[string, string, string]> => {
+    const rows: Array<[string, string, string]> = [];
+    const fc = formatCurrency;
+    const uw = underwriting;
+
+    rows.push(["ACQUISITION", "", ""]);
+    rows.push(["Purchase Price", uw ? fc(uw.purchasePrice) : "-", ""]);
+    if (uw?.pricePerUnit) rows.push(["Price Per Unit", fc(uw.pricePerUnit), `${units} units`]);
+    if (uw?.pricePerSqft) rows.push(["Price Per Sq Ft", `$${uw.pricePerSqft}`, `${parseInt(sqft).toLocaleString()} SF`]);
+    rows.push(["Down Payment", uw ? fc(uw.downPayment) : "-", uw ? `${downPaymentPercent}%` : ""]);
+    if (uw?.closingCosts) rows.push(["Est. Closing Costs", fc(uw.closingCosts), `${enrichmentData?.closingCosts?.buyerClosingCostPercent || 3.5}%`]);
+    if (uw?.totalCashRequired) rows.push(["Total Cash Required", fc(uw.totalCashRequired), ""]);
+
+    rows.push(["FINANCING", "", ""]);
+    rows.push(["Loan Amount", uw ? fc(uw.loanAmount) : "-", ""]);
+    rows.push(["Interest Rate", uw ? `${uw.interestRate}%` : "-", `via ${liveRates.source}`]);
+    rows.push(["Loan Term", uw ? `${uw.loanTerm} years` : "-", ""]);
+    rows.push(["Monthly Payment", uw ? fc(Math.round(uw.monthlyPayment)) : "-", ""]);
+    rows.push(["Annual Debt Service", uw ? fc(Math.round(uw.annualDebtService)) : "-", ""]);
+
+    rows.push(["INCOME", "", ""]);
+    rows.push(["Gross Potential Rent", fc(grossPotentialRent), rentRoll.length > 0 ? `${rentRoll.length} units` : "manual input"]);
+    rows.push(["Vacancy & Loss", `-${fc(vacancyLoss)}`, `${vacancyRate}%`]);
+    rows.push(["Effective Gross Income", fc(effectiveGrossIncome), ""]);
+
+    rows.push(["OPERATING EXPENSES", "", ""]);
+    expenses.forEach(exp => {
+      if (exp.annual > 0 || exp.monthly > 0) {
+        rows.push([exp.category, `-${fc(exp.annual)}`, `${fc(exp.monthly)}/mo`]);
+      }
+    });
+    rows.push(["Total Operating Expenses", `-${fc(totalExpenses)}`, effectiveGrossIncome > 0 ? `${((totalExpenses / effectiveGrossIncome) * 100).toFixed(1)}% ratio` : ""]);
+
+    rows.push(["NET OPERATING INCOME", fc(noiFromPnL), ""]);
+
+    rows.push(["CASH FLOW", "", ""]);
+    rows.push(["NOI", fc(noiFromPnL), ""]);
+    rows.push(["Less: Debt Service", uw ? `-${fc(Math.round(uw.annualDebtService))}` : "-", ""]);
+    const annualCf = uw ? noiFromPnL - uw.annualDebtService : 0;
+    rows.push(["Annual Cash Flow", fc(Math.round(annualCf)), ""]);
+    rows.push(["Monthly Cash Flow", fc(Math.round(annualCf / 12)), ""]);
+
+    rows.push(["RETURN METRICS", "", ""]);
+    rows.push(["Cap Rate", uw ? `${uw.capRate.toFixed(2)}%` : "-", "NOI / Price"]);
+    rows.push(["Cash-on-Cash Return", uw ? `${uw.cashOnCash.toFixed(2)}%` : "-", "Cash Flow / Total Cash In"]);
+    rows.push(["DSCR", uw ? `${uw.dscr.toFixed(2)}x` : "-", "NOI / Debt Service"]);
+    rows.push(["GRM", uw ? `${uw.grm.toFixed(2)}x` : "-", "Price / Gross Rent"]);
+    if (uw?.breakEvenOccupancy) rows.push(["Break-Even Occupancy", `${uw.breakEvenOccupancy.toFixed(1)}%`, ""]);
+
+    return rows;
+  };
+
+  // Export as CSV
+  const exportCSV = () => {
+    const rows = buildSummaryRows();
+    const propertyLabel = address ? `${address}, ${city}, ${state}` : "Property Analysis";
+    const header = `"Legacy RE Investment Summary"\n"${propertyLabel}"\n"Generated: ${new Date().toLocaleDateString()}"\n\n"Line Item","Value","Notes"\n`;
+    const csvRows = rows.map(r => `"${r[0]}","${r[1]}","${r[2]}"`).join("\n");
+    const csv = header + csvRows;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `LegacyRE_${(address || "analysis").replace(/[^a-zA-Z0-9]/g, "_")}_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Export as Excel (HTML table that Excel/Sheets can open)
+  const exportExcel = () => {
+    const rows = buildSummaryRows();
+    const propertyLabel = address ? `${address}, ${city}, ${state}` : "Property Analysis";
+    const sectionStyle = 'style="background:#1e293b;color:#fff;font-weight:700;font-size:11pt;padding:8px 12px;"';
+    const headerStyle = 'style="background:#f1f5f9;font-weight:600;padding:6px 12px;border-bottom:2px solid #334155;"';
+    const rowStyle = 'style="padding:5px 12px;border-bottom:1px solid #e2e8f0;"';
+    const highlightStyle = 'style="padding:5px 12px;border-bottom:1px solid #e2e8f0;font-weight:700;background:#f0fdf4;"';
+
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:spreadsheet"><head><meta charset="UTF-8"><style>td{font-family:Calibri,Arial,sans-serif;font-size:10pt;}</style></head><body>`;
+    html += `<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;border:1px solid #cbd5e1;">`;
+    html += `<tr><td colspan="3" style="background:#0f172a;color:#fff;font-size:14pt;font-weight:700;padding:12px;">Legacy RE — Investment Summary</td></tr>`;
+    html += `<tr><td colspan="3" ${headerStyle}>${propertyLabel} | ${new Date().toLocaleDateString()}</td></tr>`;
+    html += `<tr><td ${headerStyle}>Line Item</td><td ${headerStyle}>Value</td><td ${headerStyle}>Notes</td></tr>`;
+
+    rows.forEach(r => {
+      const isSection = r[0] === r[0].toUpperCase() && r[1] === "" && r[2] === "";
+      const isNOI = r[0] === "NET OPERATING INCOME";
+      const isTotalCash = r[0] === "Total Cash Required" || r[0] === "Annual Cash Flow";
+      if (isSection) {
+        html += `<tr><td colspan="3" ${sectionStyle}>${r[0]}</td></tr>`;
+      } else if (isNOI || isTotalCash) {
+        html += `<tr><td ${highlightStyle}>${r[0]}</td><td ${highlightStyle}>${r[1]}</td><td ${highlightStyle}>${r[2]}</td></tr>`;
+      } else {
+        html += `<tr><td ${rowStyle}>${r[0]}</td><td ${rowStyle}>${r[1]}</td><td ${rowStyle}>${r[2]}</td></tr>`;
+      }
+    });
+
+    html += `</table></body></html>`;
+    const blob = new Blob([html], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `LegacyRE_${(address || "analysis").replace(/[^a-zA-Z0-9]/g, "_")}_${new Date().toISOString().split("T")[0]}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Export as PDF (print-optimized new window)
+  const exportPDF = () => {
+    const rows = buildSummaryRows();
+    const propertyLabel = address ? `${address}, ${city}, ${state} ${zipCode}` : "Property Analysis";
+    const propInfo = [
+      propertyType && PROPERTY_TYPES.find(t => t.id === propertyType)?.name,
+      sqft && `${parseInt(sqft).toLocaleString()} SF`,
+      units && parseInt(units) > 1 && `${units} Units`,
+      yearBuilt && `Built ${yearBuilt}`,
+    ].filter(Boolean).join(" · ");
+
+    let html = `<!DOCTYPE html><html><head><title>Legacy RE — ${propertyLabel}</title><style>
+      @page { margin: 0.6in; size: letter; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; color: #1e293b; font-size: 9.5pt; line-height: 1.4; }
+      .header { background: #0f172a; color: #fff; padding: 20px 24px; margin: -0.6in -0.6in 0; }
+      .header h1 { font-size: 16pt; font-weight: 700; margin-bottom: 4px; }
+      .header .subtitle { font-size: 9pt; opacity: 0.7; }
+      .prop-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 2px solid #0f172a; margin: 20px 0 16px; }
+      .prop-bar .addr { font-size: 11pt; font-weight: 700; }
+      .prop-bar .info { font-size: 8.5pt; color: #64748b; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+      .section-header td { background: #1e293b; color: #fff; font-weight: 700; font-size: 8.5pt; letter-spacing: 0.5px; padding: 6px 10px; text-transform: uppercase; }
+      .row td { padding: 5px 10px; border-bottom: 1px solid #e2e8f0; font-size: 9pt; }
+      .row td:nth-child(2) { text-align: right; font-weight: 600; white-space: nowrap; }
+      .row td:nth-child(3) { text-align: right; color: #64748b; font-size: 8pt; }
+      .row.highlight td { background: #f0fdf4; font-weight: 700; font-size: 9.5pt; border-bottom: 2px solid #16a34a; }
+      .row.noi td { background: #ecfdf5; font-weight: 700; font-size: 10pt; }
+      .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; }
+      .metric-box { text-align: center; padding: 12px 8px; border: 1px solid #e2e8f0; border-radius: 6px; }
+      .metric-box .label { font-size: 7.5pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; }
+      .metric-box .val { font-size: 14pt; font-weight: 700; color: #0f172a; margin-top: 2px; }
+      .metric-box.green { border-color: #86efac; background: #f0fdf4; }
+      .metric-box.green .val { color: #16a34a; }
+      .metric-box.red { border-color: #fca5a5; background: #fef2f2; }
+      .metric-box.red .val { color: #dc2626; }
+      .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #cbd5e1; font-size: 7.5pt; color: #94a3b8; display: flex; justify-content: space-between; }
+      @media print { .no-print { display: none; } }
+    </style></head><body>`;
+
+    html += `<div class="header"><h1>Legacy RE</h1><div class="subtitle">Investment Analysis Report</div></div>`;
+    html += `<div class="prop-bar"><div class="addr">${propertyLabel}</div><div class="info">${propInfo} · ${new Date().toLocaleDateString()}</div></div>`;
+
+    // Key metrics bar
+    if (underwriting) {
+      const uw = underwriting;
+      const cfClass = uw.cashFlow >= 0 ? "green" : "red";
+      const cocClass = uw.cashOnCash >= 5 ? "green" : uw.cashOnCash >= 0 ? "" : "red";
+      html += `<div class="metrics">
+        <div class="metric-box ${cfClass}"><div class="label">Annual Cash Flow</div><div class="val">${formatCurrency(Math.round(uw.cashFlow))}</div></div>
+        <div class="metric-box ${cocClass}"><div class="label">Cash-on-Cash Return</div><div class="val">${uw.cashOnCash.toFixed(2)}%</div></div>
+        <div class="metric-box"><div class="label">Cap Rate</div><div class="val">${uw.capRate.toFixed(2)}%</div></div>
+        <div class="metric-box"><div class="label">DSCR</div><div class="val">${uw.dscr.toFixed(2)}x</div></div>
+      </div>`;
+    }
+
+    // Full table
+    html += `<table>`;
+    rows.forEach(r => {
+      const isSection = r[0] === r[0].toUpperCase() && r[1] === "" && r[2] === "";
+      const isNOI = r[0] === "NET OPERATING INCOME";
+      const isCf = r[0] === "Annual Cash Flow" || r[0] === "Total Cash Required";
+      if (isSection) {
+        html += `<tr class="section-header"><td colspan="3">${r[0]}</td></tr>`;
+      } else if (isNOI) {
+        html += `<tr class="row noi"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`;
+      } else if (isCf) {
+        html += `<tr class="row highlight"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`;
+      } else {
+        html += `<tr class="row"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`;
+      }
+    });
+    html += `</table>`;
+
+    html += `<div class="footer"><span>Generated by Legacy RE · legacyre.com</span><span>Rate data: ${liveRates.source} (${liveRates.lastUpdated})</span></div>`;
+    html += `<div class="no-print" style="text-align:center;margin-top:20px;"><button onclick="window.print()" style="padding:10px 32px;font-size:11pt;font-weight:600;background:#0f172a;color:#fff;border:none;border-radius:6px;cursor:pointer;">Print / Save as PDF</button></div>`;
+    html += `</body></html>`;
+
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); }
   };
 
   // Format Currency
@@ -1115,17 +1342,35 @@ export default function ValoraDashboard() {
               </button>
             </div>
 
-            {/* Current Interest Rates */}
+            {/* Current Interest Rates - fetched live on every page load */}
             <div className="val-rates-card">
-              <h4>Current Interest Rates</h4>
+              <h4>
+                {ratesLoading ? "Loading Rates..." : "Live Interest Rates"}
+                {!ratesLoading && liveRates.source && liveRates.source !== "loading..." && (
+                  <span style={{ fontSize: "0.65rem", fontWeight: 400, opacity: 0.7, marginLeft: 8 }}>
+                    via {liveRates.source}
+                  </span>
+                )}
+              </h4>
               <div className="val-rates-list">
-                <div className="val-rate-item"><span>30-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional30 || CURRENT_RATES.conventional30}%</span></div>
-                <div className="val-rate-item"><span>15-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional15 || CURRENT_RATES.conventional15}%</span></div>
-                <div className="val-rate-item"><span>Commercial</span><span className="rate">{enrichmentData?.currentMortgageRates?.commercial || CURRENT_RATES.commercial}%</span></div>
-                <div className="val-rate-item"><span>Bridge Loan</span><span className="rate">{enrichmentData?.currentMortgageRates?.bridge || CURRENT_RATES.bridge}%</span></div>
-                <div className="val-rate-item"><span>SBA 504</span><span className="rate">{CURRENT_RATES.sba504}%</span></div>
+                <div className="val-rate-item"><span>30-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional30 || liveRates.conventional30}%</span></div>
+                <div className="val-rate-item"><span>15-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional15 || liveRates.conventional15}%</span></div>
+                <div className="val-rate-item"><span>Commercial</span><span className="rate">{enrichmentData?.currentMortgageRates?.commercial || liveRates.commercial}%</span></div>
+                <div className="val-rate-item"><span>Bridge Loan</span><span className="rate">{enrichmentData?.currentMortgageRates?.bridge || liveRates.bridge}%</span></div>
+                <div className="val-rate-item"><span>SBA 504</span><span className="rate">{liveRates.sba504}%</span></div>
+                {liveRates.fedFundsRate !== null && (
+                  <div className="val-rate-item"><span>Fed Funds Rate</span><span className="rate">{liveRates.fedFundsRate}%</span></div>
+                )}
+                {liveRates.prime !== null && (
+                  <div className="val-rate-item"><span>Prime Rate</span><span className="rate">{liveRates.prime}%</span></div>
+                )}
+                {liveRates.treasury10yr !== null && (
+                  <div className="val-rate-item"><span>10-Year Treasury</span><span className="rate">{liveRates.treasury10yr}%</span></div>
+                )}
               </div>
-              <span className="val-rates-updated">Updated: {CURRENT_RATES.lastUpdated}</span>
+              <span className="val-rates-updated">
+                {ratesLoading ? "Fetching live rates..." : `Updated: ${liveRates.lastUpdated}`}
+              </span>
             </div>
 
             {/* Area Statistics - shown when enrichment data is loaded */}
@@ -1226,8 +1471,9 @@ export default function ValoraDashboard() {
                         Export
                       </button>
                       <div className="val-export-menu">
-                        <button onClick={() => exportReport("pdf")}>Export PDF</button>
-                        <button onClick={() => exportReport("excel")}>Export Excel</button>
+                        <button onClick={exportPDF}>Export PDF</button>
+                        <button onClick={exportExcel}>Export Excel</button>
+                        <button onClick={exportCSV}>Export CSV</button>
                       </div>
                     </div>
                   </div>
@@ -1786,6 +2032,97 @@ export default function ValoraDashboard() {
                     </div>
                   )}
                 </div>
+
+                {/* Investment Summary Table - always visible when underwriting data exists */}
+                {isIncomeProperty && (underwriting || totalExpenses > 0 || grossPotentialRent > 0) && (
+                  <div className="val-summary-table" id="investment-summary">
+                    <div className="val-summary-header">
+                      <h4>Investment Summary</h4>
+                      <div className="val-summary-actions">
+                        <button className="val-summary-export-btn" onClick={exportCSV} title="Download CSV">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                          CSV
+                        </button>
+                        <button className="val-summary-export-btn" onClick={exportExcel} title="Download Excel">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                          XLS
+                        </button>
+                        <button className="val-summary-export-btn" onClick={exportPDF} title="Print / PDF">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          PDF
+                        </button>
+                      </div>
+                    </div>
+                    <table className="val-summary-tbl">
+                      <thead>
+                        <tr><th>Line Item</th><th>Value</th><th>Notes</th></tr>
+                      </thead>
+                      <tbody>
+                        {/* ACQUISITION */}
+                        <tr className="section-row"><td colSpan={3}>Acquisition</td></tr>
+                        <tr><td>Purchase Price</td><td className="val-r">{underwriting ? formatCurrency(underwriting.purchasePrice) : "-"}</td><td className="val-note"></td></tr>
+                        {underwriting?.pricePerUnit && <tr><td>Price Per Unit</td><td className="val-r">{formatCurrency(underwriting.pricePerUnit)}</td><td className="val-note">{units} units</td></tr>}
+                        {underwriting?.pricePerSqft && <tr><td>Price Per Sq Ft</td><td className="val-r">${underwriting.pricePerSqft}</td><td className="val-note">{parseInt(sqft).toLocaleString()} SF</td></tr>}
+                        <tr><td>Down Payment</td><td className="val-r">{underwriting ? formatCurrency(underwriting.downPayment) : "-"}</td><td className="val-note">{downPaymentPercent}%</td></tr>
+                        {underwriting?.closingCosts ? <tr><td>Est. Closing Costs</td><td className="val-r">{formatCurrency(underwriting.closingCosts)}</td><td className="val-note">{enrichmentData?.closingCosts?.buyerClosingCostPercent || 3.5}%</td></tr> : null}
+                        {underwriting?.totalCashRequired ? <tr className="highlight-row"><td>Total Cash Required</td><td className="val-r">{formatCurrency(underwriting.totalCashRequired)}</td><td className="val-note"></td></tr> : null}
+
+                        {/* FINANCING */}
+                        <tr className="section-row"><td colSpan={3}>Financing</td></tr>
+                        <tr><td>Loan Amount</td><td className="val-r">{underwriting ? formatCurrency(underwriting.loanAmount) : "-"}</td><td className="val-note"></td></tr>
+                        <tr><td>Interest Rate</td><td className="val-r">{underwriting ? `${underwriting.interestRate}%` : "-"}</td><td className="val-note live-tag">{liveRates.source !== "loading..." ? `${liveRates.source}` : ""}</td></tr>
+                        <tr><td>Loan Term</td><td className="val-r">{underwriting ? `${underwriting.loanTerm} yrs` : "-"}</td><td className="val-note"></td></tr>
+                        <tr><td>Monthly Payment</td><td className="val-r">{underwriting ? formatCurrency(Math.round(underwriting.monthlyPayment)) : "-"}</td><td className="val-note"></td></tr>
+                        <tr><td>Annual Debt Service</td><td className="val-r">{underwriting ? formatCurrency(Math.round(underwriting.annualDebtService)) : "-"}</td><td className="val-note"></td></tr>
+
+                        {/* INCOME */}
+                        <tr className="section-row"><td colSpan={3}>Income</td></tr>
+                        <tr><td>Gross Potential Rent</td><td className="val-r">{formatCurrency(grossPotentialRent)}</td><td className="val-note">{rentRoll.length > 0 ? `${rentRoll.length} units` : "manual"}</td></tr>
+                        <tr className="negative-row"><td>Vacancy &amp; Loss</td><td className="val-r">-{formatCurrency(vacancyLoss)}</td><td className="val-note">{vacancyRate}%</td></tr>
+                        <tr className="subtotal-row"><td>Effective Gross Income</td><td className="val-r">{formatCurrency(effectiveGrossIncome)}</td><td className="val-note"></td></tr>
+
+                        {/* OPERATING EXPENSES */}
+                        <tr className="section-row"><td colSpan={3}>Operating Expenses</td></tr>
+                        {expenses.filter(e => e.annual > 0 || e.monthly > 0).map(exp => (
+                          <tr key={exp.id}><td>{exp.category}</td><td className="val-r">-{formatCurrency(exp.annual)}</td><td className="val-note">{formatCurrency(exp.monthly)}/mo</td></tr>
+                        ))}
+                        {expenses.every(e => e.annual === 0 && e.monthly === 0) && (
+                          <tr><td colSpan={3} className="val-note" style={{ textAlign: "center", padding: "0.5rem" }}>No expenses entered — use the P&L tab</td></tr>
+                        )}
+                        <tr className="subtotal-row"><td>Total Operating Expenses</td><td className="val-r">-{formatCurrency(totalExpenses)}</td><td className="val-note">{effectiveGrossIncome > 0 ? `${((totalExpenses / effectiveGrossIncome) * 100).toFixed(1)}%` : ""}</td></tr>
+
+                        {/* NOI */}
+                        <tr className="noi-row"><td>Net Operating Income (NOI)</td><td className="val-r">{formatCurrency(noiFromPnL)}</td><td className="val-note"></td></tr>
+
+                        {/* CASH FLOW */}
+                        <tr className="section-row"><td colSpan={3}>Cash Flow</td></tr>
+                        <tr><td>NOI</td><td className="val-r">{formatCurrency(noiFromPnL)}</td><td className="val-note"></td></tr>
+                        <tr className="negative-row"><td>Less: Annual Debt Service</td><td className="val-r">{underwriting ? `-${formatCurrency(Math.round(underwriting.annualDebtService))}` : "-"}</td><td className="val-note"></td></tr>
+                        {(() => {
+                          const annualCf = underwriting ? noiFromPnL - underwriting.annualDebtService : 0;
+                          return (
+                            <>
+                              <tr className={`highlight-row ${annualCf >= 0 ? "positive" : "negative"}`}><td>Annual Cash Flow</td><td className="val-r">{formatCurrency(Math.round(annualCf))}</td><td className="val-note"></td></tr>
+                              <tr className={annualCf >= 0 ? "positive" : "negative"}><td>Monthly Cash Flow</td><td className="val-r">{formatCurrency(Math.round(annualCf / 12))}</td><td className="val-note"></td></tr>
+                            </>
+                          );
+                        })()}
+
+                        {/* RETURN METRICS */}
+                        <tr className="section-row"><td colSpan={3}>Return Metrics</td></tr>
+                        <tr><td>Cap Rate</td><td className="val-r">{underwriting ? `${underwriting.capRate.toFixed(2)}%` : "-"}</td><td className="val-note">NOI / Price</td></tr>
+                        <tr className="highlight-row"><td>Cash-on-Cash Return</td><td className="val-r">{underwriting ? `${underwriting.cashOnCash.toFixed(2)}%` : "-"}</td><td className="val-note">Cash Flow / Total Cash In</td></tr>
+                        <tr><td>DSCR</td><td className="val-r">{underwriting ? `${underwriting.dscr.toFixed(2)}x` : "-"}</td><td className="val-note">NOI / Debt Service</td></tr>
+                        <tr><td>GRM</td><td className="val-r">{underwriting ? `${underwriting.grm.toFixed(2)}x` : "-"}</td><td className="val-note">Price / Gross Rent</td></tr>
+                        {underwriting?.breakEvenOccupancy ? <tr><td>Break-Even Occupancy</td><td className="val-r">{underwriting.breakEvenOccupancy.toFixed(1)}%</td><td className="val-note"></td></tr> : null}
+                      </tbody>
+                    </table>
+                    <div className="val-summary-footer">
+                      <span>Rates: {liveRates.source} ({liveRates.lastUpdated})</span>
+                      <span>{enrichmentData?.source === "openai" ? "Area data: AI analysis" : enrichmentData ? "Area data: Estimates" : ""}</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Notes Section */}
                 <div className="val-notes-section">
