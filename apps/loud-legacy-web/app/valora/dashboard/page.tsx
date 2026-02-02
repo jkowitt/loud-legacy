@@ -8,6 +8,7 @@ import AddressAutocomplete, { type PlaceResult } from "@/components/AddressAutoc
 import StreetView from "@/components/StreetView";
 import NearbyAmenities from "@/components/NearbyAmenities";
 import PropertyMap from "@/components/PropertyMap";
+import { getStreetViewUrl, isGoogleMapsConfigured } from "@/lib/google-maps";
 
 // Property Types
 const PROPERTY_TYPES = [
@@ -424,7 +425,70 @@ export default function ValoraDashboard() {
       }
     }
 
-    // Fallback improvements if none from image analysis
+    // If no photos uploaded, try using Google Street View as image source
+    if (improvementItems.length === 0 && address && isGoogleMapsConfigured()) {
+      try {
+        const fullAddress = `${address}, ${city}, ${state} ${zipCode}`.trim();
+        const streetViewUrl = getStreetViewUrl(fullAddress, { width: 600, height: 400 });
+        if (streetViewUrl) {
+          const svRes = await fetch('/api/ai/improvements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: streetViewUrl, area: 'exterior-front' }),
+          });
+          if (svRes.ok) {
+            const svData = await svRes.json();
+            conditionScore = svData.overallScore || 72;
+            if (svData.improvements) {
+              improvementItems = svData.improvements.map((imp: Record<string, unknown>) => ({
+                area: (imp.title as string) || 'General',
+                issue: (imp.description as string)?.split('.')[0] || 'Needs improvement',
+                recommendation: (imp.description as string) || '',
+                estimatedCost: typeof imp.estimatedCost === 'object' && imp.estimatedCost !== null ? (imp.estimatedCost as { low: number }).low || 5000 : 5000,
+                potentialValueAdd: Math.round(((typeof imp.estimatedCost === 'object' && imp.estimatedCost !== null ? (imp.estimatedCost as { low: number }).low : 5000) * ((imp.potentialROI as number) || 150)) / 100),
+                priority: (imp.priority as string) || 'medium',
+              }));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Street View analysis error:", err);
+      }
+    }
+
+    // If no image-based improvements, use OpenAI recommendations based on property data
+    if (improvementItems.length === 0) {
+      try {
+        const recRes = await fetch('/api/ai/recommendations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            propertyType,
+            condition: 75,
+            yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
+            squareFeet: sqft ? parseInt(sqft) : undefined,
+            issues: [],
+          }),
+        });
+        if (recRes.ok) {
+          const recData = await recRes.json();
+          if (recData.recommendations && Array.isArray(recData.recommendations)) {
+            improvementItems = recData.recommendations.map((rec: Record<string, unknown>) => ({
+              area: (rec.recommendation as string)?.split(':')[0]?.trim() || 'General',
+              issue: `${(rec.priority as string) || 'Medium'} priority improvement`,
+              recommendation: (rec.recommendation as string) || '',
+              estimatedCost: typeof rec.estimatedCost === 'string' ? parseInt((rec.estimatedCost as string).replace(/[^0-9]/g, '')) || 5000 : (rec.estimatedCost as number) || 5000,
+              potentialValueAdd: typeof rec.valueIncrease === 'string' ? parseInt((rec.valueIncrease as string).replace(/[^0-9]/g, '')) || 10000 : (rec.valueIncrease as number) || 10000,
+              priority: ((rec.priority as string) || 'medium').toLowerCase(),
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Recommendations API error:", err);
+      }
+    }
+
+    // Last resort fallback if both AI calls failed
     if (improvementItems.length === 0) {
       improvementItems = [
         { area: "Kitchen", issue: "Dated appliances and countertops", recommendation: "Update to modern stainless appliances and quartz counters", estimatedCost: 25000, potentialValueAdd: 45000, priority: "high" },
@@ -1081,18 +1145,16 @@ export default function ValoraDashboard() {
                           </div>
                           <span className="confidence">{valuation.confidence}% Confidence</span>
                         </div>
-                        {uploadedImages.length > 0 && (
-                          <div className="val-condition-score">
-                            <div className="score-ring">
-                              <svg viewBox="0 0 100 100">
-                                <circle cx="50" cy="50" r="45" fill="none" stroke="#E5E7EB" strokeWidth="8" />
-                                <circle cx="50" cy="50" r="45" fill="none" stroke={valuation.conditionScore >= 70 ? "#22C55E" : valuation.conditionScore >= 50 ? "#F59E0B" : "#EF4444"} strokeWidth="8" strokeDasharray={`${valuation.conditionScore * 2.83} 283`} strokeLinecap="round" transform="rotate(-90 50 50)" />
-                              </svg>
-                              <div className="score-text"><span>{valuation.conditionScore}</span><small>/100</small></div>
-                            </div>
-                            <span className="score-label">Condition Score</span>
+                        <div className="val-condition-score">
+                          <div className="score-ring">
+                            <svg viewBox="0 0 100 100">
+                              <circle cx="50" cy="50" r="45" fill="none" stroke="#E5E7EB" strokeWidth="8" />
+                              <circle cx="50" cy="50" r="45" fill="none" stroke={valuation.conditionScore >= 70 ? "#22C55E" : valuation.conditionScore >= 50 ? "#F59E0B" : "#EF4444"} strokeWidth="8" strokeDasharray={`${valuation.conditionScore * 2.83} 283`} strokeLinecap="round" transform="rotate(-90 50 50)" />
+                            </svg>
+                            <div className="score-text"><span>{valuation.conditionScore}</span><small>/100</small></div>
                           </div>
-                        )}
+                          <span className="score-label">Condition Score</span>
+                        </div>
                       </div>
                       <div className="val-approaches">
                         <h4>Valuation Approaches</h4>
