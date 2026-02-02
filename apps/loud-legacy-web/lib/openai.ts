@@ -92,13 +92,15 @@ export async function generatePropertyRecommendations(propertyData: {
 - Square Feet: ${propertyData.squareFeet || 'Unknown'}
 - Known Issues: ${propertyData.issues?.join(', ') || 'None reported'}
 
-Provide 5-7 actionable recommendations to increase property value, including:
+Provide 5-7 actionable recommendations to increase property value. For each recommendation include:
 1. Priority (High/Medium/Low)
-2. Estimated cost
-3. Potential value increase
+2. Estimated cost (dollar amount)
+3. Potential value increase (dollar amount)
 4. Timeline
+5. costBasis: Explain how the cost estimate was calculated (e.g., material costs, labor rates, scope of work)
+6. valueRationale: Explain how the value increase was determined (e.g., industry data, comparable sales impact, buyer demand factors)
 
-Format as JSON array with keys: priority, recommendation, estimatedCost, valueIncrease, timeline`,
+Format as JSON array with keys: priority, recommendation, estimatedCost, valueIncrease, timeline, costBasis, valueRationale`,
         },
       ],
       max_tokens: 1500,
@@ -191,9 +193,11 @@ export async function analyzeImprovementsFromImage(imageUrl: string, area: strin
 
 For each improvement provide:
 - title: Short name of the improvement
-- description: Detailed description of what should be done, referencing what you see
+- description: Detailed written explanation of what should be done and WHY this improvement increases property value. Reference what you see in the image. Explain the value proposition clearly.
 - estimatedCost: Object with "low" and "high" dollar amounts
+- costBasis: Explain HOW the cost estimate was calculated (e.g., "Based on average exterior painting costs of $2-4 per square foot for a typical 1,500 sqft facade, plus prep work and materials")
 - potentialROI: Percentage ROI (e.g., 150 means 150% return)
+- valueRationale: Explain HOW the ROI/value increase was determined (e.g., "National Association of Realtors data shows fresh exterior paint recovers 150% of cost at resale. Curb appeal improvements are the #1 driver of first impressions for buyers.")
 - priority: "high", "medium", or "low"
 - timeframe: Estimated completion time (e.g., "2-3 days")
 
@@ -204,7 +208,7 @@ Return ONLY valid JSON with this structure:
   "overallScore": number,
   "condition": "excellent" | "good" | "fair" | "poor",
   "issues": ["string"],
-  "improvements": [{ "title": "", "description": "", "estimatedCost": { "low": 0, "high": 0 }, "potentialROI": 0, "priority": "", "timeframe": "" }],
+  "improvements": [{ "title": "", "description": "", "estimatedCost": { "low": 0, "high": 0 }, "costBasis": "", "potentialROI": 0, "valueRationale": "", "priority": "", "timeframe": "" }],
   "estimatedValueImpact": number
 }`,
             },
