@@ -424,7 +424,39 @@ export default function ValoraDashboard() {
       }
     }
 
-    // Fallback improvements if none from image analysis
+    // If no image-based improvements, use OpenAI recommendations based on property data
+    if (improvementItems.length === 0) {
+      try {
+        const recRes = await fetch('/api/ai/recommendations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            propertyType,
+            condition: 75,
+            yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
+            squareFeet: sqft ? parseInt(sqft) : undefined,
+            issues: [],
+          }),
+        });
+        if (recRes.ok) {
+          const recData = await recRes.json();
+          if (recData.recommendations && Array.isArray(recData.recommendations)) {
+            improvementItems = recData.recommendations.map((rec: Record<string, unknown>) => ({
+              area: (rec.recommendation as string)?.split(':')[0]?.trim() || 'General',
+              issue: `${(rec.priority as string) || 'Medium'} priority improvement`,
+              recommendation: (rec.recommendation as string) || '',
+              estimatedCost: typeof rec.estimatedCost === 'string' ? parseInt((rec.estimatedCost as string).replace(/[^0-9]/g, '')) || 5000 : (rec.estimatedCost as number) || 5000,
+              potentialValueAdd: typeof rec.valueIncrease === 'string' ? parseInt((rec.valueIncrease as string).replace(/[^0-9]/g, '')) || 10000 : (rec.valueIncrease as number) || 10000,
+              priority: ((rec.priority as string) || 'medium').toLowerCase(),
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Recommendations API error:", err);
+      }
+    }
+
+    // Last resort fallback if both AI calls failed
     if (improvementItems.length === 0) {
       improvementItems = [
         { area: "Kitchen", issue: "Dated appliances and countertops", recommendation: "Update to modern stainless appliances and quartz counters", estimatedCost: 25000, potentialValueAdd: 45000, priority: "high" },
