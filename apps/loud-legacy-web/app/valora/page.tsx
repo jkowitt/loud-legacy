@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
+import LiveRatesTicker from "@/components/LiveRatesTicker";
 
 export const metadata = {
   title: "Legacy RE - Smart Property Analysis for Real Estate Pros",
@@ -92,6 +93,9 @@ export default function ValoraPage() {
           </div>
         </div>
       </section>
+
+      {/* Live Interest Rates Ticker */}
+      <LiveRatesTicker />
 
       {/* Property Types Supported */}
       <section className="product-section" style={{ background: 'var(--bg-secondary)', paddingTop: '3rem', paddingBottom: '3rem' }}>

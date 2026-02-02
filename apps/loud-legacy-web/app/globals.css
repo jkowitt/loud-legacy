@@ -1164,6 +1164,128 @@ main {
   margin: 0 auto 3rem;
 }
 
+/* Live Rates Ticker */
+.rates-ticker {
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+}
+
+.rates-ticker-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.625rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rates-ticker-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #22c55e;
+  white-space: nowrap;
+  padding-right: 0.75rem;
+  border-right: 1px solid #334155;
+}
+
+.rates-ticker-loading {
+  font-size: 0.78rem;
+  color: #64748b;
+  padding: 0.25rem 0;
+}
+
+.rates-ticker-items {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rates-ticker-items::-webkit-scrollbar {
+  display: none;
+}
+
+.rates-ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.rates-ticker-item:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.rates-ticker-item.highlight {
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.2);
+}
+
+.rates-ticker-item-label {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.rates-ticker-item-value {
+  font-size: 0.8rem;
+  color: #f1f5f9;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rates-ticker-item.highlight .rates-ticker-item-value {
+  color: #60a5fa;
+}
+
+.rates-ticker-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.0625rem;
+  font-size: 0.6rem;
+  color: #475569;
+  white-space: nowrap;
+  padding-left: 0.75rem;
+  border-left: 1px solid #334155;
+}
+
+@media (max-width: 900px) {
+  .rates-ticker-inner {
+    padding: 0.5rem 1rem;
+    gap: 0.75rem;
+  }
+  .rates-ticker-meta {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .rates-ticker-label {
+    font-size: 0.6rem;
+    padding-right: 0.5rem;
+  }
+  .rates-ticker-item {
+    padding: 0.2rem 0.4rem;
+  }
+  .rates-ticker-item-label {
+    font-size: 0.6rem;
+  }
+  .rates-ticker-item-value {
+    font-size: 0.7rem;
+  }
+}
+
 .features-grid,
 .problems-grid {
   display: grid;
