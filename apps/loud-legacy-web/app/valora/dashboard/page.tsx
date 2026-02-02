@@ -106,6 +106,10 @@ interface CompProperty {
   baths?: number;
   units?: number;
   capRate?: number;
+  adjustments?: string;
+  googleValidated?: boolean;
+  lat?: number;
+  lng?: number;
 }
 
 // Improvement Item Interface
@@ -352,7 +356,7 @@ export default function ValoraDashboard() {
       const compsRes = await fetch('/api/ai/comps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice }),
+        body: JSON.stringify({ address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice, lat: coordinates?.lat, lng: coordinates?.lng }),
       });
       if (compsRes.ok) {
         const compsData = await compsRes.json();
@@ -371,6 +375,10 @@ export default function ValoraDashboard() {
             baths: c.baths as number | undefined,
             units: c.units as number | undefined,
             capRate: c.capRate as number | undefined,
+            adjustments: (c.adjustments as string) || undefined,
+            googleValidated: (c.googleValidated as boolean) || false,
+            lat: c.lat as number | undefined,
+            lng: c.lng as number | undefined,
           }));
         }
         if (compsData.marketSummary) {
@@ -1053,6 +1061,69 @@ export default function ValoraDashboard() {
                               <div className="breakdown-row highlight"><span>Net Operating Income (NOI)</span><span>{formatCurrency(underwriting.noi)}</span></div>
                             </div>
                           </div>
+
+                          {/* Scenario Analysis */}
+                          <div style={{ marginTop: "1.5rem" }}>
+                            <h4 style={{ marginBottom: "0.75rem" }}>Scenario Analysis</h4>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+                              {/* Conservative */}
+                              {(() => {
+                                const consVacancy = underwriting.vacancy + 3;
+                                const consGross = underwriting.grossRent * 0.95;
+                                const consEgi = consGross * (1 - consVacancy / 100);
+                                const consOpex = underwriting.operatingExpenses * 1.1;
+                                const consNoi = consEgi - consOpex;
+                                const consCf = consNoi - underwriting.annualDebtService;
+                                const consCoc = underwriting.downPayment > 0 ? (consCf / underwriting.downPayment) * 100 : 0;
+                                return (
+                                  <div style={{ padding: "0.75rem", borderRadius: "8px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#EF4444", marginBottom: "0.5rem" }}>Conservative</div>
+                                    <div style={{ fontSize: "0.7rem", color: "#64748b", marginBottom: "0.375rem" }}>Rent -5%, Vacancy +3%, Opex +10%</div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.78rem" }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between" }}><span>NOI</span><span style={{ fontWeight: 600 }}>{formatCurrency(consNoi)}</span></div>
+                                      <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash Flow</span><span style={{ fontWeight: 600, color: consCf >= 0 ? "#16A34A" : "#EF4444" }}>{formatCurrency(consCf)}</span></div>
+                                      <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash-on-Cash</span><span style={{ fontWeight: 600 }}>{consCoc.toFixed(2)}%</span></div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                              {/* Base Case */}
+                              <div style={{ padding: "0.75rem", borderRadius: "8px", background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.2)" }}>
+                                <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#3B82F6", marginBottom: "0.5rem" }}>Base Case</div>
+                                <div style={{ fontSize: "0.7rem", color: "#64748b", marginBottom: "0.375rem" }}>Current assumptions</div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.78rem" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between" }}><span>NOI</span><span style={{ fontWeight: 600 }}>{formatCurrency(underwriting.noi)}</span></div>
+                                  <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash Flow</span><span style={{ fontWeight: 600, color: underwriting.cashFlow >= 0 ? "#16A34A" : "#EF4444" }}>{formatCurrency(underwriting.cashFlow)}</span></div>
+                                  <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash-on-Cash</span><span style={{ fontWeight: 600 }}>{underwriting.cashOnCash.toFixed(2)}%</span></div>
+                                </div>
+                              </div>
+                              {/* Optimistic */}
+                              {(() => {
+                                const optVacancy = Math.max(underwriting.vacancy - 2, 1);
+                                const optGross = underwriting.grossRent * 1.05;
+                                const optEgi = optGross * (1 - optVacancy / 100);
+                                const optOpex = underwriting.operatingExpenses * 0.95;
+                                const optNoi = optEgi - optOpex;
+                                const optCf = optNoi - underwriting.annualDebtService;
+                                const optCoc = underwriting.downPayment > 0 ? (optCf / underwriting.downPayment) * 100 : 0;
+                                return (
+                                  <div style={{ padding: "0.75rem", borderRadius: "8px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
+                                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#16A34A", marginBottom: "0.5rem" }}>Optimistic</div>
+                                    <div style={{ fontSize: "0.7rem", color: "#64748b", marginBottom: "0.375rem" }}>Rent +5%, Vacancy -2%, Opex -5%</div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.78rem" }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between" }}><span>NOI</span><span style={{ fontWeight: 600 }}>{formatCurrency(optNoi)}</span></div>
+                                      <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash Flow</span><span style={{ fontWeight: 600, color: optCf >= 0 ? "#16A34A" : "#EF4444" }}>{formatCurrency(optCf)}</span></div>
+                                      <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash-on-Cash</span><span style={{ fontWeight: 600 }}>{optCoc.toFixed(2)}%</span></div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                            {/* Sensitivity note */}
+                            <div style={{ marginTop: "0.75rem", fontSize: "0.72rem", color: "#94a3b8", lineHeight: 1.5 }}>
+                              Sensitivity: A 1% change in vacancy impacts NOI by {formatCurrency(Math.round(underwriting.grossRent * 0.01))} annually. A 1% rate increase adds {formatCurrency(Math.round(underwriting.loanAmount * 0.01 / 12) * 12)}/yr to debt service.
+                            </div>
+                          </div>
                         </div>
                       )}
                       {!underwriting && (
@@ -1231,25 +1302,63 @@ export default function ValoraDashboard() {
                   {/* Comps Tab */}
                   {activeTab === "comps" && (
                     <div className="val-comps-content">
-                      <div className="val-comps-header"><h4>Comparable Sales</h4><span>{comps.length} properties within 1.5 miles</span></div>
+                      <div className="val-comps-header">
+                        <h4>Comparable Sales</h4>
+                        <span>{comps.length} properties {comps.some(c => c.googleValidated) ? "- distances verified via Google Maps" : "nearby"}</span>
+                      </div>
                       <div className="val-comps-table">
                         <div className="val-comps-row header"><span>Address</span><span>Distance</span><span>Sale Price</span><span>Date</span><span>Sq Ft</span><span>$/SF</span></div>
                         {comps.map(comp => (
-                          <div key={comp.id} className="val-comps-row">
-                            <span className="address">{comp.address}</span>
-                            <span>{comp.distance}</span>
-                            <span className="price">{formatCurrency(comp.salePrice)}</span>
-                            <span>{comp.saleDate}</span>
-                            <span>{comp.sqft.toLocaleString()}</span>
-                            <span>${comp.pricePerSqft}</span>
+                          <div key={comp.id} className="val-comps-row" style={{ flexDirection: "column", gap: "0.25rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "2fr 0.8fr 1fr 0.8fr 0.8fr 0.6fr", gap: "0.5rem", alignItems: "center", width: "100%" }}>
+                              <span className="address" style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                                {comp.address}
+                                {comp.googleValidated && (
+                                  <span title="Address verified via Google Maps" style={{ display: "inline-flex", alignItems: "center", padding: "1px 5px", borderRadius: "4px", background: "#DCFCE7", color: "#16A34A", fontSize: "0.6rem", fontWeight: 600 }}>GPS</span>
+                                )}
+                              </span>
+                              <span>{comp.distance}</span>
+                              <span className="price">{formatCurrency(comp.salePrice)}</span>
+                              <span>{comp.saleDate}</span>
+                              <span>{comp.sqft.toLocaleString()}</span>
+                              <span>${comp.pricePerSqft}</span>
+                            </div>
+                            {comp.adjustments && (
+                              <div style={{ fontSize: "0.72rem", color: "#64748b", paddingLeft: "0.25rem", fontStyle: "italic" }}>
+                                Adjustments: {comp.adjustments}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                       <div className="val-comps-summary">
                         <div className="summary-item"><span>Average Sale Price</span><span>{formatCurrency(comps.reduce((a, b) => a + b.salePrice, 0) / comps.length)}</span></div>
                         <div className="summary-item"><span>Average $/SF</span><span>${Math.round(comps.reduce((a, b) => a + b.pricePerSqft, 0) / comps.length)}</span></div>
-                        <div className="summary-item"><span>Median Sale Price</span><span>{formatCurrency(comps.sort((a, b) => a.salePrice - b.salePrice)[Math.floor(comps.length / 2)].salePrice)}</span></div>
+                        <div className="summary-item"><span>Median Sale Price</span><span>{formatCurrency([...comps].sort((a, b) => a.salePrice - b.salePrice)[Math.floor(comps.length / 2)].salePrice)}</span></div>
                       </div>
+                      {/* Market Report Summary */}
+                      {valuation && (
+                        <div style={{ marginTop: "1rem", padding: "1rem", background: "rgba(27,42,74,0.03)", borderRadius: "8px" }}>
+                          <h5 style={{ fontSize: "0.875rem", fontWeight: 600, color: "#1B2A4A", marginBottom: "0.75rem" }}>Market Intelligence Report</h5>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                            <div style={{ textAlign: "center", padding: "0.5rem", background: "white", borderRadius: "6px" }}>
+                              <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Avg $/SF</div>
+                              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1B2A4A" }}>${valuation.approaches.sales.pricePerSqft}</div>
+                            </div>
+                            <div style={{ textAlign: "center", padding: "0.5rem", background: "white", borderRadius: "6px" }}>
+                              <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Comps Analyzed</div>
+                              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1B2A4A" }}>{comps.length}</div>
+                            </div>
+                            <div style={{ textAlign: "center", padding: "0.5rem", background: "white", borderRadius: "6px" }}>
+                              <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Confidence</div>
+                              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: valuation.confidence >= 70 ? "#16A34A" : "#F59E0B" }}>{valuation.confidence}%</div>
+                            </div>
+                          </div>
+                          <ul style={{ margin: 0, paddingLeft: "1.25rem", fontSize: "0.8rem", color: "#475569", lineHeight: 1.7 }}>
+                            {valuation.marketFactors.map((factor, i) => <li key={i}>{factor}</li>)}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
 

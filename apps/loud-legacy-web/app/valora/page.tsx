@@ -67,7 +67,7 @@ export default function ValoraPage() {
     <main className="product-page">
       <Header />
 
-      <section className="product-hero" style={{ background: "linear-gradient(135deg, #1B2A4A 0%, #2C3E5A 100%)" }}>
+      <section className="product-hero" style={{ background: "linear-gradient(160deg, #F0F4F8 0%, #E2E8F0 40%, #CBD5E1 100%)" }}>
         <div className="container">
           <Link href="/valora" className="product-hero-logo" aria-label="Legacy RE Home">
             <Image
@@ -78,16 +78,16 @@ export default function ValoraPage() {
               priority
             />
           </Link>
-          <div className="badge">Built to Last</div>
-          <p className="tagline">
+          <div className="badge" style={{ background: '#1B2A4A', color: '#D4A843' }}>Built to Last</div>
+          <p className="tagline" style={{ color: '#1E293B' }}>
             AI-powered real estate intelligence platform combining computer vision,
             sophisticated underwriting, and portfolio management in one comprehensive system.
           </p>
           <div className="hero-actions">
-            <Link href="/dashboard" className="button button--primary" style={{ background: 'white', color: '#1E40AF' }}>
+            <Link href="/valora/dashboard" className="button button--primary" style={{ background: '#1B2A4A', color: '#D4A843' }}>
               Try Demo
             </Link>
-            <Link href="#features" className="button button--secondary" style={{ borderColor: 'white', color: 'white' }}>
+            <Link href="#features" className="button button--secondary" style={{ borderColor: '#1B2A4A', color: '#1B2A4A' }}>
               Explore Features
             </Link>
           </div>
@@ -297,7 +297,7 @@ export default function ValoraPage() {
             Join forward-thinking brokers, investors, and lenders using Legacy RE to make better decisions faster.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/dashboard" className="button button--primary" style={{ fontSize: '1.125rem', padding: '0.875rem 2rem' }}>
+            <Link href="/valora/dashboard" className="button button--primary" style={{ fontSize: '1.125rem', padding: '0.875rem 2rem' }}>
               Try Demo Dashboard
             </Link>
             <Link href="/auth/signup" className="button button--secondary" style={{ fontSize: '1.125rem', padding: '0.875rem 2rem' }}>
