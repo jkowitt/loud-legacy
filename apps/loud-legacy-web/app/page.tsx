@@ -16,8 +16,8 @@ export default function HomePage() {
           <div className="badge">Legacy RE. Built to Last.</div>
           <h1>Real estate intelligence<br/>built for operators.</h1>
           <p className="tagline">
-            AI-powered valuations, underwriting, and portfolio management.
-            One platform. Every property type. Built to last.
+            Analyze any property. Run the numbers. Find what adds value.
+            One platform for valuations, underwriting, and portfolio management.
           </p>
           <div className="hero-actions">
             <Link href="/valora" className="button button--primary">
@@ -45,9 +45,9 @@ export default function HomePage() {
         <div className="container">
           <h2>Why we build this way</h2>
           <p className="philosophy-intro">
-            We got tired of bloated software that tries to do everything and ends up doing nothing well.
-            Legacy RE solves real estate intelligence really well—valuations, underwriting, and portfolio management
-            in one focused platform.
+            We built Legacy RE because we were tired of clunky software that tries to do everything
+            but does nothing well. This platform does one thing really well — helps you understand
+            real estate deals.
           </p>
           <div className="philosophy-grid">
             <div className="philosophy-card">
@@ -58,7 +58,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3>Scratch our own itch</h3>
-              <p>Everything here started because we needed it ourselves.</p>
+              <p>We built the tools we needed ourselves. If it&apos;s in here, it&apos;s because we use it too.</p>
             </div>
             <div className="philosophy-card">
               <div className="philosophy-icon">
@@ -68,7 +68,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3>Simple beats clever</h3>
-              <p>No fancy tricks. Just tools that do what they say.</p>
+              <p>No gimmicks. The tools work the way you&apos;d expect them to.</p>
             </div>
             <div className="philosophy-card">
               <div className="philosophy-icon">
@@ -78,7 +78,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3>Built to last</h3>
-              <p>We&apos;re not chasing trends. This platform gets better over time.</p>
+              <p>We&apos;re not chasing hype. The platform just gets better over time.</p>
             </div>
           </div>
         </div>

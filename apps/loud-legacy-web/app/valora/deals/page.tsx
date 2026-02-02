@@ -5,104 +5,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const deals = [
-  {
-    id: 1,
-    name: "Downtown Mixed-Use Acquisition",
-    type: "Acquisition",
-    propertyType: "Mixed-Use",
-    address: "400 Commerce St, Austin, TX",
-    askingPrice: 42000000,
-    targetPrice: 38500000,
-    sqft: 165000,
-    capRate: 5.8,
-    stage: "due-diligence",
-    probability: 75,
-    closeDate: "Mar 2024",
-    assignee: "Sarah Chen",
-    priority: "high"
-  },
-  {
-    id: 2,
-    name: "Industrial Portfolio Sale",
-    type: "Disposition",
-    propertyType: "Industrial",
-    address: "Multiple Locations, TX",
-    askingPrice: 85000000,
-    targetPrice: 88000000,
-    sqft: 520000,
-    capRate: 6.5,
-    stage: "negotiation",
-    probability: 60,
-    closeDate: "Apr 2024",
-    assignee: "Mike Johnson",
-    priority: "high"
-  },
-  {
-    id: 3,
-    name: "Suburban Office Refinance",
-    type: "Refinance",
-    propertyType: "Office",
-    address: "2100 Tech Pkwy, Plano, TX",
-    askingPrice: 28000000,
-    targetPrice: 28000000,
-    sqft: 95000,
-    capRate: 6.2,
-    stage: "underwriting",
-    probability: 90,
-    closeDate: "Feb 2024",
-    assignee: "Emily Rodriguez",
-    priority: "medium"
-  },
-  {
-    id: 4,
-    name: "Multifamily Development Site",
-    type: "Acquisition",
-    propertyType: "Land",
-    address: "Hwy 290 & Loop 1, Austin, TX",
-    askingPrice: 12500000,
-    targetPrice: 11000000,
-    sqft: 435600,
-    capRate: 0,
-    stage: "loi",
-    probability: 40,
-    closeDate: "May 2024",
-    assignee: "Sarah Chen",
-    priority: "medium"
-  },
-  {
-    id: 5,
-    name: "Retail Center Recap",
-    type: "Refinance",
-    propertyType: "Retail",
-    address: "Westgate Mall, San Antonio, TX",
-    askingPrice: 22000000,
-    targetPrice: 22000000,
-    sqft: 110000,
-    capRate: 7.1,
-    stage: "closing",
-    probability: 95,
-    closeDate: "Jan 2024",
-    assignee: "Mike Johnson",
-    priority: "low"
-  },
-  {
-    id: 6,
-    name: "Medical Office Building",
-    type: "Acquisition",
-    propertyType: "Medical Office",
-    address: "5500 Memorial Dr, Houston, TX",
-    askingPrice: 35000000,
-    targetPrice: 32000000,
-    sqft: 78000,
-    capRate: 6.0,
-    stage: "prospect",
-    probability: 25,
-    closeDate: "Jun 2024",
-    assignee: "Emily Rodriguez",
-    priority: "low"
-  },
-];
+const deals: { id: number; name: string; type: string; propertyType: string; address: string; askingPrice: number; targetPrice: number; sqft: number; capRate: number; stage: string; probability: number; closeDate: string; assignee: string; priority: string }[] = [];
 
 const stages = [
   { id: "prospect", label: "Prospect", color: "#94A3B8" },
@@ -200,7 +103,7 @@ export default function VALORADealsPage() {
             </div>
             <div className="val-stat-card">
               <span className="val-stat-label">Avg Deal Size</span>
-              <span className="val-stat-value">{formatCurrency(totalPipelineValue / activeDeals)}</span>
+              <span className="val-stat-value">{formatCurrency(activeDeals > 0 ? totalPipelineValue / activeDeals : 0)}</span>
               <span className="val-stat-sub">Across pipeline</span>
             </div>
           </div>
@@ -254,7 +157,15 @@ export default function VALORADealsPage() {
       {/* Pipeline View */}
       <section className="val-pipeline-section">
         <div className="container">
-          {viewMode === "pipeline" ? (
+          {deals.length === 0 ? (
+            <div className="val-empty-state" style={{ textAlign: "center", padding: "4rem 2rem" }}>
+              <h2>No Active Deals</h2>
+              <p style={{ color: "#64748B", marginTop: "0.5rem" }}>Deals will appear here as you track acquisitions, dispositions, and refinances.</p>
+              <Link href="/valora/dashboard" className="val-btn primary" style={{ marginTop: "1.5rem", display: "inline-block" }}>
+                Start Analyzing
+              </Link>
+            </div>
+          ) : viewMode === "pipeline" ? (
             <div className="val-pipeline-board">
               {stages.map(stage => {
                 const stageDeals = filteredDeals.filter(d => d.stage === stage.id);
