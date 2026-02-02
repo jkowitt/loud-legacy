@@ -227,14 +227,18 @@ interface PropertyEnrichmentData {
   };
 }
 
-// Current Interest Rates (simulated real-time)
-const CURRENT_RATES = {
-  conventional30: 7.125,
-  conventional15: 6.625,
+// Default rates used before live data loads
+const DEFAULT_RATES = {
+  conventional30: 6.875,
+  conventional15: 6.125,
   commercial: 7.50,
   bridge: 10.25,
-  sba504: 6.875,
-  lastUpdated: new Date().toLocaleString(),
+  sba504: 6.75,
+  fedFundsRate: null as number | null,
+  prime: null as number | null,
+  treasury10yr: null as number | null,
+  lastUpdated: "",
+  source: "loading...",
 };
 
 // Default Operating Expenses by Category
@@ -286,7 +290,7 @@ export default function ValoraDashboard() {
   const [underwriting, setUnderwriting] = useState<UnderwritingData | null>(null);
   const [purchasePrice, setPurchasePrice] = useState("");
   const [downPaymentPercent, setDownPaymentPercent] = useState("25");
-  const [interestRate, setInterestRate] = useState(CURRENT_RATES.commercial.toString());
+  const [interestRate, setInterestRate] = useState(DEFAULT_RATES.commercial.toString());
   const [loanTerm, setLoanTerm] = useState("30");
   const [grossRent, setGrossRent] = useState("");
   const [vacancyRate, setVacancyRate] = useState("5");
@@ -323,11 +327,50 @@ export default function ValoraDashboard() {
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichmentLoaded, setEnrichmentLoaded] = useState(false);
 
+  // Live Interest Rates State
+  const [liveRates, setLiveRates] = useState(DEFAULT_RATES);
+  const [ratesLoading, setRatesLoading] = useState(true);
+
   // Marketplace State
   const [isPublic, setIsPublic] = useState(false);
   const [askingPrice, setAskingPrice] = useState("");
   const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [promoteSuccess, setPromoteSuccess] = useState(false);
+
+  // Fetch real-time interest rates on page load
+  useEffect(() => {
+    const fetchLiveRates = async () => {
+      setRatesLoading(true);
+      try {
+        const res = await fetch('/api/interest-rates');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success || data.conventional30) {
+            setLiveRates({
+              conventional30: data.conventional30 || DEFAULT_RATES.conventional30,
+              conventional15: data.conventional15 || DEFAULT_RATES.conventional15,
+              commercial: data.commercial || DEFAULT_RATES.commercial,
+              bridge: data.bridge || DEFAULT_RATES.bridge,
+              sba504: data.sba504 || DEFAULT_RATES.sba504,
+              fedFundsRate: data.fedFundsRate ?? null,
+              prime: data.prime ?? null,
+              treasury10yr: data.treasury10yr ?? null,
+              lastUpdated: data.lastUpdated || new Date().toISOString().split('T')[0],
+              source: data.source || "live",
+            });
+            // Auto-update the interest rate input if user hasn't changed it yet
+            if (interestRate === DEFAULT_RATES.commercial.toString() && data.commercial) {
+              setInterestRate(data.commercial.toString());
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch live rates:", err);
+      }
+      setRatesLoading(false);
+    };
+    fetchLiveRates();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check if property type is NOT single-family (shows underwriting workspace)
   const isIncomeProperty = propertyType && propertyType !== "single-family" && propertyType !== "land";
@@ -902,7 +945,7 @@ export default function ValoraDashboard() {
     setAnalysisComplete(false); setCurrentWorkspaceId(null); setWorkspaceName(""); setNotes("");
     setPurchasePrice(""); setGrossRent(""); setActiveTab("underwriting");
     setRentRoll([]); setExpenses(DEFAULT_EXPENSES); setIsPublic(false); setAskingPrice("");
-    setDownPaymentPercent("25"); setInterestRate(CURRENT_RATES.commercial.toString()); setLoanTerm("30");
+    setDownPaymentPercent("25"); setInterestRate(liveRates.commercial.toString()); setLoanTerm("30");
     setVacancyRate("5"); setOperatingExpenseRatio("35");
     setEnrichmentData(null); setEnrichmentLoaded(false); setCoordinates(null);
   };
@@ -1115,17 +1158,35 @@ export default function ValoraDashboard() {
               </button>
             </div>
 
-            {/* Current Interest Rates */}
+            {/* Current Interest Rates - fetched live on every page load */}
             <div className="val-rates-card">
-              <h4>Current Interest Rates</h4>
+              <h4>
+                {ratesLoading ? "Loading Rates..." : "Live Interest Rates"}
+                {!ratesLoading && liveRates.source && liveRates.source !== "loading..." && (
+                  <span style={{ fontSize: "0.65rem", fontWeight: 400, opacity: 0.7, marginLeft: 8 }}>
+                    via {liveRates.source}
+                  </span>
+                )}
+              </h4>
               <div className="val-rates-list">
-                <div className="val-rate-item"><span>30-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional30 || CURRENT_RATES.conventional30}%</span></div>
-                <div className="val-rate-item"><span>15-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional15 || CURRENT_RATES.conventional15}%</span></div>
-                <div className="val-rate-item"><span>Commercial</span><span className="rate">{enrichmentData?.currentMortgageRates?.commercial || CURRENT_RATES.commercial}%</span></div>
-                <div className="val-rate-item"><span>Bridge Loan</span><span className="rate">{enrichmentData?.currentMortgageRates?.bridge || CURRENT_RATES.bridge}%</span></div>
-                <div className="val-rate-item"><span>SBA 504</span><span className="rate">{CURRENT_RATES.sba504}%</span></div>
+                <div className="val-rate-item"><span>30-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional30 || liveRates.conventional30}%</span></div>
+                <div className="val-rate-item"><span>15-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional15 || liveRates.conventional15}%</span></div>
+                <div className="val-rate-item"><span>Commercial</span><span className="rate">{enrichmentData?.currentMortgageRates?.commercial || liveRates.commercial}%</span></div>
+                <div className="val-rate-item"><span>Bridge Loan</span><span className="rate">{enrichmentData?.currentMortgageRates?.bridge || liveRates.bridge}%</span></div>
+                <div className="val-rate-item"><span>SBA 504</span><span className="rate">{liveRates.sba504}%</span></div>
+                {liveRates.fedFundsRate !== null && (
+                  <div className="val-rate-item"><span>Fed Funds Rate</span><span className="rate">{liveRates.fedFundsRate}%</span></div>
+                )}
+                {liveRates.prime !== null && (
+                  <div className="val-rate-item"><span>Prime Rate</span><span className="rate">{liveRates.prime}%</span></div>
+                )}
+                {liveRates.treasury10yr !== null && (
+                  <div className="val-rate-item"><span>10-Year Treasury</span><span className="rate">{liveRates.treasury10yr}%</span></div>
+                )}
               </div>
-              <span className="val-rates-updated">Updated: {CURRENT_RATES.lastUpdated}</span>
+              <span className="val-rates-updated">
+                {ratesLoading ? "Fetching live rates..." : `Updated: ${liveRates.lastUpdated}`}
+              </span>
             </div>
 
             {/* Area Statistics - shown when enrichment data is loaded */}
