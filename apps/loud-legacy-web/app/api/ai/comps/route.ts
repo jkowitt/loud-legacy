@@ -85,6 +85,66 @@ async function crossReferenceComps(
   });
 }
 
+// Calculate recency score for a comp based on days since sale
+// 0-30 days = 100, 31-60 = 92, 61-90 = 82, 91-120 = 70, 121-150 = 55, 151-180 = 40, 180+ = 20
+function computeRecencyScore(saleDate: string): { daysAgo: number; recencyScore: number; recencyLabel: string } {
+  const sale = new Date(saleDate);
+  const now = new Date();
+  const daysAgo = Math.max(0, Math.floor((now.getTime() - sale.getTime()) / (1000 * 60 * 60 * 24)));
+
+  let recencyScore: number;
+  let recencyLabel: string;
+
+  if (daysAgo <= 30) {
+    recencyScore = 100;
+    recencyLabel = "Excellent";
+  } else if (daysAgo <= 60) {
+    recencyScore = 92;
+    recencyLabel = "Very Good";
+  } else if (daysAgo <= 90) {
+    recencyScore = 82;
+    recencyLabel = "Good";
+  } else if (daysAgo <= 120) {
+    recencyScore = 70;
+    recencyLabel = "Fair";
+  } else if (daysAgo <= 150) {
+    recencyScore = 55;
+    recencyLabel = "Aging";
+  } else if (daysAgo <= 180) {
+    recencyScore = 40;
+    recencyLabel = "Stale";
+  } else {
+    recencyScore = 20;
+    recencyLabel = "Outdated";
+  }
+
+  return { daysAgo, recencyScore, recencyLabel };
+}
+
+// Enrich comps with recency data and adjust overall confidence
+function enrichWithRecency(
+  comps: Array<Record<string, unknown>>,
+  marketSummary?: Record<string, unknown>
+): { comps: Array<Record<string, unknown>>; adjustedConfidence?: number } {
+  const enriched = comps.map((comp) => {
+    const saleDate = (comp.saleDate as string) || "";
+    if (!saleDate) return { ...comp, daysAgo: 999, recencyScore: 0, recencyLabel: "Unknown" };
+    const recency = computeRecencyScore(saleDate);
+    return { ...comp, ...recency };
+  });
+
+  // Adjust overall confidence based on average recency of comps
+  let adjustedConfidence: number | undefined;
+  if (marketSummary && enriched.length > 0) {
+    const avgRecency = enriched.reduce((sum, c) => sum + ((c.recencyScore as number) || 0), 0) / enriched.length;
+    const baseConfidence = (marketSummary.confidence as number) || 75;
+    // Blend: 60% base confidence + 40% recency-adjusted
+    adjustedConfidence = Math.round(baseConfidence * 0.6 + avgRecency * 0.4);
+  }
+
+  return { comps: enriched, adjustedConfidence };
+}
+
 // Fallback comps when OpenAI is not configured
 function generateFallbackComps(propertyData: {
   propertyType: string;
@@ -98,12 +158,20 @@ function generateFallbackComps(propertyData: {
     : propertyData.propertyType === "multifamily" ? 180
     : 200;
 
+  // Generate sale dates within the last 6 months, most recent first
+  const now = new Date();
+  const recentDate = (daysBack: number) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - daysBack);
+    return d.toISOString().split('T')[0];
+  };
+
   const comps = [
-    { id: "1", address: "123 Oak Street", distance: "0.3 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 0.95), saleDate: "2025-10-15", sqft: Math.round(baseSqft * 1.05), pricePerSqft: Math.round(basePricePerSqft * 0.95), propertyType: propertyData.propertyType, yearBuilt: 1998, beds: 4, baths: 2.5, adjustments: "Similar size, slightly older", googleValidated: false },
-    { id: "2", address: "456 Maple Avenue", distance: "0.5 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 0.92), saleDate: "2025-11-08", sqft: Math.round(baseSqft * 0.95), pricePerSqft: Math.round(basePricePerSqft * 0.98), propertyType: propertyData.propertyType, yearBuilt: 2001, beds: 3, baths: 2, adjustments: "Smaller lot, better condition", googleValidated: false },
-    { id: "3", address: "789 Pine Road", distance: "0.7 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 1.05), saleDate: "2025-09-28", sqft: Math.round(baseSqft * 1.12), pricePerSqft: Math.round(basePricePerSqft * 0.97), propertyType: propertyData.propertyType, yearBuilt: 2003, beds: 4, baths: 3, adjustments: "Larger, recently renovated", googleValidated: false },
-    { id: "4", address: "321 Elm Boulevard", distance: "0.9 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 0.98), saleDate: "2025-12-20", sqft: Math.round(baseSqft * 1.02), pricePerSqft: Math.round(basePricePerSqft * 0.99), propertyType: propertyData.propertyType, yearBuilt: 1995, beds: 4, baths: 2, adjustments: "Comparable size and condition", googleValidated: false },
-    { id: "5", address: "654 Cedar Lane", distance: "1.1 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 1.02), saleDate: "2026-01-14", sqft: Math.round(baseSqft * 1.08), pricePerSqft: Math.round(basePricePerSqft * 0.96), propertyType: propertyData.propertyType, yearBuilt: 2005, beds: 4, baths: 2.5, adjustments: "Superior location", googleValidated: false },
+    { id: "1", address: "123 Oak Street", distance: "0.3 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 0.95), saleDate: recentDate(12), sqft: Math.round(baseSqft * 1.05), pricePerSqft: Math.round(basePricePerSqft * 0.95), propertyType: propertyData.propertyType, yearBuilt: 1998, beds: 4, baths: 2.5, adjustments: "Similar size, slightly older", googleValidated: false },
+    { id: "2", address: "456 Maple Avenue", distance: "0.5 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 0.92), saleDate: recentDate(38), sqft: Math.round(baseSqft * 0.95), pricePerSqft: Math.round(basePricePerSqft * 0.98), propertyType: propertyData.propertyType, yearBuilt: 2001, beds: 3, baths: 2, adjustments: "Smaller lot, better condition", googleValidated: false },
+    { id: "3", address: "789 Pine Road", distance: "0.7 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 1.05), saleDate: recentDate(75), sqft: Math.round(baseSqft * 1.12), pricePerSqft: Math.round(basePricePerSqft * 0.97), propertyType: propertyData.propertyType, yearBuilt: 2003, beds: 4, baths: 3, adjustments: "Larger, recently renovated", googleValidated: false },
+    { id: "4", address: "321 Elm Boulevard", distance: "0.9 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 0.98), saleDate: recentDate(110), sqft: Math.round(baseSqft * 1.02), pricePerSqft: Math.round(basePricePerSqft * 0.99), propertyType: propertyData.propertyType, yearBuilt: 1995, beds: 4, baths: 2, adjustments: "Comparable size and condition", googleValidated: false },
+    { id: "5", address: "654 Cedar Lane", distance: "1.1 mi", salePrice: Math.round(baseSqft * basePricePerSqft * 1.02), saleDate: recentDate(155), sqft: Math.round(baseSqft * 1.08), pricePerSqft: Math.round(basePricePerSqft * 0.96), propertyType: propertyData.propertyType, yearBuilt: 2005, beds: 4, baths: 2.5, adjustments: "Superior location, aging comp", googleValidated: false },
   ];
 
   const suggestedValue = Math.round(baseSqft * basePricePerSqft);
@@ -179,6 +247,13 @@ export async function POST(request: NextRequest) {
               result.comps, subjectLat, subjectLng, city, state
             );
           }
+
+          // Enrich with recency scoring and adjust confidence
+          const recencyResult = enrichWithRecency(result.comps, result.marketSummary);
+          result.comps = recencyResult.comps;
+          if (recencyResult.adjustedConfidence !== undefined && result.marketSummary) {
+            result.marketSummary.confidence = recencyResult.adjustedConfidence;
+          }
         }
 
         return NextResponse.json({
@@ -194,6 +269,11 @@ export async function POST(request: NextRequest) {
 
     // Fallback to generated comps
     const fallback = generateFallbackComps({ propertyType, sqft: sqft ? parseInt(sqft) : undefined, city, state });
+    const recencyFallback = enrichWithRecency(fallback.comps, fallback.marketSummary as unknown as Record<string, unknown>);
+    fallback.comps = recencyFallback.comps as typeof fallback.comps;
+    if (recencyFallback.adjustedConfidence !== undefined) {
+      fallback.marketSummary.confidence = recencyFallback.adjustedConfidence;
+    }
     return NextResponse.json({
       success: true,
       ...fallback,

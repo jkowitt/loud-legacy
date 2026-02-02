@@ -110,6 +110,9 @@ interface CompProperty {
   googleValidated?: boolean;
   lat?: number;
   lng?: number;
+  daysAgo?: number;
+  recencyScore?: number;
+  recencyLabel?: string;
 }
 
 // Improvement Item Interface
@@ -117,6 +120,7 @@ interface ImprovementItem {
   area: string;
   issue: string;
   recommendation: string;
+  specificChanges?: string[];
   estimatedCost: number;
   costRange?: { low: number; high: number };
   potentialValueAdd: number;
@@ -146,6 +150,81 @@ interface UnderwritingData {
   cashOnCash: number;
   dscr: number;
   grm: number;
+  // Enhanced fields
+  closingCosts?: number;
+  totalCashRequired?: number;
+  annualPropertyTax?: number;
+  annualInsurance?: number;
+  annualMaintenance?: number;
+  annualReserves?: number;
+  breakEvenOccupancy?: number;
+  pricePerUnit?: number;
+  pricePerSqft?: number;
+}
+
+// Property Enrichment Data Interface
+interface PropertyEnrichmentData {
+  propertyTax?: {
+    effectiveTaxRate: number;
+    annualTaxEstimate: number;
+    assessmentRatio: number;
+    taxJurisdiction: string;
+    taxTrend: string;
+  };
+  insurance?: {
+    annualPremiumEstimate: number;
+    perSqftRate: number;
+    coverageRecommendation: string;
+    floodZoneRisk: string;
+  };
+  closingCosts?: {
+    buyerClosingCostPercent: number;
+    sellerClosingCostPercent: number;
+    titleInsurance: number;
+    transferTax: number;
+    totalEstimatedClosingCosts: number;
+  };
+  maintenanceReserves?: {
+    annualMaintenancePerSqft: number;
+    annualMaintenanceTotal: number;
+    capexReservePercent: number;
+    replacementReservePerUnit: number;
+  };
+  operatingExpenseBenchmarks?: {
+    propertyTaxAnnual: number;
+    insuranceAnnual: number;
+    utilitiesAnnual: number;
+    repairsMaintenanceAnnual: number;
+    propertyManagementPercent: number;
+    propertyManagementAnnual: number;
+    landscapingAnnual: number;
+    trashRemovalAnnual: number;
+    professionalFeesAnnual: number;
+    reservesAnnual: number;
+  };
+  areaStatistics?: {
+    medianHomePrice: number;
+    medianRentPerSqft: number;
+    averageCapRate: number;
+    populationGrowth: number;
+    employmentGrowthRate: number;
+    averageDaysOnMarket: number;
+    vacancyRate: number;
+    rentGrowthRate: number;
+  };
+  currentMortgageRates?: {
+    conventional30: number;
+    conventional15: number;
+    commercial: number;
+    bridge: number;
+  };
+  source?: string;
+  meta?: {
+    location: string;
+    propertyType: string;
+    estimatedValue: number;
+    generatedAt: string;
+  };
 }
 
 // Current Interest Rates (simulated real-time)
@@ -239,6 +318,11 @@ export default function ValoraDashboard() {
   const [notes, setNotes] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Property Enrichment State
+  const [enrichmentData, setEnrichmentData] = useState<PropertyEnrichmentData | null>(null);
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichmentLoaded, setEnrichmentLoaded] = useState(false);
+
   // Marketplace State
   const [isPublic, setIsPublic] = useState(false);
   const [askingPrice, setAskingPrice] = useState("");
@@ -247,6 +331,66 @@ export default function ValoraDashboard() {
 
   // Check if property type is NOT single-family (shows underwriting workspace)
   const isIncomeProperty = propertyType && propertyType !== "single-family" && propertyType !== "land";
+
+  // Fetch property enrichment data (tax rates, insurance, area stats)
+  const fetchEnrichmentData = async (enrichCity: string, enrichState: string, enrichZip?: string) => {
+    if (!enrichCity || !enrichState) return;
+    setIsEnriching(true);
+    try {
+      const res = await fetch('/api/ai/property-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          city: enrichCity,
+          state: enrichState,
+          zipCode: enrichZip || zipCode,
+          propertyType: propertyType || "residential",
+          sqft: sqft ? parseInt(sqft) : undefined,
+          yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
+          purchasePrice: purchasePrice ? parseFloat(purchasePrice) : undefined,
+          units: units ? parseInt(units) : undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setEnrichmentData(data);
+          setEnrichmentLoaded(true);
+
+          // Auto-populate P&L expenses from enrichment data
+          if (data.operatingExpenseBenchmarks) {
+            const b = data.operatingExpenseBenchmarks;
+            setExpenses([
+              { id: "1", category: "Property Taxes", annual: b.propertyTaxAnnual || 0, monthly: Math.round((b.propertyTaxAnnual || 0) / 12) },
+              { id: "2", category: "Insurance", annual: b.insuranceAnnual || 0, monthly: Math.round((b.insuranceAnnual || 0) / 12) },
+              { id: "3", category: "Utilities", annual: b.utilitiesAnnual || 0, monthly: Math.round((b.utilitiesAnnual || 0) / 12) },
+              { id: "4", category: "Repairs & Maintenance", annual: b.repairsMaintenanceAnnual || 0, monthly: Math.round((b.repairsMaintenanceAnnual || 0) / 12) },
+              { id: "5", category: "Property Management", annual: b.propertyManagementAnnual || 0, monthly: Math.round((b.propertyManagementAnnual || 0) / 12) },
+              { id: "6", category: "Landscaping", annual: b.landscapingAnnual || 0, monthly: Math.round((b.landscapingAnnual || 0) / 12) },
+              { id: "7", category: "Trash Removal", annual: b.trashRemovalAnnual || 0, monthly: Math.round((b.trashRemovalAnnual || 0) / 12) },
+              { id: "8", category: "Professional Fees", annual: b.professionalFeesAnnual || 0, monthly: Math.round((b.professionalFeesAnnual || 0) / 12) },
+              { id: "9", category: "Reserves", annual: b.reservesAnnual || 0, monthly: Math.round((b.reservesAnnual || 0) / 12) },
+              { id: "10", category: "Other", annual: 0, monthly: 0 },
+            ]);
+          }
+
+          // Update vacancy rate from area stats
+          if (data.areaStatistics?.vacancyRate) {
+            setVacancyRate(data.areaStatistics.vacancyRate.toString());
+          }
+
+          // Update interest rates if available
+          if (data.currentMortgageRates?.commercial) {
+            setInterestRate(data.currentMortgageRates.commercial.toString());
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Property enrichment error:", err);
+    }
+    setIsEnriching(false);
+  };
 
   // Handle Image Upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -379,6 +523,9 @@ export default function ValoraDashboard() {
             googleValidated: (c.googleValidated as boolean) || false,
             lat: c.lat as number | undefined,
             lng: c.lng as number | undefined,
+            daysAgo: c.daysAgo as number | undefined,
+            recencyScore: c.recencyScore as number | undefined,
+            recencyLabel: (c.recencyLabel as string) || undefined,
           }));
         }
         if (compsData.marketSummary) {
@@ -432,6 +579,7 @@ export default function ValoraDashboard() {
                 area: (imp.title as string) || 'General',
                 issue: (imp.description as string)?.split('.')[0] || 'Needs improvement',
                 recommendation: (imp.description as string) || '',
+                specificChanges: Array.isArray(imp.specificChanges) ? (imp.specificChanges as string[]) : undefined,
                 estimatedCost: lowCost,
                 costRange: { low: lowCost, high: highCost },
                 potentialValueAdd: Math.round((lowCost * roiPct) / 100),
@@ -473,6 +621,7 @@ export default function ValoraDashboard() {
                   area: (imp.title as string) || 'General',
                   issue: (imp.description as string)?.split('.')[0] || 'Needs improvement',
                   recommendation: (imp.description as string) || '',
+                  specificChanges: Array.isArray(imp.specificChanges) ? (imp.specificChanges as string[]) : undefined,
                   estimatedCost: lowCost,
                   costRange: { low: lowCost, high: highCost },
                   potentialValueAdd: Math.round((lowCost * roiPct) / 100),
@@ -515,6 +664,7 @@ export default function ValoraDashboard() {
                 area: (rec.recommendation as string)?.split(':')[0]?.trim() || 'General',
                 issue: `${(rec.priority as string) || 'Medium'} priority improvement`,
                 recommendation: (rec.recommendation as string) || '',
+                specificChanges: Array.isArray(rec.specificChanges) ? (rec.specificChanges as string[]) : undefined,
                 estimatedCost: cost,
                 costRange: { low: cost, high: Math.round(cost * 1.4) },
                 potentialValueAdd: valueAdd,
@@ -535,11 +685,11 @@ export default function ValoraDashboard() {
     // Last resort fallback if both AI calls failed
     if (improvementItems.length === 0) {
       improvementItems = [
-        { area: "Kitchen", issue: "Dated appliances and countertops", recommendation: "Update to modern stainless steel appliances and install quartz countertops. A kitchen refresh is one of the highest-ROI improvements because buyers prioritize kitchens above all other rooms when evaluating a home.", estimatedCost: 25000, costRange: { low: 25000, high: 40000 }, potentialValueAdd: 45000, roiPercent: 180, timeframe: "2-3 weeks", costBasis: "Appliance package ($3,000-$7,000), quartz countertops at $50-$100/sqft for ~40 sqft, installation labor at $40-$60/hr, plus cabinet hardware and backsplash updates.", valueRationale: "NAR Remodeling Impact Report shows minor kitchen remodels recover 75-80% of cost at resale. In competitive markets, updated kitchens command 3-7% higher sale prices. Cost-to-value ratio of 180% factors in buyer willingness to pay premium for move-in ready kitchens.", priority: "high" },
-        { area: "Bathrooms", issue: "Original fixtures and tile", recommendation: "Remodel master bath and update fixtures in secondary baths. Modern bathrooms are the second most important feature for buyers, and dated bathrooms are a top reason properties sit on market longer.", estimatedCost: 18000, costRange: { low: 18000, high: 28000 }, potentialValueAdd: 30000, roiPercent: 167, timeframe: "2-4 weeks", costBasis: "Master bath full remodel ($12,000-$20,000) including new vanity, tile, fixtures, and shower/tub. Secondary bath fixture updates at $2,000-$4,000 each. Labor accounts for approximately 40% of total cost.", valueRationale: "Bathroom remodels recover 60-70% of cost per NARI data, but the indirect value is higher as updated baths reduce buyer objections and decrease days on market by an average of 12 days, leading to stronger offers.", priority: "high" },
-        { area: "Exterior", issue: "Landscaping needs attention", recommendation: "Professional landscaping and curb appeal improvements including foundation plantings, fresh mulch, and seasonal color. Curb appeal creates the critical first impression that determines a buyer's emotional response to the property.", estimatedCost: 8000, costRange: { low: 8000, high: 15000 }, potentialValueAdd: 15000, roiPercent: 188, timeframe: "1-2 weeks", costBasis: "Professional landscape design ($500-$1,500), foundation plantings and trees ($2,000-$5,000), hardscape edging and mulch ($1,000-$3,000), outdoor lighting ($500-$1,500), and seasonal flowers/planters ($500-$1,000).", valueRationale: "Michigan State University research shows quality landscaping adds 5-11% to perceived home value. Curb appeal improvements have one of the highest ROIs in real estate at 100-200% because they affect every buyer who views the property.", priority: "medium" },
-        { area: "HVAC", issue: "System approaching end of life", recommendation: "Replace with a high-efficiency HVAC system. While not a cosmetic improvement, HVAC replacement removes a major buyer concern and can be highlighted as a key selling feature that reduces future maintenance risk.", estimatedCost: 12000, costRange: { low: 12000, high: 18000 }, potentialValueAdd: 18000, roiPercent: 150, timeframe: "2-3 days", costBasis: "High-efficiency furnace and AC unit ($6,000-$10,000), ductwork inspection and sealing ($500-$1,500), smart thermostat ($200-$500), installation labor ($2,000-$4,000), and disposal of old equipment.", valueRationale: "Energy Star estimates high-efficiency systems save $200-$400/year in energy costs. Appraisers typically add $10,000-$15,000 for a new HVAC system. Buyers discount properties with aging systems by $15,000-$25,000 to account for replacement risk.", priority: "medium" },
-        { area: "Flooring", issue: "Carpet in living areas worn", recommendation: "Install hardwood or luxury vinyl plank flooring throughout living areas. Hard surface flooring is the most requested feature by today's buyers, and worn carpet is one of the top turn-offs during showings.", estimatedCost: 10000, costRange: { low: 10000, high: 18000 }, potentialValueAdd: 20000, roiPercent: 200, timeframe: "3-5 days", costBasis: "Luxury vinyl plank at $3-$7/sqft material for approximately 1,000 sqft of living space, plus $2-$4/sqft for professional installation, including subfloor prep, transitions, and baseboards.", valueRationale: "NAR data shows hardwood/LVP floors recover 100-150% of cost. Real estate agents report that homes with hard surface flooring sell 10-15% faster. The 200% ROI accounts for both the direct value add and the elimination of a common buyer objection.", priority: "low" },
+        { area: "Kitchen", issue: "Dated appliances and countertops", recommendation: "Update to modern stainless steel appliances and install quartz countertops. A kitchen refresh is one of the highest-ROI improvements because buyers prioritize kitchens above all other rooms when evaluating a home.", specificChanges: ["Replace countertops with white quartz (Calacatta or marble-look pattern)", "Install matching stainless steel appliance package (refrigerator, range, dishwasher, microwave)", "Replace cabinet hardware with brushed nickel or matte black pulls and knobs", "Add subway tile backsplash in white or light gray with contrasting grout", "Install under-cabinet LED strip lighting for task illumination", "Replace kitchen faucet with pull-down sprayer model in matching finish", "Update light fixtures to modern pendant or recessed LED lighting"], estimatedCost: 25000, costRange: { low: 25000, high: 40000 }, potentialValueAdd: 45000, roiPercent: 180, timeframe: "2-3 weeks", costBasis: "Appliance package ($3,000-$7,000), quartz countertops at $50-$100/sqft for ~40 sqft, installation labor at $40-$60/hr, plus cabinet hardware and backsplash updates.", valueRationale: "NAR Remodeling Impact Report shows minor kitchen remodels recover 75-80% of cost at resale. In competitive markets, updated kitchens command 3-7% higher sale prices. Cost-to-value ratio of 180% factors in buyer willingness to pay premium for move-in ready kitchens.", priority: "high" },
+        { area: "Bathrooms", issue: "Original fixtures and tile", recommendation: "Remodel master bath and update fixtures in secondary baths. Modern bathrooms are the second most important feature for buyers, and dated bathrooms are a top reason properties sit on market longer.", specificChanges: ["Install new floating vanity with quartz countertop and undermount sink", "Replace faucets and showerheads with rain-style heads in brushed nickel or matte black", "Re-tile shower surround with large-format porcelain tile (12x24 or larger)", "Install frameless glass shower door to replace shower curtain or framed door", "Add modern LED-backlit mirror above vanity", "Replace toilet with comfort-height elongated bowl model", "Install new ceramic or porcelain floor tile in neutral gray or wood-look pattern"], estimatedCost: 18000, costRange: { low: 18000, high: 28000 }, potentialValueAdd: 30000, roiPercent: 167, timeframe: "2-4 weeks", costBasis: "Master bath full remodel ($12,000-$20,000) including new vanity, tile, fixtures, and shower/tub. Secondary bath fixture updates at $2,000-$4,000 each. Labor accounts for approximately 40% of total cost.", valueRationale: "Bathroom remodels recover 60-70% of cost per NARI data, but the indirect value is higher as updated baths reduce buyer objections and decrease days on market by an average of 12 days, leading to stronger offers.", priority: "high" },
+        { area: "Exterior", issue: "Landscaping needs attention", recommendation: "Professional landscaping and curb appeal improvements including foundation plantings, fresh mulch, and seasonal color. Curb appeal creates the critical first impression that determines a buyer's emotional response to the property.", specificChanges: ["Plant foundation shrubs (boxwood, hydrangea, or holly) along front of house", "Add 3-4 inches of fresh hardwood mulch to all planting beds", "Install low-voltage LED path lights along walkway (6-10 fixtures)", "Mount modern coach-style sconces flanking the front door", "Plant seasonal color flowers in beds and window boxes", "Power wash driveway, walkways, and siding", "Paint or replace front door in a bold accent color (navy, red, or black)"], estimatedCost: 8000, costRange: { low: 8000, high: 15000 }, potentialValueAdd: 15000, roiPercent: 188, timeframe: "1-2 weeks", costBasis: "Professional landscape design ($500-$1,500), foundation plantings and trees ($2,000-$5,000), hardscape edging and mulch ($1,000-$3,000), outdoor lighting ($500-$1,500), and seasonal flowers/planters ($500-$1,000).", valueRationale: "Michigan State University research shows quality landscaping adds 5-11% to perceived home value. Curb appeal improvements have one of the highest ROIs in real estate at 100-200% because they affect every buyer who views the property.", priority: "medium" },
+        { area: "HVAC", issue: "System approaching end of life", recommendation: "Replace with a high-efficiency HVAC system. While not a cosmetic improvement, HVAC replacement removes a major buyer concern and can be highlighted as a key selling feature that reduces future maintenance risk.", specificChanges: ["Install high-efficiency (16+ SEER) central air conditioning unit", "Replace furnace with 95%+ AFUE rated high-efficiency model", "Seal and insulate all accessible ductwork to reduce energy loss", "Install programmable smart thermostat (Nest, Ecobee, or similar)", "Add return air vents to rooms that lack them for better airflow", "Replace air filter with HEPA-rated filtration system"], estimatedCost: 12000, costRange: { low: 12000, high: 18000 }, potentialValueAdd: 18000, roiPercent: 150, timeframe: "2-3 days", costBasis: "High-efficiency furnace and AC unit ($6,000-$10,000), ductwork inspection and sealing ($500-$1,500), smart thermostat ($200-$500), installation labor ($2,000-$4,000), and disposal of old equipment.", valueRationale: "Energy Star estimates high-efficiency systems save $200-$400/year in energy costs. Appraisers typically add $10,000-$15,000 for a new HVAC system. Buyers discount properties with aging systems by $15,000-$25,000 to account for replacement risk.", priority: "medium" },
+        { area: "Flooring", issue: "Carpet in living areas worn", recommendation: "Install hardwood or luxury vinyl plank flooring throughout living areas. Hard surface flooring is the most requested feature by today's buyers, and worn carpet is one of the top turn-offs during showings.", specificChanges: ["Remove existing carpet and padding from all living areas", "Repair and level subfloor where needed with self-leveling compound", "Install luxury vinyl plank flooring in oak or hickory finish (waterproof, 6mm+ thickness)", "Add matching quarter-round or shoe molding at all baseboards", "Install T-molding transitions at doorways between rooms", "Replace any damaged baseboards with matching painted trim"], estimatedCost: 10000, costRange: { low: 10000, high: 18000 }, potentialValueAdd: 20000, roiPercent: 200, timeframe: "3-5 days", costBasis: "Luxury vinyl plank at $3-$7/sqft material for approximately 1,000 sqft of living space, plus $2-$4/sqft for professional installation, including subfloor prep, transitions, and baseboards.", valueRationale: "NAR data shows hardwood/LVP floors recover 100-150% of cost. Real estate agents report that homes with hard surface flooring sell 10-15% faster. The 200% ROI accounts for both the direct value add and the elimination of a common buyer objection.", priority: "low" },
       ];
     }
 
@@ -589,6 +739,17 @@ export default function ValoraDashboard() {
     const monthly = loan * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1);
     const annualDebt = monthly * 12;
 
+    // Closing costs from enrichment data or estimate
+    const closingCostPct = enrichmentData?.closingCosts?.buyerClosingCostPercent || 3.5;
+    const closingCosts = Math.round(price * (closingCostPct / 100));
+    const totalCashRequired = downPmt + closingCosts;
+
+    // Property-specific costs from enrichment
+    const annualPropertyTax = enrichmentData?.propertyTax?.annualTaxEstimate || enrichmentData?.operatingExpenseBenchmarks?.propertyTaxAnnual || 0;
+    const annualInsurance = enrichmentData?.insurance?.annualPremiumEstimate || enrichmentData?.operatingExpenseBenchmarks?.insuranceAnnual || 0;
+    const annualMaintenance = enrichmentData?.maintenanceReserves?.annualMaintenanceTotal || enrichmentData?.operatingExpenseBenchmarks?.repairsMaintenanceAnnual || 0;
+    const annualReserves = enrichmentData?.operatingExpenseBenchmarks?.reservesAnnual || 0;
+
     // Use rent roll data if available, otherwise use manual input
     const gross = rentRoll.length > 0 ? rentRollTotals.totalMonthlyRent * 12 : (parseFloat(grossRent) * 12 || 0);
     const vacancy = parseFloat(vacancyRate) / 100;
@@ -598,6 +759,9 @@ export default function ValoraDashboard() {
     const opex = rentRoll.length > 0 ? totalExpenses : egi * (parseFloat(operatingExpenseRatio) / 100);
     const noi = egi - opex;
     const cf = noi - annualDebt;
+
+    // Break-even occupancy: what occupancy % is needed to cover all expenses + debt
+    const breakEvenOcc = gross > 0 ? ((opex + annualDebt) / gross) * 100 : 0;
 
     setUnderwriting({
       purchasePrice: price,
@@ -617,6 +781,15 @@ export default function ValoraDashboard() {
       cashOnCash: downPmt > 0 ? (cf / downPmt) * 100 : 0,
       dscr: annualDebt > 0 ? noi / annualDebt : 0,
       grm: gross > 0 ? price / gross : 0,
+      closingCosts: closingCosts,
+      totalCashRequired: totalCashRequired,
+      annualPropertyTax: annualPropertyTax,
+      annualInsurance: annualInsurance,
+      annualMaintenance: annualMaintenance,
+      annualReserves: annualReserves,
+      breakEvenOccupancy: Math.min(breakEvenOcc, 100),
+      pricePerUnit: parseInt(units) > 1 ? Math.round(price / parseInt(units)) : undefined,
+      pricePerSqft: parseInt(sqft) > 0 ? Math.round(price / parseInt(sqft)) : undefined,
     });
   };
 
@@ -624,7 +797,7 @@ export default function ValoraDashboard() {
     if (purchasePrice || grossRent || rentRoll.length > 0) {
       calculateUnderwriting();
     }
-  }, [purchasePrice, downPaymentPercent, interestRate, loanTerm, grossRent, vacancyRate, operatingExpenseRatio, rentRoll, expenses]);
+  }, [purchasePrice, downPaymentPercent, interestRate, loanTerm, grossRent, vacancyRate, operatingExpenseRatio, rentRoll, expenses, enrichmentData, sqft, units]);
 
   // Save Workspace
   const saveWorkspace = () => {
@@ -731,6 +904,7 @@ export default function ValoraDashboard() {
     setRentRoll([]); setExpenses(DEFAULT_EXPENSES); setIsPublic(false); setAskingPrice("");
     setDownPaymentPercent("25"); setInterestRate(CURRENT_RATES.commercial.toString()); setLoanTerm("30");
     setVacancyRate("5"); setOperatingExpenseRatio("35");
+    setEnrichmentData(null); setEnrichmentLoaded(false); setCoordinates(null);
   };
 
   // Export Report
@@ -831,8 +1005,24 @@ export default function ValoraDashboard() {
                     if (place.components.stateShort) setState(place.components.stateShort);
                     if (place.components.zip) setZipCode(place.components.zip);
                     if (place.lat && place.lng) setCoordinates({ lat: place.lat, lng: place.lng });
+                    // Auto-enrich property data when address is selected
+                    if (place.components.city && place.components.stateShort) {
+                      fetchEnrichmentData(place.components.city, place.components.stateShort, place.components.zip);
+                    }
                   }}
                 />
+                {isEnriching && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.375rem", fontSize: "0.75rem", color: "#3B82F6" }}>
+                    <span className="val-spinner" style={{ width: 12, height: 12, borderWidth: 2 }}></span>
+                    Loading area tax rates, insurance & market data...
+                  </div>
+                )}
+                {enrichmentLoaded && !isEnriching && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.375rem", fontSize: "0.75rem", color: "#16A34A" }}>
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    Area data loaded &mdash; tax rates, insurance, and expenses auto-populated
+                  </div>
+                )}
                 <div className="val-input-row" style={{ marginTop: "0.5rem" }}>
                   <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="val-input" />
                   <input type="text" placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="val-input small" />
@@ -929,14 +1119,58 @@ export default function ValoraDashboard() {
             <div className="val-rates-card">
               <h4>Current Interest Rates</h4>
               <div className="val-rates-list">
-                <div className="val-rate-item"><span>30-Year Fixed</span><span className="rate">{CURRENT_RATES.conventional30}%</span></div>
-                <div className="val-rate-item"><span>15-Year Fixed</span><span className="rate">{CURRENT_RATES.conventional15}%</span></div>
-                <div className="val-rate-item"><span>Commercial</span><span className="rate">{CURRENT_RATES.commercial}%</span></div>
-                <div className="val-rate-item"><span>Bridge Loan</span><span className="rate">{CURRENT_RATES.bridge}%</span></div>
+                <div className="val-rate-item"><span>30-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional30 || CURRENT_RATES.conventional30}%</span></div>
+                <div className="val-rate-item"><span>15-Year Fixed</span><span className="rate">{enrichmentData?.currentMortgageRates?.conventional15 || CURRENT_RATES.conventional15}%</span></div>
+                <div className="val-rate-item"><span>Commercial</span><span className="rate">{enrichmentData?.currentMortgageRates?.commercial || CURRENT_RATES.commercial}%</span></div>
+                <div className="val-rate-item"><span>Bridge Loan</span><span className="rate">{enrichmentData?.currentMortgageRates?.bridge || CURRENT_RATES.bridge}%</span></div>
                 <div className="val-rate-item"><span>SBA 504</span><span className="rate">{CURRENT_RATES.sba504}%</span></div>
               </div>
               <span className="val-rates-updated">Updated: {CURRENT_RATES.lastUpdated}</span>
             </div>
+
+            {/* Area Statistics - shown when enrichment data is loaded */}
+            {enrichmentData?.areaStatistics && (
+              <div className="val-rates-card">
+                <h4>Area Market Data</h4>
+                <div className="val-rates-list">
+                  <div className="val-rate-item"><span>Median Price</span><span className="rate">{formatCurrency(enrichmentData.areaStatistics.medianHomePrice)}</span></div>
+                  <div className="val-rate-item"><span>Avg Cap Rate</span><span className="rate">{enrichmentData.areaStatistics.averageCapRate}%</span></div>
+                  <div className="val-rate-item"><span>Vacancy Rate</span><span className="rate">{enrichmentData.areaStatistics.vacancyRate}%</span></div>
+                  <div className="val-rate-item"><span>Rent Growth</span><span className="rate">{enrichmentData.areaStatistics.rentGrowthRate}%/yr</span></div>
+                  <div className="val-rate-item"><span>Avg Days on Market</span><span className="rate">{enrichmentData.areaStatistics.averageDaysOnMarket}</span></div>
+                  <div className="val-rate-item"><span>Rent/SF/Mo</span><span className="rate">${enrichmentData.areaStatistics.medianRentPerSqft?.toFixed(2)}</span></div>
+                  <div className="val-rate-item"><span>Pop. Growth</span><span className="rate">{enrichmentData.areaStatistics.populationGrowth}%</span></div>
+                  <div className="val-rate-item"><span>Job Growth</span><span className="rate">{enrichmentData.areaStatistics.employmentGrowthRate}%</span></div>
+                </div>
+                {enrichmentData.meta && (
+                  <span className="val-rates-updated">Source: {enrichmentData.source === "openai" ? "AI analysis" : "Estimates"} for {enrichmentData.meta.location}</span>
+                )}
+              </div>
+            )}
+
+            {/* Property Tax & Insurance Summary */}
+            {enrichmentData?.propertyTax && (
+              <div className="val-rates-card">
+                <h4>Ownership Costs</h4>
+                <div className="val-rates-list">
+                  <div className="val-rate-item"><span>Tax Rate ({enrichmentData.propertyTax.taxJurisdiction})</span><span className="rate">{enrichmentData.propertyTax.effectiveTaxRate}%</span></div>
+                  <div className="val-rate-item"><span>Annual Property Tax</span><span className="rate">{formatCurrency(enrichmentData.propertyTax.annualTaxEstimate)}</span></div>
+                  <div className="val-rate-item"><span>Tax Trend</span><span className="rate" style={{ textTransform: "capitalize" }}>{enrichmentData.propertyTax.taxTrend}</span></div>
+                  {enrichmentData.insurance && (
+                    <>
+                      <div className="val-rate-item"><span>Annual Insurance</span><span className="rate">{formatCurrency(enrichmentData.insurance.annualPremiumEstimate)}</span></div>
+                      <div className="val-rate-item"><span>Flood Risk</span><span className="rate" style={{ textTransform: "capitalize" }}>{enrichmentData.insurance.floodZoneRisk}</span></div>
+                    </>
+                  )}
+                  {enrichmentData.closingCosts && (
+                    <div className="val-rate-item"><span>Est. Closing Costs</span><span className="rate">{enrichmentData.closingCosts.buyerClosingCostPercent}%</span></div>
+                  )}
+                  {enrichmentData.maintenanceReserves && (
+                    <div className="val-rate-item"><span>Maint./SF/Yr</span><span className="rate">${enrichmentData.maintenanceReserves.annualMaintenancePerSqft?.toFixed(2)}</span></div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Quick Links */}
             <div className="val-quick-links-card">
@@ -1043,11 +1277,24 @@ export default function ValoraDashboard() {
                             <div className={`val-uw-metric ${underwriting.cashOnCash >= 8 ? "positive" : underwriting.cashOnCash >= 5 ? "neutral" : "negative"}`}><span className="metric-label">Cash-on-Cash</span><span className="metric-value">{underwriting.cashOnCash.toFixed(2)}%</span></div>
                             <div className={`val-uw-metric ${underwriting.capRate >= 6 ? "positive" : underwriting.capRate >= 4 ? "neutral" : "negative"}`}><span className="metric-label">Cap Rate</span><span className="metric-value">{underwriting.capRate.toFixed(2)}%</span></div>
                             <div className={`val-uw-metric ${underwriting.dscr >= 1.25 ? "positive" : underwriting.dscr >= 1 ? "neutral" : "negative"}`}><span className="metric-label">DSCR</span><span className="metric-value">{underwriting.dscr.toFixed(2)}x</span></div>
+                            {underwriting.breakEvenOccupancy !== undefined && underwriting.breakEvenOccupancy > 0 && (
+                              <div className={`val-uw-metric ${underwriting.breakEvenOccupancy <= 80 ? "positive" : underwriting.breakEvenOccupancy <= 90 ? "neutral" : "negative"}`}><span className="metric-label">Break-Even Occ.</span><span className="metric-value">{underwriting.breakEvenOccupancy.toFixed(1)}%</span></div>
+                            )}
+                            <div className="val-uw-metric"><span className="metric-label">GRM</span><span className="metric-value">{underwriting.grm.toFixed(2)}x</span></div>
                           </div>
                           <div className="val-uw-breakdown">
                             <div className="breakdown-section">
-                              <h5>Financing</h5>
-                              <div className="breakdown-row"><span>Down Payment</span><span>{formatCurrency(underwriting.downPayment)}</span></div>
+                              <h5>Acquisition & Financing</h5>
+                              <div className="breakdown-row"><span>Purchase Price</span><span>{formatCurrency(underwriting.purchasePrice)}</span></div>
+                              {underwriting.pricePerUnit && <div className="breakdown-row"><span>Price Per Unit</span><span>{formatCurrency(underwriting.pricePerUnit)}</span></div>}
+                              {underwriting.pricePerSqft && <div className="breakdown-row"><span>Price Per Sq Ft</span><span>${underwriting.pricePerSqft}</span></div>}
+                              <div className="breakdown-row"><span>Down Payment ({downPaymentPercent}%)</span><span>{formatCurrency(underwriting.downPayment)}</span></div>
+                              {underwriting.closingCosts !== undefined && underwriting.closingCosts > 0 && (
+                                <div className="breakdown-row"><span>Est. Closing Costs ({enrichmentData?.closingCosts?.buyerClosingCostPercent || 3.5}%)</span><span>{formatCurrency(underwriting.closingCosts)}</span></div>
+                              )}
+                              {underwriting.totalCashRequired !== undefined && underwriting.totalCashRequired > 0 && (
+                                <div className="breakdown-row highlight"><span>Total Cash Required</span><span>{formatCurrency(underwriting.totalCashRequired)}</span></div>
+                              )}
                               <div className="breakdown-row"><span>Loan Amount</span><span>{formatCurrency(underwriting.loanAmount)}</span></div>
                               <div className="breakdown-row"><span>Monthly Payment</span><span>{formatCurrency(underwriting.monthlyPayment)}</span></div>
                               <div className="breakdown-row"><span>Annual Debt Service</span><span>{formatCurrency(underwriting.annualDebtService)}</span></div>
@@ -1060,6 +1307,22 @@ export default function ValoraDashboard() {
                               <div className="breakdown-row"><span>Operating Expenses</span><span>-{formatCurrency(underwriting.operatingExpenses)}</span></div>
                               <div className="breakdown-row highlight"><span>Net Operating Income (NOI)</span><span>{formatCurrency(underwriting.noi)}</span></div>
                             </div>
+                            {/* Ownership Cost Breakdown - from enrichment data */}
+                            {enrichmentData?.propertyTax && (
+                              <div className="breakdown-section">
+                                <h5>Annual Ownership Costs</h5>
+                                <div className="breakdown-row"><span>Property Tax ({enrichmentData.propertyTax.effectiveTaxRate}%)</span><span>{formatCurrency(underwriting.annualPropertyTax || 0)}</span></div>
+                                <div className="breakdown-row"><span>Insurance</span><span>{formatCurrency(underwriting.annualInsurance || 0)}</span></div>
+                                <div className="breakdown-row"><span>Maintenance & Repairs</span><span>{formatCurrency(underwriting.annualMaintenance || 0)}</span></div>
+                                <div className="breakdown-row"><span>Reserves</span><span>{formatCurrency(underwriting.annualReserves || 0)}</span></div>
+                                <div className="breakdown-row"><span>Debt Service</span><span>{formatCurrency(underwriting.annualDebtService)}</span></div>
+                                <div className="breakdown-row highlight"><span>Total Annual Cost</span><span>{formatCurrency((underwriting.annualPropertyTax || 0) + (underwriting.annualInsurance || 0) + (underwriting.annualMaintenance || 0) + (underwriting.annualReserves || 0) + underwriting.annualDebtService)}</span></div>
+                                <div className="breakdown-row" style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                                  <span>Monthly Carry Cost</span>
+                                  <span>{formatCurrency(Math.round(((underwriting.annualPropertyTax || 0) + (underwriting.annualInsurance || 0) + (underwriting.annualMaintenance || 0) + (underwriting.annualReserves || 0) + underwriting.annualDebtService) / 12))}</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Scenario Analysis */}
@@ -1206,6 +1469,12 @@ export default function ValoraDashboard() {
                   {activeTab === "pnl" && isIncomeProperty && (
                     <div className="val-pnl-content">
                       <h4>Pro Forma P&L Statement</h4>
+                      {enrichmentLoaded && (
+                        <div style={{ padding: "0.625rem 0.875rem", background: "rgba(59,130,246,0.06)", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.78rem", color: "#3B82F6", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                          <span>Expenses auto-populated from {enrichmentData?.source === "openai" ? "AI analysis" : "area estimates"} for {enrichmentData?.meta?.location || `${city}, ${state}`}. Adjust values as needed for your specific property.</span>
+                        </div>
+                      )}
                       <div className="val-pnl-section income">
                         <h5>Income</h5>
                         <div className="pnl-row"><span>Gross Potential Rent</span><span>{formatCurrency(grossPotentialRent)}</span></div>
@@ -1233,8 +1502,20 @@ export default function ValoraDashboard() {
                           <div><span>Expense Ratio</span><span>{effectiveGrossIncome > 0 ? ((totalExpenses / effectiveGrossIncome) * 100).toFixed(1) : 0}%</span></div>
                           <div><span>Per Unit/Year</span><span>{rentRoll.length > 0 ? formatCurrency(totalExpenses / rentRoll.length) : "-"}</span></div>
                           <div><span>Per Sq Ft/Year</span><span>{rentRollTotals.totalSqft > 0 ? `$${(totalExpenses / rentRollTotals.totalSqft).toFixed(2)}` : "-"}</span></div>
+                          {purchasePrice && parseFloat(purchasePrice) > 0 && noiFromPnL > 0 && (
+                            <div><span>Implied Cap Rate</span><span>{((noiFromPnL / parseFloat(purchasePrice)) * 100).toFixed(2)}%</span></div>
+                          )}
                         </div>
                       </div>
+                      {/* Debt Service & Cash Flow from P&L */}
+                      {underwriting && (
+                        <div className="val-pnl-section" style={{ marginTop: "0.5rem" }}>
+                          <h5>Below the Line</h5>
+                          <div className="pnl-row"><span>Annual Debt Service</span><span>-{formatCurrency(underwriting.annualDebtService)}</span></div>
+                          <div className="pnl-row highlight"><span>Cash Flow Before Tax</span><span style={{ color: noiFromPnL - underwriting.annualDebtService >= 0 ? "#16A34A" : "#EF4444" }}>{formatCurrency(noiFromPnL - underwriting.annualDebtService)}</span></div>
+                          <div className="pnl-row"><span>Monthly Cash Flow</span><span style={{ color: noiFromPnL - underwriting.annualDebtService >= 0 ? "#16A34A" : "#EF4444" }}>{formatCurrency(Math.round((noiFromPnL - underwriting.annualDebtService) / 12))}</span></div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1304,11 +1585,13 @@ export default function ValoraDashboard() {
                     <div className="val-comps-content">
                       <div className="val-comps-header">
                         <h4>Comparable Sales</h4>
-                        <span>{comps.length} properties {comps.some(c => c.googleValidated) ? "- distances verified via Google Maps" : "nearby"}</span>
+                        <span>{comps.length} properties {comps.some(c => c.googleValidated) ? "- distances verified via Google Maps" : "nearby"} &bull; 6-month lookback</span>
                       </div>
                       <div className="val-comps-table">
                         <div className="val-comps-row header"><span>Address</span><span>Distance</span><span>Sale Price</span><span>Date</span><span>Sq Ft</span><span>$/SF</span></div>
-                        {comps.map(comp => (
+                        {comps.map(comp => {
+                          const recColor = (comp.recencyScore ?? 80) >= 80 ? "#16A34A" : (comp.recencyScore ?? 80) >= 55 ? "#F59E0B" : "#EF4444";
+                          return (
                           <div key={comp.id} className="val-comps-row" style={{ flexDirection: "column", gap: "0.25rem" }}>
                             <div style={{ display: "grid", gridTemplateColumns: "2fr 0.8fr 1fr 0.8fr 0.8fr 0.6fr", gap: "0.5rem", alignItems: "center", width: "100%" }}>
                               <span className="address" style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
@@ -1319,17 +1602,31 @@ export default function ValoraDashboard() {
                               </span>
                               <span>{comp.distance}</span>
                               <span className="price">{formatCurrency(comp.salePrice)}</span>
-                              <span>{comp.saleDate}</span>
+                              <span style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                                <span>{comp.saleDate}</span>
+                                {comp.daysAgo !== undefined && (
+                                  <span style={{ fontSize: "0.65rem", color: recColor, fontWeight: 600 }}>
+                                    {comp.daysAgo}d ago &bull; {comp.recencyLabel}
+                                  </span>
+                                )}
+                              </span>
                               <span>{comp.sqft.toLocaleString()}</span>
                               <span>${comp.pricePerSqft}</span>
                             </div>
                             {comp.adjustments && (
-                              <div style={{ fontSize: "0.72rem", color: "#64748b", paddingLeft: "0.25rem", fontStyle: "italic" }}>
-                                Adjustments: {comp.adjustments}
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.72rem", color: "#64748b", paddingLeft: "0.25rem" }}>
+                                <span style={{ fontStyle: "italic" }}>Adjustments: {comp.adjustments}</span>
+                                {comp.recencyScore !== undefined && (
+                                  <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "1px 6px", borderRadius: "4px", background: recColor + "12", color: recColor, fontSize: "0.6rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: recColor, display: "inline-block" }}></span>
+                                    Recency {comp.recencyScore}/100
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <div className="val-comps-summary">
                         <div className="summary-item"><span>Average Sale Price</span><span>{formatCurrency(comps.reduce((a, b) => a + b.salePrice, 0) / comps.length)}</span></div>
@@ -1383,6 +1680,23 @@ export default function ValoraDashboard() {
                             <div className="improvement-header"><span className="area">{item.area}</span><span className={`priority ${item.priority}`}>{item.priority}</span></div>
                             <p className="issue">{item.issue}</p>
                             <p className="recommendation" style={{ lineHeight: 1.6, marginBottom: "0.75rem" }}>{item.recommendation}</p>
+                            {/* Specific Changes to Make */}
+                            {item.specificChanges && item.specificChanges.length > 0 && (
+                              <div style={{ margin: "0.625rem 0 0.75rem", padding: "0.75rem 0.875rem", background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.12)", borderRadius: "8px" }}>
+                                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#1B2A4A", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                                  <svg viewBox="0 0 20 20" fill="#3B82F6" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                  Specific Changes to Increase Value
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: "1.25rem", fontSize: "0.78rem", color: "#334155", lineHeight: 1.7, listStyleType: "none" }}>
+                                  {item.specificChanges.map((change, ci) => (
+                                    <li key={ci} style={{ position: "relative", paddingLeft: "0.25rem", marginBottom: "0.25rem" }}>
+                                      <span style={{ position: "absolute", left: "-1.1rem", color: "#3B82F6", fontWeight: 700 }}>{ci + 1}.</span>
+                                      {change}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                             <div className="improvement-numbers">
                               <div>
                                 <span>Est. Cost</span>

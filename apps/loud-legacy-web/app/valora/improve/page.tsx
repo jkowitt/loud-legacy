@@ -25,6 +25,7 @@ interface PhotoAnalysis {
 interface Improvement {
   title: string;
   description: string;
+  specificChanges?: string[];
   estimatedCost: { low: number; high: number };
   potentialROI: number;
   costBasis?: string;
@@ -75,6 +76,7 @@ export default function ImproveBuildingValuePage() {
         improvements: (data.improvements ?? []).map((imp: Record<string, unknown>) => ({
           title: imp.title ?? 'Improvement',
           description: imp.description ?? '',
+          specificChanges: Array.isArray(imp.specificChanges) ? (imp.specificChanges as string[]) : undefined,
           estimatedCost: imp.estimatedCost ?? { low: 0, high: 0 },
           potentialROI: imp.potentialROI ?? 100,
           costBasis: (imp.costBasis as string) || undefined,
@@ -327,6 +329,23 @@ export default function ImproveBuildingValuePage() {
                             <span className={`priority-badge ${improvement.priority}`}>{improvement.priority}</span>
                           </div>
                           <p style={{ lineHeight: 1.6 }}>{improvement.description}</p>
+                          {/* Specific Changes to Make */}
+                          {improvement.specificChanges && improvement.specificChanges.length > 0 && (
+                            <div style={{ margin: "0.625rem 0", padding: "0.625rem 0.75rem", background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.12)", borderRadius: "8px" }}>
+                              <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#1B2A4A", marginBottom: "0.375rem", display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                                <svg viewBox="0 0 20 20" fill="#3B82F6" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                Specific Changes to Increase Value
+                              </div>
+                              <ul style={{ margin: 0, paddingLeft: "1.25rem", fontSize: "0.78rem", color: "#334155", lineHeight: 1.7, listStyleType: "none" }}>
+                                {improvement.specificChanges.map((change, ci) => (
+                                  <li key={ci} style={{ position: "relative", paddingLeft: "0.25rem", marginBottom: "0.2rem" }}>
+                                    <span style={{ position: "absolute", left: "-1.1rem", color: "#3B82F6", fontWeight: 700 }}>{ci + 1}.</span>
+                                    {change}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                           <div className="recommendation-metrics">
                             <div className="metric">
                               <span className="label">Est. Cost</span>

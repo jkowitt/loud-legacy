@@ -99,8 +99,9 @@ Provide 5-7 actionable recommendations to increase property value. For each reco
 4. Timeline
 5. costBasis: Explain how the cost estimate was calculated (e.g., material costs, labor rates, scope of work)
 6. valueRationale: Explain how the value increase was determined (e.g., industry data, comparable sales impact, buyer demand factors)
+7. specificChanges: An array of 3-7 specific, actionable changes to make. Each should be a concrete task a contractor or homeowner could execute with specific materials and actions. For example: ["Replace countertops with white quartz", "Install new brushed nickel cabinet hardware", "Add subway tile backsplash in herringbone pattern", "Replace kitchen faucet with pull-down sprayer in matte black"]
 
-Format as JSON array with keys: priority, recommendation, estimatedCost, valueIncrease, timeline, costBasis, valueRationale`,
+Format as JSON array with keys: priority, recommendation, estimatedCost, valueIncrease, timeline, costBasis, valueRationale, specificChanges`,
         },
       ],
       max_tokens: 1500,
@@ -194,6 +195,7 @@ export async function analyzeImprovementsFromImage(imageUrl: string, area: strin
 For each improvement provide:
 - title: Short name of the improvement
 - description: Detailed written explanation of what should be done and WHY this improvement increases property value. Reference what you see in the image. Explain the value proposition clearly.
+- specificChanges: An array of 3-7 specific, actionable changes to make. Each should be a concrete task a contractor or homeowner could execute. Be very specific about materials, finishes, and actions. For example: ["Replace countertops with white quartz (Calacatta pattern)", "Install brushed nickel cabinet pulls on all doors and drawers", "Add LED under-cabinet strip lighting", "Replace single-basin sink with undermount double-basin stainless"]
 - estimatedCost: Object with "low" and "high" dollar amounts
 - costBasis: Explain HOW the cost estimate was calculated (e.g., "Based on average exterior painting costs of $2-4 per square foot for a typical 1,500 sqft facade, plus prep work and materials")
 - potentialROI: Percentage ROI (e.g., 150 means 150% return)
@@ -208,7 +210,7 @@ Return ONLY valid JSON with this structure:
   "overallScore": number,
   "condition": "excellent" | "good" | "fair" | "poor",
   "issues": ["string"],
-  "improvements": [{ "title": "", "description": "", "estimatedCost": { "low": 0, "high": 0 }, "costBasis": "", "potentialROI": 0, "valueRationale": "", "priority": "", "timeframe": "" }],
+  "improvements": [{ "title": "", "description": "", "specificChanges": [""], "estimatedCost": { "low": 0, "high": 0 }, "costBasis": "", "potentialROI": 0, "valueRationale": "", "priority": "", "timeframe": "" }],
   "estimatedValueImpact": number
 }`,
             },
@@ -255,7 +257,9 @@ export async function analyzeComparables(propertyData: {
       messages: [
         {
           role: "system",
-          content: `You are a real estate comparable sales analyst. Given a subject property, generate realistic comparable sales that would be used in a professional appraisal. Comps should be nearby properties with similar characteristics that sold recently. Use realistic addresses, prices, and metrics for the given market area. Base your analysis on typical market data for the location and property type.`,
+          content: `You are a real estate comparable sales analyst. Given a subject property, generate realistic comparable sales that would be used in a professional appraisal. Comps should be nearby properties with similar characteristics that sold recently. Use realistic addresses, prices, and metrics for the given market area. Base your analysis on typical market data for the location and property type.
+
+CRITICAL: Today's date is ${new Date().toISOString().split('T')[0]}. A good comp MUST have sold within the last 6 months. More recent sales are more reliable indicators of current market value. The farther from the sale date, the lower the confidence in that comp. If a comp is older than 6 months it should not be included. Prioritize the most recent sales first.`,
         },
         {
           role: "user",
@@ -270,11 +274,14 @@ Year Built: ${propertyData.yearBuilt || 'Unknown'}
 Units: ${propertyData.units || '1'}
 ${propertyData.purchasePrice ? `Listed/Purchase Price: $${propertyData.purchasePrice.toLocaleString()}` : ''}
 
+Today's date is ${new Date().toISOString().split('T')[0]}. ALL comps must have sold within the last 6 months. Prefer the most recent sales.
+
 For each comp provide:
 - address: A realistic nearby street address (use real street name patterns for ${propertyData.city}, ${propertyData.state})
 - distance: Distance from subject (e.g., "0.3 mi")
 - salePrice: Recent sale price in dollars
-- saleDate: Recent sale date (within last 6 months, format YYYY-MM-DD)
+- saleDate: Sale date in YYYY-MM-DD format (MUST be within the last 6 months from today)
+- daysAgo: Number of days between sale date and today
 - sqft: Square footage
 - pricePerSqft: Price per square foot (calculated)
 - propertyType: Same as subject
@@ -290,7 +297,7 @@ Also provide a market summary with:
 - medianSalePrice: Median sale price
 - suggestedValue: Your estimated fair market value for the subject
 - valueRange: { low: number, high: number }
-- confidence: Confidence level 0-100
+- confidence: Confidence level 0-100 (reduce confidence if comps are older; comps within 30 days = highest confidence, 30-90 days = high, 90-150 days = moderate, 150-180 days = low)
 - marketTrend: "appreciating", "stable", or "declining"
 - keyInsights: Array of 3-5 market insight strings
 
