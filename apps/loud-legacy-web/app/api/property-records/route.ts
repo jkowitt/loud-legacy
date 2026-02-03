@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         source: "rentcast",
         lotSizeAcres: dbCached.lotSizeSqft ? Math.round((dbCached.lotSizeSqft / 43560) * 1000) / 1000 : null,
         lotSizeSqft: dbCached.lotSizeSqft,
-        saleHistory: Array.isArray(dbCached.saleHistory) ? (dbCached.saleHistory as SaleRecord[]) : [],
+        saleHistory: Array.isArray(dbCached.saleHistory) ? (dbCached.saleHistory as unknown as SaleRecord[]) : [],
         propertyDetails: {
           bedrooms: dbCached.bedrooms ?? undefined,
           bathrooms: dbCached.bathrooms ?? undefined,
