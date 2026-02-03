@@ -4,8 +4,36 @@ import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
+// Rate limiting for signup (10 attempts per IP per hour)
+const signupRateLimit = new Map<string, { count: number; resetTime: number }>();
+const SIGNUP_RATE_LIMIT = 10;
+const SIGNUP_RATE_WINDOW = 60 * 60 * 1000; // 1 hour
+
+function checkSignupRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = signupRateLimit.get(ip);
+  if (!record || now > record.resetTime) {
+    signupRateLimit.set(ip, { count: 1, resetTime: now + SIGNUP_RATE_WINDOW });
+    return true;
+  }
+  if (record.count >= SIGNUP_RATE_LIMIT) return false;
+  record.count++;
+  return true;
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit check
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    if (!checkSignupRateLimit(ip)) {
+      return NextResponse.json(
+        { error: 'Too many signup attempts. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     // Check if database is configured
     if (!process.env.DATABASE_URL) {
       return NextResponse.json(
@@ -22,6 +50,13 @@ export async function POST(request: NextRequest) {
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof email !== 'string' || !EMAIL_REGEX.test(email)) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address' },
         { status: 400 }
       );
     }
