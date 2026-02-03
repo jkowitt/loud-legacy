@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -283,6 +285,9 @@ const DEFAULT_EXPENSES: OperatingExpense[] = [
 ];
 
 export default function ValoraDashboard() {
+  const { status } = useSession();
+  const authRouter = useRouter();
+
   // Address & Property State
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -1317,6 +1322,20 @@ export default function ValoraDashboard() {
 
     return tabs;
   };
+
+  // Auth gate: redirect unauthenticated/demo users to sign in
+  if (status === "loading") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", color: "#fff" }}>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    authRouter.push("/auth/signin");
+    return null;
+  }
 
   return (
     <main className="valora-dashboard-page">
