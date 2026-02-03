@@ -256,7 +256,7 @@ export default function TermsOfServicePage() {
             </p>
           </section>
 
-          <section className="legal-section">
+          <section className="legal-section" id="ai-disclaimer">
             <h2>8. Artificial Intelligence Disclaimer</h2>
             <p>
               Our Legacy RE platform incorporates artificial intelligence ("AI")
