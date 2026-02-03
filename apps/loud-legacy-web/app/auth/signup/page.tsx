@@ -16,6 +16,7 @@ export default function SignUpPage() {
     password: "",
     confirmPassword: "",
   });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -62,6 +63,11 @@ export default function SignUpPage() {
 
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters");
+      return;
+    }
+
+    if (!agreedToTerms) {
+      setError("You must agree to the Terms of Service and Privacy Policy to create an account");
       return;
     }
 
@@ -206,7 +212,25 @@ export default function SignUpPage() {
               />
             </div>
 
-            <button type="submit" className="auth-submit-btn auth-submit-beta" disabled={loading}>
+            <div className="auth-form-group" style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
+              <input
+                id="agreeTerms"
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                disabled={loading}
+                style={{ marginTop: "0.25rem", accentColor: "#F97316", width: "18px", height: "18px", flexShrink: 0 }}
+              />
+              <label htmlFor="agreeTerms" style={{ fontSize: "0.8rem", lineHeight: "1.4", color: "#64748B", cursor: "pointer" }}>
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" style={{ color: "#F97316", textDecoration: "underline" }}>Terms of Service</Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" style={{ color: "#F97316", textDecoration: "underline" }}>Privacy Policy</Link>,
+                and I acknowledge that AI-powered property valuations are estimates only and not a substitute for professional appraisals.
+              </label>
+            </div>
+
+            <button type="submit" className="auth-submit-btn auth-submit-beta" disabled={loading || !agreedToTerms}>
               {loading ? (
                 <span className="auth-spinner" />
               ) : null}
@@ -254,7 +278,8 @@ export default function SignUpPage() {
           <p className="auth-terms">
             By signing up, you agree to our{" "}
             <Link href="/terms">Terms of Service</Link> and{" "}
-            <Link href="/privacy">Privacy Policy</Link>.
+            <Link href="/privacy">Privacy Policy</Link>, including our{" "}
+            <Link href="/terms#ai-disclaimer">AI Disclaimer</Link>.
           </p>
         </div>
       </div>

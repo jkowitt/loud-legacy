@@ -1138,6 +1138,33 @@ export default function ValoraDashboard() {
     setIsAnalyzing(false);
     setAnalysisComplete(true);
     setActiveTab("valuation");
+
+    // Log the evaluation for owner audit trail and cache as future comp
+    fetch("/api/ai/log-evaluation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        address,
+        city,
+        state,
+        zipCode,
+        propertyType,
+        sqft,
+        yearBuilt,
+        estimatedValue,
+        confidence,
+        compsCount: mergedComps.length,
+        realCompsCount: hasRealComps ? realComps.length : 0,
+        marketTemperature: trendData?.marketTemperature || null,
+        usedPublicRecords: recordsLoaded,
+        usedRealComps: hasRealComps,
+        usedAiComps: true,
+        usedMarketTrends: !!trendData,
+        usedImageAnalysis: uploadedImages.length > 0,
+        latitude: coordinates?.lat,
+        longitude: coordinates?.lng,
+      }),
+    }).catch(() => {});
   };
 
   // Calculate Underwriting

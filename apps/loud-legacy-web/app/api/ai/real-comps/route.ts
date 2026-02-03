@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkPropertyRecordAccess, recordPropertyRecordUsage, OVERAGE_PRICE_CENTS } from "@/lib/usage";
 import { fetchRecentSales } from "@/lib/rentcast";
+import { cachePropertyRecord, getLocalComps } from "@/lib/property-cache";
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,60 @@ export async function POST(request: NextRequest) {
         error: "Real comparable sales require a RentCast API key. Configure RENTCAST_API_KEY to enable this feature.",
         comps: [],
         source: "unavailable",
+      });
+    }
+
+    // Check local cache for comps in this area first (no charge)
+    const localComps = await getLocalComps({
+      city, state,
+      propertyType: propertyType || undefined,
+      limit: Math.min(parseInt(limit) || 6, 15),
+    });
+
+    if (localComps.length >= 4) {
+      // Enough local comps — return without RentCast call or charge
+      const { usage: currentUsage } = await checkPropertyRecordAccess(userId);
+      return NextResponse.json({
+        success: true,
+        comps: localComps.map((c, i) => ({
+          id: `local_${i}`,
+          address: c.address,
+          formattedAddress: `${c.address}, ${c.city}, ${c.state}`,
+          city: c.city,
+          state: c.state,
+          zipCode: c.zipCode,
+          latitude: c.latitude,
+          longitude: c.longitude,
+          propertyType: c.propertyType,
+          bedrooms: c.bedrooms,
+          bathrooms: c.bathrooms,
+          squareFeet: c.squareFeet,
+          lotSize: null,
+          yearBuilt: c.yearBuilt,
+          lastSaleDate: c.lastSaleDate,
+          lastSalePrice: c.lastSalePrice,
+          distance: null,
+          pricePerSqft: c.squareFeet && c.lastSalePrice ? Math.round(c.lastSalePrice / c.squareFeet) : null,
+          daysOnMarket: null,
+          status: "Sold",
+          source: "legacy-cache",
+        })),
+        totalFound: localComps.length,
+        radiusUsed: 0,
+        lookbackDays: 0,
+        expanded: false,
+        source: "legacy-cache",
+        disclaimer: `${localComps.length} comparable sales served from Legacy RE database (no lookup charged). Originally sourced from county records.`,
+        usage: {
+          used: currentUsage.used,
+          limit: currentUsage.limit,
+          remaining: currentUsage.remaining,
+          plan: currentUsage.plan,
+          overageCount: currentUsage.overageCount,
+          overageCostCents: currentUsage.overageCostCents,
+          wasOverage: false,
+          charged: false,
+        },
       });
     }
 
@@ -117,6 +172,27 @@ export async function POST(request: NextRequest) {
     }
     if (willBeOverage) {
       disclaimer += ` This lookup exceeded your ${usage.plan} plan limit of ${usage.limit}/month. An additional charge of $${(OVERAGE_PRICE_CENTS / 100).toFixed(2)} applies.`;
+    }
+
+    // Persist each comp to the local database for future reuse
+    for (const comp of result.comps) {
+      cachePropertyRecord({
+        address: comp.address,
+        city: comp.city || city,
+        state: comp.state || state,
+        zipCode: comp.zipCode,
+        propertyType: comp.propertyType,
+        bedrooms: comp.bedrooms ?? undefined,
+        bathrooms: comp.bathrooms ?? undefined,
+        squareFeet: comp.squareFeet ?? undefined,
+        yearBuilt: comp.yearBuilt ?? undefined,
+        latitude: comp.latitude ?? undefined,
+        longitude: comp.longitude ?? undefined,
+        lastSaleDate: comp.lastSaleDate ?? undefined,
+        lastSalePrice: comp.lastSalePrice ?? undefined,
+        source: "rentcast-comps",
+        isComp: true,
+      }).catch(() => {});
     }
 
     return NextResponse.json({

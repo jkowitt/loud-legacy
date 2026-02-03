@@ -17,7 +17,7 @@ export default function TermsOfServicePage() {
             Please read these terms carefully before using the Loud Legacy
             platform and services.
           </p>
-          <p className="legal-updated">Last updated: January 28, 2026</p>
+          <p className="legal-updated">Last updated: February 3, 2026</p>
         </div>
       </section>
 
@@ -257,7 +257,90 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="legal-section">
-            <h2>8. Disclaimer of Warranties</h2>
+            <h2>8. Artificial Intelligence Disclaimer</h2>
+            <p>
+              Our Legacy RE platform incorporates artificial intelligence ("AI")
+              and machine learning technologies to assist with property
+              valuations, comparable sales analysis, market trend analysis, and
+              property condition assessments. By using these features, you
+              acknowledge and agree to the following:
+            </p>
+
+            <h3>AI Is Not a Perfect Science</h3>
+            <p>
+              <strong>Artificial intelligence-powered property analysis is not a
+              perfect science. Rather, it is a tool designed to help guide those
+              in the real estate industry.</strong> AI-generated valuations,
+              estimates, comparable sales analyses, market trend projections, and
+              property condition assessments are approximations based on
+              available data and algorithms. They are not substitutes for
+              professional appraisals, licensed property inspections, or
+              independent due diligence.
+            </p>
+
+            <h3>No Guarantee of Accuracy</h3>
+            <p>
+              While we strive to provide useful and reasonably accurate
+              estimates, we make no representations or warranties regarding the
+              accuracy, completeness, reliability, or timeliness of any AI-generated
+              output. Actual property values, market conditions, and property
+              conditions may differ materially from the estimates provided by
+              our platform. Factors including but not limited to local market
+              fluctuations, property-specific conditions not visible in available
+              data, zoning changes, environmental factors, and economic shifts
+              may cause actual outcomes to vary significantly from AI predictions.
+            </p>
+
+            <h3>Professional Advice Recommended</h3>
+            <p>
+              You should not rely solely on AI-generated valuations or analyses
+              when making real estate investment, purchasing, selling, or
+              financing decisions. We strongly recommend consulting with
+              licensed real estate professionals, certified appraisers,
+              property inspectors, and financial advisors before making any
+              real estate decisions. Loud Legacy is not a licensed appraisal
+              firm and does not provide certified property appraisals.
+            </p>
+
+            <h3>Third-Party Data Limitations</h3>
+            <p>
+              AI analyses may incorporate data from third-party providers
+              (including public property records and comparable sales
+              databases). We do not control the accuracy or completeness of
+              third-party data. Errors, delays, or gaps in source data may
+              affect the quality of AI-generated results.
+            </p>
+
+            <h3>User Responsibility</h3>
+            <p>
+              By using our AI-powered features, you accept full responsibility
+              for any decisions made based on AI-generated information. Loud
+              Legacy shall not be held liable for any losses, damages, or
+              claims arising from reliance on AI-generated valuations,
+              analyses, or recommendations.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>9. Usage-Based Billing and Property Record Lookups</h2>
+            <p>
+              Certain features of our platform, including real comparable sales
+              data and public property record lookups, are subject to
+              usage-based billing. Each lookup counts against your plan's
+              monthly quota. If you exceed your plan's included lookups,
+              additional lookups may incur an overage charge as displayed in
+              your account settings before each pull. By initiating a lookup,
+              you authorize the applicable charge.
+            </p>
+            <p>
+              Cached data served from our database (previously retrieved records
+              and evaluations) does not count toward your lookup quota and
+              incurs no additional charge.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>10. Disclaimer of Warranties</h2>
             <p>
               The Services are provided on an "as is" and "as available" basis
               without warranties of any kind, whether express or implied,
@@ -270,10 +353,18 @@ export default function TermsOfServicePage() {
               or error-free, that defects will be corrected, or that the
               Services are free of viruses or other harmful components.
             </p>
+            <p>
+              Without limiting the foregoing, we specifically disclaim any
+              warranty that AI-generated property valuations, comparable sales
+              analyses, market trend assessments, or condition evaluations will
+              be accurate, complete, or suitable for any particular purpose
+              including but not limited to property purchases, sales,
+              financing, insurance, or investment decisions.
+            </p>
           </section>
 
           <section className="legal-section">
-            <h2>9. Indemnification</h2>
+            <h2>11. Indemnification</h2>
             <p>
               You agree to indemnify, defend, and hold harmless Loud Legacy and
               its officers, directors, employees, contractors, agents, and
@@ -290,7 +381,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="legal-section">
-            <h2>10. Termination</h2>
+            <h2>12. Termination</h2>
             <p>
               We may suspend or terminate your access to the Services at any
               time, with or without cause, and with or without notice. Reasons
@@ -317,7 +408,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="legal-section">
-            <h2>11. Governing Law and Dispute Resolution</h2>
+            <h2>13. Governing Law and Dispute Resolution</h2>
             <p>
               These Terms shall be governed by and construed in accordance with
               the laws of the State of Delaware, without regard to its conflict
@@ -340,7 +431,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="legal-section">
-            <h2>12. Severability</h2>
+            <h2>14. Severability</h2>
             <p>
               If any provision of these Terms is found to be unenforceable or
               invalid, that provision will be limited or eliminated to the
@@ -350,7 +441,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="legal-section">
-            <h2>13. Contact Information</h2>
+            <h2>15. Contact Information</h2>
             <p>
               If you have questions about these Terms of Service, please contact
               us:

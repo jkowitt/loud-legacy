@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
             Your privacy matters. This policy explains how Loud Legacy collects,
             uses, and protects your personal information.
           </p>
-          <p className="legal-updated">Last updated: January 28, 2026</p>
+          <p className="legal-updated">Last updated: February 3, 2026</p>
         </div>
       </section>
 
@@ -257,7 +257,71 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="legal-section">
-            <h2>10. Changes to This Policy</h2>
+            <h2>10. Artificial Intelligence and Automated Analysis</h2>
+
+            <h3>AI-Powered Property Valuations</h3>
+            <p>
+              Our Legacy RE platform uses artificial intelligence and machine
+              learning technologies, including third-party AI services (such as
+              OpenAI), to provide property valuation estimates, comparable sales
+              analysis, market trend analysis, and property condition assessments.
+            </p>
+
+            <h3>Data Used in AI Analysis</h3>
+            <p>When you use our AI-powered features, we may process the following data:</p>
+            <ul>
+              <li>Property address, type, size, age, and physical characteristics</li>
+              <li>Publicly available property records and recent sales data in the surrounding area</li>
+              <li>Market trend data for the relevant geographic region</li>
+              <li>Uploaded property photographs for condition assessment</li>
+              <li>Financial inputs you provide (rent rolls, operating expenses, income data)</li>
+            </ul>
+
+            <h3>Third-Party Data Services</h3>
+            <p>
+              We use third-party data providers, including RentCast, to obtain
+              verified comparable sales and public property records. When you
+              opt in to pull public records or real comparable sales, your
+              property search data (address, city, state) is transmitted to these
+              providers. Each provider is subject to their own privacy policy.
+            </p>
+
+            <h3>Data Caching and Reuse</h3>
+            <p>
+              Property data retrieved from third-party sources is cached on our
+              servers to improve service quality and reduce redundant data
+              lookups. This cached data may be used to serve future requests
+              from you or other users searching in the same area. Cached data
+              expires periodically (30-90 days) and is automatically refreshed
+              when a new lookup is performed.
+            </p>
+
+            <h3>AI Accuracy Disclaimer</h3>
+            <p>
+              <strong>AI-generated valuations and analyses are estimates only and
+              should not be relied upon as definitive property appraisals.</strong>{" "}
+              Artificial intelligence is not a perfect science. Our AI tools are
+              designed to assist and guide real estate professionals, not to
+              replace professional judgment, licensed appraisals, or due
+              diligence. Actual property values may differ significantly from
+              AI-generated estimates due to factors not captured by available
+              data. See our{" "}
+              <Link href="/terms">Terms of Service</Link> for full disclaimers.
+            </p>
+
+            <h3>Evaluation Activity Logging</h3>
+            <p>
+              We maintain an activity log of all property evaluations performed
+              on the platform, including which features were used (public records,
+              comparable sales, market trends, image analysis) and the resulting
+              estimates. This data is used for platform improvement, billing
+              accuracy, and audit purposes. It is not shared with third parties
+              for marketing purposes.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>11. Changes to This Policy</h2>
             <p>
               We may update this Privacy Policy from time to time to reflect changes
               in our practices, technology, legal requirements, or other factors. We
@@ -272,7 +336,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="legal-section">
-            <h2>11. Contact Us</h2>
+            <h2>12. Contact Us</h2>
             <p>
               If you have questions or concerns about this Privacy Policy or our
               data practices, please contact us:
