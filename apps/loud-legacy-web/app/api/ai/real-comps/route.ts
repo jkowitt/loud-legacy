@@ -54,9 +54,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check local cache for comps in this area first (no charge)
+    // Exclude the subject property so it doesn't appear as its own comp
     const localComps = await getLocalComps({
       city, state,
       propertyType: propertyType || undefined,
+      excludeAddress: address,
       limit: Math.min(parseInt(limit) || 6, 15),
     });
 

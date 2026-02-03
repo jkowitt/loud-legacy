@@ -21,8 +21,7 @@ const COMP_TTL_DAYS = 90;
 export function hashAddress(address: string, city: string, state: string): string {
   const normalized = `${address}|${city}|${state}`
     .toLowerCase()
-    .replace(/[^a-z0-9|]/g, "")
-    .replace(/\s+/g, "");
+    .replace(/[^a-z0-9|]/g, "");
   return createHash("sha256").update(normalized).digest("hex");
 }
 
@@ -89,9 +88,9 @@ export async function cachePropertyRecord(data: {
         longitude: data.longitude ?? undefined,
         lastSaleDate: data.lastSaleDate ?? undefined,
         lastSalePrice: data.lastSalePrice ?? undefined,
-        saleHistory: data.saleHistory ? JSON.parse(JSON.stringify(data.saleHistory)) : undefined,
+        saleHistory: data.saleHistory ?? undefined,
         source: data.source,
-        rawData: data.rawData ? JSON.parse(JSON.stringify(data.rawData)) : undefined,
+        rawData: data.rawData ?? undefined,
         isComp: data.isComp ?? false,
         fetchedAt: new Date(),
         expiresAt,
@@ -112,9 +111,9 @@ export async function cachePropertyRecord(data: {
         longitude: data.longitude,
         lastSaleDate: data.lastSaleDate,
         lastSalePrice: data.lastSalePrice,
-        saleHistory: data.saleHistory ? JSON.parse(JSON.stringify(data.saleHistory)) : undefined,
+        saleHistory: data.saleHistory ?? undefined,
         source: data.source,
-        rawData: data.rawData ? JSON.parse(JSON.stringify(data.rawData)) : undefined,
+        rawData: data.rawData ?? undefined,
         isComp: data.isComp ?? false,
         expiresAt,
       },
@@ -134,6 +133,7 @@ export async function getLocalComps(params: {
   city: string;
   state: string;
   propertyType?: string;
+  excludeAddress?: string;
   limit?: number;
 }): Promise<Array<{
   address: string;
@@ -161,6 +161,9 @@ export async function getLocalComps(params: {
     };
     if (params.propertyType) {
       where.propertyType = { equals: params.propertyType, mode: "insensitive" };
+    }
+    if (params.excludeAddress) {
+      where.addressHash = { not: hashAddress(params.excludeAddress, params.city, params.state) };
     }
 
     const records = await prisma.propertyCache.findMany({
