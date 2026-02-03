@@ -7,6 +7,8 @@ publish = ".next"
 NODE_VERSION = "20"
 NEXT_TELEMETRY_DISABLED = "1"
 NEXT_DISABLE_SWC_WASM = "1"
+# Prisma needs to download engine binaries during install
+PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING = "1"
 # Disable secrets scanner - Google Maps API keys are intentionally public (restricted in GCP)
 SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
