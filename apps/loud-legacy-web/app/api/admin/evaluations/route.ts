@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Parse the details JSON for each evaluation
-    const formatted = evaluations.map((e: { id: string; userId: string; details: unknown; createdAt: Date; user: { name: string | null; email: string; role: string } | null }) => {
+    const formatted = evaluations.map((e: { id: string; userId: string | null; details: unknown; createdAt: Date; user: { name: string | null; email: string; role: string } | null }) => {
       const details = (e.details || {}) as Record<string, unknown>;
       return {
         id: e.id,
