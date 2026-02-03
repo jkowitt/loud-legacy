@@ -161,12 +161,12 @@ export async function getLocalComps(params: {
         lastSalePrice: { not: null },
         lastSaleDate: { not: null },
         expiresAt: { gt: new Date() },
-        ...(params.propertyType
-          ? { propertyType: { equals: params.propertyType, mode: "insensitive" as const } }
-          : {}),
-        ...(params.excludeAddress
-          ? { addressHash: { not: hashAddress(params.excludeAddress, params.city, params.state) } }
-          : {}),
+        propertyType: params.propertyType
+          ? { equals: params.propertyType, mode: "insensitive" as const }
+          : undefined,
+        addressHash: params.excludeAddress
+          ? { not: hashAddress(params.excludeAddress, params.city, params.state) }
+          : undefined,
       },
       orderBy: { fetchedAt: "desc" },
       take: params.limit || 20,

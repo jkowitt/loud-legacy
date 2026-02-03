@@ -158,9 +158,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch user details for most active users
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userIds = mostActiveUsers
-      .map((u: { userId: string | null }) => u.userId)
-      .filter((id: string | null): id is string => id !== null);
+      .map((u: any) => u.userId)
+      .filter((id: any): id is string => id !== null);
 
     const userDetails = await prisma.user.findMany({
       where: {
@@ -176,9 +177,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const mostActiveUsersWithDetails = mostActiveUsers.map((activity: { userId: string | null; _count: { id: number } }) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mostActiveUsersWithDetails = mostActiveUsers.map((activity: any) => ({
       ...activity,
-      user: userDetails.find((u: { id: string; name: string | null; email: string; role: string }) => u.id === activity.userId),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      user: userDetails.find((u: any) => u.id === activity.userId),
     }));
 
     // Popular actions
@@ -212,23 +215,27 @@ export async function GET(request: NextRequest) {
         activeUsers,
       },
       distribution: {
-        usersByRole: usersByRole.map((r: { role: string; _count: { id: number } }) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        usersByRole: usersByRole.map((r: any) => ({
           role: r.role,
           count: r._count.id,
         })),
-        organizationsByPlan: organizationsByPlan.map((p: { planType: string; _count: { id: number } }) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        organizationsByPlan: organizationsByPlan.map((p: any) => ({
           plan: p.planType,
           count: p._count.id,
         })),
       },
       trends: {
-        activity: activityTrends.map((a: { createdAt: Date; _count: { id: number } }) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        activity: activityTrends.map((a: any) => ({
           date: a.createdAt,
           count: a._count.id,
         })),
       },
       topUsers: mostActiveUsersWithDetails,
-      popularActions: popularActions.map((a: { action: string; _count: { id: number } }) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      popularActions: popularActions.map((a: any) => ({
         action: a.action,
         count: a._count.id,
       })),
