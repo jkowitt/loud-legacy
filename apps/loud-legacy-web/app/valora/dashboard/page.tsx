@@ -425,6 +425,9 @@ export default function ValoraDashboard() {
           yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
           purchasePrice: purchasePrice ? parseFloat(purchasePrice) : undefined,
           units: units ? parseInt(units) : undefined,
+          lotSizeAcres: lotSize ? parseFloat(lotSize) : undefined,
+          saleHistory: propertyRecords?.saleHistory,
+          saleHistorySource: propertyRecords?.source,
         }),
       });
       if (res.ok) {
@@ -618,7 +621,13 @@ export default function ValoraDashboard() {
       const compsRes = await fetch('/api/ai/comps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice, lat: coordinates?.lat, lng: coordinates?.lng }),
+        body: JSON.stringify({
+          address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice,
+          lat: coordinates?.lat, lng: coordinates?.lng,
+          lotSizeAcres: lotSize ? parseFloat(lotSize) : undefined,
+          saleHistory: propertyRecords?.saleHistory,
+          saleHistorySource: propertyRecords?.source,
+        }),
       });
       if (compsRes.ok) {
         const compsData = await compsRes.json();
@@ -666,11 +675,29 @@ export default function ValoraDashboard() {
       ];
     }
 
-    // Build valuation from comps data
-    const avgPricePerSqft = marketSummary?.avgPricePerSqft || Math.round(aiComps.reduce((a, b) => a + b.pricePerSqft, 0) / aiComps.length);
-    const estimatedValue = marketSummary?.suggestedValue || baseSqft * avgPricePerSqft;
+    // Build valuation from comps data, grounded by real sale records when available
+    const hasRealRecords = propertyRecords?.source === "rentcast" && propertyRecords?.saleHistory?.length > 0;
+    const lastRealSalePrice = hasRealRecords ? propertyRecords!.saleHistory[0].price : null;
+    const lastRealPpsf = lastRealSalePrice && baseSqft > 0 ? Math.round(lastRealSalePrice / baseSqft) : null;
+
+    // Use real $/sqft from public records as primary anchor when available
+    const avgPricePerSqft = lastRealPpsf
+      || marketSummary?.avgPricePerSqft
+      || Math.round(aiComps.reduce((a, b) => a + b.pricePerSqft, 0) / aiComps.length);
+
+    // Blend AI suggested value with real last sale when both are available
+    let estimatedValue: number;
+    if (lastRealSalePrice && marketSummary?.suggestedValue) {
+      // 60% weight on real sale records, 40% on AI market estimate
+      estimatedValue = Math.round(lastRealSalePrice * 0.6 + marketSummary.suggestedValue * 0.4);
+    } else {
+      estimatedValue = lastRealSalePrice || marketSummary?.suggestedValue || baseSqft * avgPricePerSqft;
+    }
+
     const valueRange = marketSummary?.valueRange || { low: Math.round(estimatedValue * 0.92), high: Math.round(estimatedValue * 1.08) };
-    const confidence = marketSummary?.confidence || 75;
+    // Boost confidence when grounded by real sale data
+    const baseConfidence = marketSummary?.confidence || 45;
+    const confidence = hasRealRecords ? Math.min(baseConfidence + 15, 80) : baseConfidence;
 
     // If photos uploaded, get AI image analysis for improvements
     let improvementItems: ImprovementItem[] = [];
@@ -811,11 +838,15 @@ export default function ValoraDashboard() {
       ];
     }
 
-    const marketFactors = marketSummary?.keyInsights || [
-      `Average price per sqft in ${city || "the area"}: $${avgPricePerSqft}`,
-      `Market trend: ${marketSummary?.marketTrend || "stable"}`,
-      `${aiComps.length} comparable sales analyzed`,
-      `Confidence level: ${confidence}%`,
+    const marketFactors = [
+      ...(hasRealRecords ? [`Last recorded sale: ${formatCurrency(lastRealSalePrice!)} ($${lastRealPpsf}/sqft) — from public records`] : []),
+      ...(marketSummary?.keyInsights || []),
+      ...(marketSummary?.keyInsights ? [] : [
+        `Average price per sqft in ${city || "the area"}: $${avgPricePerSqft}`,
+        `Market trend: ${marketSummary?.marketTrend || "stable"}`,
+        `${aiComps.length} comparable sales analyzed`,
+        `Confidence level: ${confidence}%`,
+      ]),
     ];
 
     // Income approach: use actual rent roll NOI when available, otherwise estimate from area cap rate
@@ -832,7 +863,11 @@ export default function ValoraDashboard() {
     const buildCostPerSqft = propertyType === "commercial" ? 175 : propertyType === "industrial" ? 100 : 150;
     const propertyAge = yearBuilt ? new Date().getFullYear() - parseInt(yearBuilt) : 20;
     const depreciationRate = Math.min(propertyAge * 0.012, 0.40); // 1.2% per year, max 40%
-    const estLandValue = Math.round(estimatedValue * 0.20);
+    // Use lot size for land value estimate when available (price per acre varies by area)
+    const lotAcres = lotSize ? parseFloat(lotSize) : 0;
+    const estLandValue = lotAcres > 0
+      ? Math.round(lotAcres * (estimatedValue / (lotAcres + 1)) * 0.30) // Land typically 25-35% of total value, adjusted by lot size
+      : Math.round(estimatedValue * 0.20);
     const replacementCost = baseSqft * buildCostPerSqft;
     const depreciationAmount = Math.round(replacementCost * depreciationRate);
     const costApproachValue = estLandValue + replacementCost - depreciationAmount;
@@ -1935,10 +1970,14 @@ export default function ValoraDashboard() {
                   {/* Valuation Tab */}
                   {activeTab === "valuation" && valuation && (
                     <div className="val-valuation-content">
-                      <div className="val-ai-disclaimer">
+                      <div className="val-ai-disclaimer" style={propertyRecords?.source === "rentcast" ? { background: "#ecfdf5", borderColor: "#10b981", color: "#065f46" } : undefined}>
                         <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                         <div>
-                          <strong>AI Estimate</strong> — This valuation is generated by AI based on market knowledge, not MLS transaction records. Values, comps, and market data are estimates and should be verified with local MLS data and a licensed appraiser before making investment decisions.
+                          {propertyRecords?.source === "rentcast" ? (
+                            <><strong>Grounded by Public Records</strong> — This valuation uses real sale history from county deed records to calibrate AI estimates. Comps and market data remain AI-generated and should be verified with local MLS data.</>
+                          ) : (
+                            <><strong>AI Estimate</strong> — This valuation is generated by AI based on market knowledge, not MLS transaction records. Values, comps, and market data are estimates and should be verified with local MLS data and a licensed appraiser before making investment decisions.</>
+                          )}
                         </div>
                       </div>
                       <div className="val-main-value">
@@ -2002,10 +2041,14 @@ export default function ValoraDashboard() {
                   {/* Comps Tab */}
                   {activeTab === "comps" && (
                     <div className="val-comps-content">
-                      <div className="val-ai-disclaimer">
+                      <div className="val-ai-disclaimer" style={propertyRecords?.source === "rentcast" ? { background: "#ecfdf5", borderColor: "#10b981", color: "#065f46" } : undefined}>
                         <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                         <div>
-                          <strong>AI Estimated Comps</strong> — These comparable sales are AI-generated estimates, not actual MLS records. Addresses, sale prices, and dates are approximations based on market knowledge for this area. Always verify with local MLS data.
+                          {propertyRecords?.source === "rentcast" ? (
+                            <><strong>Comps Calibrated by Public Records</strong> — AI-generated comps have been calibrated using real sale history from county deed records for the subject property. Comp addresses and prices are still AI estimates — verify with local MLS data.</>
+                          ) : (
+                            <><strong>AI Estimated Comps</strong> — These comparable sales are AI-generated estimates, not actual MLS records. Addresses, sale prices, and dates are approximations based on market knowledge for this area. Always verify with local MLS data.</>
+                          )}
                         </div>
                       </div>
                       <div className="val-comps-header">

@@ -235,9 +235,8 @@ Return ONLY valid JSON with this structure:
 }
 
 /**
- * Generate ESTIMATED comparable sales using AI market knowledge.
- * These are NOT real MLS records — they are AI-generated estimates
- * based on the model's training data about real estate pricing.
+ * Generate comparable sales using AI market knowledge, grounded by
+ * real public records data (sale history, lot size) when available.
  */
 export async function analyzeComparables(propertyData: {
   address: string;
@@ -250,25 +249,59 @@ export async function analyzeComparables(propertyData: {
   yearBuilt?: number;
   units?: number;
   purchasePrice?: number;
+  lotSizeAcres?: number;
+  saleHistory?: Array<{ date: string; price: number; type?: string }>;
+  saleHistorySource?: "rentcast" | "openai" | "fallback";
 }) {
   try {
     const openai = getOpenAIClient();
     const today = new Date().toISOString().split('T')[0];
+
+    // Build sale history context for the prompt
+    const hasSaleRecords = propertyData.saleHistory && propertyData.saleHistory.length > 0;
+    const isPublicRecords = propertyData.saleHistorySource === "rentcast";
+
+    let saleHistoryBlock = "";
+    if (hasSaleRecords) {
+      const records = propertyData.saleHistory!;
+      const label = isPublicRecords ? "PUBLIC RECORDS (verified)" : "AI-estimated sale history (lower confidence)";
+      saleHistoryBlock = `\n\nSALE HISTORY FOR THIS PROPERTY (${label}):
+${records.map(s => `  - ${s.date}: $${s.price.toLocaleString()} (${s.type || "Sale"})`).join("\n")}
+
+${isPublicRecords
+  ? "These are REAL recorded transactions from county deed records. Use them to calibrate your $/sqft estimates and value ranges. The most recent sale price is a strong anchor — your comps and suggested value should be consistent with this transaction data."
+  : "These are AI-estimated sale records, not verified public records. Use them as approximate context only."
+}`;
+      // Derive $/sqft from most recent sale if we have sqft
+      if (propertyData.sqft && records.length > 0) {
+        const mostRecent = records[0];
+        const ppsf = Math.round(mostRecent.price / propertyData.sqft);
+        saleHistoryBlock += `\nDerived $/sqft from most recent sale: ~$${ppsf}/sqft. Your comp estimates should be in this neighborhood.`;
+      }
+    }
+
+    // Adjust confidence cap based on data quality
+    const confidenceCap = isPublicRecords ? 72 : hasSaleRecords ? 60 : 55;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a real estate market analyst. You do NOT have access to MLS, public records, or live transaction databases. You are providing ESTIMATES based on your training data about real estate pricing patterns, neighborhood values, and market conditions.
+          content: `You are a real estate market analyst. ${isPublicRecords
+            ? "You have been provided with REAL public records data (verified county deed transactions) for this property. Use this data to ground your comparable sales estimates and market analysis. Your estimates should be CONSISTENT with the recorded transaction history."
+            : "You do NOT have access to MLS, public records, or live transaction databases. You are providing ESTIMATES based on your training data about real estate pricing patterns, neighborhood values, and market conditions."
+          }
 
 RULES YOU MUST FOLLOW:
 1. Be CONSERVATIVE. It is far better to underestimate values than to overestimate. Brokers will compare your numbers to real MLS data — if you are too high, you lose all credibility.
 2. Use REAL street names that actually exist in ${propertyData.city}, ${propertyData.state}. Do not invent streets.
-3. Base $/sqft estimates on your knowledge of median home prices and typical $/sqft for this specific city and property type. Do NOT anchor on any listed price the user provides — analyze the market independently.
-4. Provide meaningful VALUE RANGES (at least +/- 10-15%) to reflect the uncertainty in AI estimates.
-5. Your confidence score should NEVER exceed 55 because you lack real transaction data. This is inherently an estimate.
-6. For sale prices: think about what the Zillow/Redfin median is for this zip code, then adjust for property specifics. If you are uncertain about a market, widen your ranges and lower confidence.
+3. ${isPublicRecords
+  ? "You have real sale history data for this property. Use the most recent sale price and $/sqft as a strong calibration point for your comp estimates. Your suggested value and comp prices should be CONSISTENT with the actual recorded transactions — do not deviate wildly from the real $/sqft."
+  : "Base $/sqft estimates on your knowledge of median home prices and typical $/sqft for this specific city and property type. Do NOT anchor on any listed price the user provides — analyze the market independently."}
+4. Provide meaningful VALUE RANGES (at least +/- 10-15%) to reflect uncertainty.
+5. Your confidence score should NEVER exceed ${confidenceCap}. ${isPublicRecords ? "With real sale records you can be somewhat more confident, but still acknowledge that comps are estimates." : "Without real transaction data this is inherently an estimate."}
+6. For sale prices: think about what the Zillow/Redfin median is for this zip code, then adjust for property specifics.
 7. Today's date is ${today}. Set estimated sale dates within the last 6 months.`,
         },
         {
@@ -278,11 +311,12 @@ RULES YOU MUST FOLLOW:
 Address: ${propertyData.address}, ${propertyData.city}, ${propertyData.state}
 Property Type: ${propertyData.propertyType}
 Square Feet: ${propertyData.sqft || 'Unknown'}
+${propertyData.lotSizeAcres ? `Lot Size: ${propertyData.lotSizeAcres} acres` : ''}
 Beds: ${propertyData.beds || 'N/A'}
 Baths: ${propertyData.baths || 'N/A'}
 Year Built: ${propertyData.yearBuilt || 'Unknown'}
 Units: ${propertyData.units || '1'}
-${propertyData.purchasePrice ? `User-Provided Price Reference: $${propertyData.purchasePrice.toLocaleString()} (DO NOT simply echo this back — provide your own independent estimate)` : ''}
+${propertyData.purchasePrice ? `User-Provided Price Reference: $${propertyData.purchasePrice.toLocaleString()} (provide your own independent estimate, but if sale records are provided, weight those more heavily)` : ''}${saleHistoryBlock}
 
 Generate 4-6 estimated comps. For each:
 - address: A REAL street name in ${propertyData.city}, ${propertyData.state} with a plausible house number
@@ -304,11 +338,11 @@ Market summary:
 - pricePerSqftRange: { low: number, high: number }
 - medianSalePrice: Estimated median for similar properties
 - suggestedValue: Conservative estimate of fair market value
-- valueRange: { low: number, high: number } — meaningful range reflecting uncertainty (at least +/- 12%)
-- confidence: 0-55 MAX. Be honest about the limits of AI estimation without MLS data.
+- valueRange: { low: number, high: number } — meaningful range reflecting uncertainty
+- confidence: 0-${confidenceCap} MAX.
 - marketTrend: "appreciating", "stable", or "declining"
-- keyInsights: 3-5 insights about this specific market
-- disclaimer: "These are AI-generated estimates based on market knowledge, not actual MLS transaction records. Verify all values with local MLS data before making investment decisions."
+- keyInsights: 3-5 insights about this specific market${isPublicRecords ? " (reference the real sale history when relevant)" : ""}
+- disclaimer: "${isPublicRecords ? "Comparable sales are AI-generated estimates informed by real public records for the subject property. Verify all values with local MLS data before making investment decisions." : "These are AI-generated estimates based on market knowledge, not actual MLS transaction records. Verify all values with local MLS data before making investment decisions."}"
 
 Return ONLY valid JSON:
 {

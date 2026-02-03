@@ -18,12 +18,15 @@ interface PropertyDataRequest {
   yearBuilt?: number;
   purchasePrice?: number;
   units?: number;
+  lotSizeAcres?: number;
+  saleHistory?: Array<{ date: string; price: number; type?: string }>;
+  saleHistorySource?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: PropertyDataRequest = await request.json();
-    const { city, state, zipCode, propertyType, sqft, yearBuilt, purchasePrice, units } = body;
+    const { city, state, zipCode, propertyType, sqft, yearBuilt, purchasePrice, units, lotSizeAcres, saleHistory, saleHistorySource } = body;
 
     if (!city || !state) {
       return NextResponse.json({ error: "City and state are required" }, { status: 400 });
@@ -36,21 +39,37 @@ export async function POST(request: NextRequest) {
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
         const today = new Date().toISOString().split('T')[0];
-        const estimatedValue = purchasePrice || (sqft ? sqft * 200 : 400000);
+
+        // Use most recent public sale record for value estimate when available
+        const lastSalePrice = saleHistory && saleHistory.length > 0 ? saleHistory[0].price : null;
+        const estimatedValue = purchasePrice || lastSalePrice || (sqft ? sqft * 200 : 400000);
+        const hasRealSaleData = lastSalePrice && saleHistorySource === "rentcast";
+
+        // Build sale history context
+        let saleHistoryContext = "";
+        if (saleHistory && saleHistory.length > 0) {
+          const label = saleHistorySource === "rentcast" ? "PUBLIC RECORDS (verified)" : "estimated";
+          saleHistoryContext = `\n\nSale History (${label}):\n${saleHistory.map(s => `  - ${s.date}: $${s.price.toLocaleString()}`).join("\n")}`;
+          if (hasRealSaleData) {
+            saleHistoryContext += `\nThe most recent recorded sale price ($${lastSalePrice.toLocaleString()}) is the best available basis for property tax assessment calculations.`;
+          }
+        }
 
         const response = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: `You are a real estate data analyst providing ESTIMATES of property costs and area statistics. You do NOT have access to live county assessor databases, MLS, or insurance quote systems. Your estimates are based on your training data about typical costs for specific locations and property types.
+              content: `You are a real estate data analyst providing ESTIMATES of property costs and area statistics. ${hasRealSaleData
+                ? "You have been given REAL public records data including verified sale history. Use the most recent sale price as a strong basis for tax assessments, insurance valuations, and operating cost calculations."
+                : "You do NOT have access to live county assessor databases, MLS, or insurance quote systems. Your estimates are based on your training data about typical costs for specific locations and property types."}
 
 RULES:
 - Be CONSERVATIVE. Underestimates are better than overestimates.
 - Property tax rates by state are relatively well-known public data — use accurate state-level rates. County-level variation exists, so note this.
 - Insurance and maintenance costs should use industry benchmarks, not guesses.
 - For area statistics (median prices, cap rates, vacancy), acknowledge these are estimates from your training data, not live market data.
-- Today's date is ${today}. Your training data may not reflect the most recent market shifts.`,
+- Today's date is ${today}. Your training data may not reflect the most recent market shifts.${hasRealSaleData ? "\n- Use the real sale price data provided to ground your property tax and insurance estimates." : ""}`,
             },
             {
               role: "user",
@@ -59,9 +78,10 @@ RULES:
 Location: ${city}, ${state} ${zipCode || ""}
 Property Type: ${propertyType}
 Square Feet: ${sqft || "Unknown"}
+${lotSizeAcres ? `Lot Size: ${lotSizeAcres} acres` : ""}
 Year Built: ${yearBuilt || "Unknown"}
-Estimated Value: $${estimatedValue.toLocaleString()}
-Units: ${units || 1}
+Estimated Value: $${estimatedValue.toLocaleString()}${hasRealSaleData ? " (based on recorded sale price)" : ""}
+Units: ${units || 1}${saleHistoryContext}
 
 Provide ALL of the following data points with realistic, location-specific values:
 
@@ -148,7 +168,8 @@ Return ONLY valid JSON matching the structure described above. Use realistic val
     }
 
     // Fallback estimates when OpenAI is not available
-    const estimatedValue = purchasePrice || (sqft ? sqft * 200 : 400000);
+    const fallbackLastSale = saleHistory && saleHistory.length > 0 ? saleHistory[0].price : null;
+    const estimatedValue = purchasePrice || fallbackLastSale || (sqft ? sqft * 200 : 400000);
     const estSqft = sqft || 2000;
     const estUnits = units || 1;
 
