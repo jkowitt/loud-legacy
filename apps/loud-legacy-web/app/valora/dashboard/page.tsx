@@ -189,6 +189,15 @@ interface PropertyRecordsData {
     lastSalePrice?: number;
   };
   disclaimer?: string;
+  usage?: {
+    used: number;
+    limit: number;
+    remaining: number;
+    plan: string;
+    overageCount: number;
+    overageCostCents: number;
+    wasOverage: boolean;
+  };
 }
 
 // Property Enrichment Data Interface
@@ -1439,12 +1448,32 @@ export default function ValoraDashboard() {
                   </div>
                 )}
                 {recordsLoaded && !isLoadingRecords && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.375rem", fontSize: "0.75rem", color: "#16A34A" }}>
-                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                    Property records loaded{propertyRecords?.lotSizeAcres ? ` \u2014 ${propertyRecords.lotSizeAcres} acres` : ""}{propertyRecords?.saleHistory?.length ? `, ${propertyRecords.saleHistory.length} sale record${propertyRecords.saleHistory.length !== 1 ? "s" : ""}` : ""}
-                    {propertyRecords?.source === "rentcast" && <span style={{ marginLeft: "0.25rem", color: "#9CA3AF" }}>(public records)</span>}
-                    {propertyRecords?.source === "openai" && <span style={{ marginLeft: "0.25rem", color: "#9CA3AF" }}>(AI estimate)</span>}
-                  </div>
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.375rem", fontSize: "0.75rem", color: "#16A34A" }}>
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                      Property records loaded{propertyRecords?.lotSizeAcres ? ` \u2014 ${propertyRecords.lotSizeAcres} acres` : ""}{propertyRecords?.saleHistory?.length ? `, ${propertyRecords.saleHistory.length} sale record${propertyRecords.saleHistory.length !== 1 ? "s" : ""}` : ""}
+                      {propertyRecords?.source === "rentcast" && <span style={{ marginLeft: "0.25rem", color: "#9CA3AF" }}>(public records)</span>}
+                      {propertyRecords?.source === "openai" && <span style={{ marginLeft: "0.25rem", color: "#9CA3AF" }}>(AI estimate)</span>}
+                    </div>
+                    {propertyRecords?.usage && (
+                      <div style={{ marginTop: "0.25rem", fontSize: "0.7rem", color: "#9CA3AF" }}>
+                        Lookups: {propertyRecords.usage.used}/{propertyRecords.usage.limit} ({propertyRecords.usage.plan})
+                        {propertyRecords.usage.remaining > 0 && ` \u2014 ${propertyRecords.usage.remaining} remaining`}
+                        {propertyRecords.usage.remaining <= 0 && (
+                          <span style={{ color: "#F59E0B" }}> \u2014 Limit reached. Additional lookups: $2.00 each.</span>
+                        )}
+                        {propertyRecords.usage.wasOverage && (
+                          <span style={{ color: "#EF4444" }}> ($2.00 charged for this lookup)</span>
+                        )}
+                        {propertyRecords.usage.overageCount > 0 && (
+                          <span style={{ color: "#F59E0B" }}> \u2014 Overage this period: ${(propertyRecords.usage.overageCostCents / 100).toFixed(2)}</span>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ marginTop: "0.2rem", fontSize: "0.65rem", color: "#6B7280" }}>
+                      Saving a workspace caches results locally. Re-fetching records from a new analysis or reloading data uses a new lookup.
+                    </div>
+                  </>
                 )}
                 <div className="val-input-row" style={{ marginTop: "0.5rem" }}>
                   <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="val-input" />

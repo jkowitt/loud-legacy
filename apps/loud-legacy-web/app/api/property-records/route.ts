@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkPropertyRecordAccess, recordPropertyRecordUsage, OVERAGE_PRICE_CENTS } from "@/lib/usage";
 
 export const dynamic = 'force-dynamic';
 
@@ -6,6 +9,10 @@ export const dynamic = 'force-dynamic';
  * Property Records API
  * Fetches public property records (lot size, sale history) from RentCast API.
  * Falls back to OpenAI estimation when RentCast is unavailable.
+ *
+ * Usage is tracked per user per billing period.
+ * After the plan's included lookups are exhausted, each additional
+ * request is charged $2.00 automatically.
  */
 
 interface PropertyRecordsRequest {
@@ -40,6 +47,15 @@ interface PropertyRecordsResponse {
     lastSalePrice?: number;
   };
   disclaimer?: string;
+  usage?: {
+    used: number;
+    limit: number;
+    remaining: number;
+    plan: string;
+    overageCount: number;
+    overageCostCents: number;
+    wasOverage: boolean;
+  };
 }
 
 // Simple in-memory cache (5-minute TTL, max 200 entries)
@@ -49,6 +65,14 @@ const CACHE_MAX_SIZE = 200;
 
 export async function POST(request: NextRequest) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as { id?: string })?.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
     const body: PropertyRecordsRequest = await request.json();
     const { address, city, state, zipCode } = body;
 
@@ -56,12 +80,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Address, city, and state are required" }, { status: 400 });
     }
 
-    // Check cache
+    // Check cache first (cached results don't count against usage)
     const cacheKey = `${address}|${city}|${state}`.toLowerCase();
     const cached = recordsCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return NextResponse.json(cached.data);
+      // Return cached data with fresh usage info (no new charge)
+      const { usage: currentUsage } = await checkPropertyRecordAccess(userId);
+      return NextResponse.json({
+        ...cached.data,
+        usage: {
+          used: currentUsage.used,
+          limit: currentUsage.limit,
+          remaining: currentUsage.remaining,
+          plan: currentUsage.plan,
+          overageCount: currentUsage.overageCount,
+          overageCostCents: currentUsage.overageCostCents,
+          wasOverage: false,
+        },
+      });
     }
+
+    // Check usage limits (always allowed, but may be flagged as overage)
+    const { willBeOverage, usage } = await checkPropertyRecordAccess(userId);
     // Evict stale and excess entries to prevent unbounded memory growth
     if (recordsCache.size >= CACHE_MAX_SIZE) {
       const now = Date.now();
@@ -75,13 +115,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Build usage info for response
+    const buildUsage = (wasOverage: boolean) => ({
+      used: usage.used + 1,
+      limit: usage.limit,
+      remaining: Math.max(0, usage.remaining - 1),
+      plan: usage.plan,
+      overageCount: wasOverage ? usage.overageCount + 1 : usage.overageCount,
+      overageCostCents: wasOverage ? usage.overageCostCents + OVERAGE_PRICE_CENTS : usage.overageCostCents,
+      wasOverage,
+    });
+
     // Try RentCast API first
     if (process.env.RENTCAST_API_KEY) {
       try {
         const result = await fetchFromRentCast(address, city, state, zipCode);
         if (result) {
+          // Record usage (counts against quota)
+          await recordPropertyRecordUsage(userId, {
+            address: `${address}, ${city}, ${state}`,
+            source: 'rentcast',
+            wasOverage: willBeOverage,
+          });
+
+          const responseData = {
+            ...result,
+            usage: buildUsage(willBeOverage),
+          };
+
+          if (willBeOverage) {
+            responseData.disclaimer = `${result.disclaimer || ""} Note: This lookup exceeded your ${usage.plan} plan limit of ${usage.limit}/month. An additional charge of $${(OVERAGE_PRICE_CENTS / 100).toFixed(2)} applies.`.trim();
+          }
+
           recordsCache.set(cacheKey, { data: result, timestamp: Date.now() });
-          return NextResponse.json(result);
+          return NextResponse.json(responseData);
         }
       } catch (err) {
         console.error("RentCast API error, falling back:", err);
@@ -93,15 +160,31 @@ export async function POST(request: NextRequest) {
       try {
         const result = await estimateFromOpenAI(address, city, state, zipCode, body.propertyType);
         if (result) {
+          // Record usage (counts against quota)
+          await recordPropertyRecordUsage(userId, {
+            address: `${address}, ${city}, ${state}`,
+            source: 'openai',
+            wasOverage: willBeOverage,
+          });
+
+          const responseData = {
+            ...result,
+            usage: buildUsage(willBeOverage),
+          };
+
+          if (willBeOverage) {
+            responseData.disclaimer = `${result.disclaimer || ""} Note: This lookup exceeded your ${usage.plan} plan limit of ${usage.limit}/month. An additional charge of $${(OVERAGE_PRICE_CENTS / 100).toFixed(2)} applies.`.trim();
+          }
+
           recordsCache.set(cacheKey, { data: result, timestamp: Date.now() });
-          return NextResponse.json(result);
+          return NextResponse.json(responseData);
         }
       } catch (err) {
         console.error("OpenAI property records fallback error:", err);
       }
     }
 
-    // Static fallback
+    // Static fallback (no external call — doesn't count against usage)
     const fallback: PropertyRecordsResponse = {
       success: true,
       source: "fallback",
@@ -109,6 +192,15 @@ export async function POST(request: NextRequest) {
       lotSizeSqft: null,
       saleHistory: [],
       disclaimer: "No property records API configured. Add a RENTCAST_API_KEY for real public records data.",
+      usage: {
+        used: usage.used,
+        limit: usage.limit,
+        remaining: usage.remaining,
+        plan: usage.plan,
+        overageCount: usage.overageCount,
+        overageCostCents: usage.overageCostCents,
+        wasOverage: false,
+      },
     };
     return NextResponse.json(fallback);
 
