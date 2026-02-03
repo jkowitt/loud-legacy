@@ -18,11 +18,11 @@ const adminRoutes = [
   '/api/admin',
 ];
 
-// Allowed origins for CORS (add your production domain)
-const allowedOrigins = new Set([
+// Allowed origins for CORS — populated from env vars at startup
+const configuredOrigins = [
   process.env.NEXTAUTH_URL || '',
   process.env.NEXT_PUBLIC_APP_URL || '',
-].filter(Boolean));
+].filter(Boolean);
 
 function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -33,64 +33,85 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const isApiRoute = pathname.startsWith('/api/');
-
-  // CORS: Block cross-origin API requests in production
-  if (isApiRoute && allowedOrigins.size > 0) {
-    const origin = request.headers.get('origin');
-    if (origin && !allowedOrigins.has(origin)) {
-      return addSecurityHeaders(
-        NextResponse.json(
-          { error: 'Cross-origin request blocked' },
-          { status: 403 }
-        )
-      );
-    }
+function isSameOrigin(request: NextRequest, origin: string): boolean {
+  try {
+    const requestOrigin = request.nextUrl.origin;
+    return origin === requestOrigin;
+  } catch {
+    return false;
   }
+}
 
-  // Check if route requires authentication
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-  const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
+export async function middleware(request: NextRequest) {
+  try {
+    const { pathname } = request.nextUrl;
+    const isApiRoute = pathname.startsWith('/api/');
 
-  if (isProtectedRoute) {
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
-
-    // Require real authentication for all protected routes
-    if (!token) {
-      return addSecurityHeaders(
-        NextResponse.json(
-          { error: 'Authentication required. Please sign in with a real account.' },
-          { status: 401 }
-        )
-      );
+    // CORS: Block cross-origin API requests from unknown origins
+    if (isApiRoute) {
+      const origin = request.headers.get('origin');
+      if (origin) {
+        // Always allow same-origin requests
+        const sameOrigin = isSameOrigin(request, origin);
+        // Allow configured origins (production domain, app URL)
+        const isAllowed = sameOrigin || configuredOrigins.includes(origin);
+        if (!isAllowed && configuredOrigins.length > 0) {
+          return addSecurityHeaders(
+            NextResponse.json(
+              { error: 'Cross-origin request blocked' },
+              { status: 403 }
+            )
+          );
+        }
+      }
     }
 
-    // Check admin access
-    if (isAdminRoute) {
-      const userRole = token.role as string;
-      if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    // Check if route requires authentication
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+    const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
+
+    if (isProtectedRoute) {
+      const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+
+      // Require real authentication for all protected routes
+      if (!token) {
         return addSecurityHeaders(
           NextResponse.json(
-            { error: 'Admin access required' },
-            { status: 403 }
+            { error: 'Authentication required. Please sign in with a real account.' },
+            { status: 401 }
           )
         );
       }
-    }
-  }
 
-  const response = NextResponse.next();
-  return addSecurityHeaders(response);
+      // Check admin access
+      if (isAdminRoute) {
+        const userRole = token.role as string;
+        if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+          return addSecurityHeaders(
+            NextResponse.json(
+              { error: 'Admin access required' },
+              { status: 403 }
+            )
+          );
+        }
+      }
+    }
+
+    const response = NextResponse.next();
+    return addSecurityHeaders(response);
+  } catch (error) {
+    // Prevent middleware crashes from causing proxy errors
+    console.error('Middleware error:', error);
+    const response = NextResponse.next();
+    return addSecurityHeaders(response);
+  }
 }
 
 export const config = {
   matcher: [
     '/api/:path*',
-    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
