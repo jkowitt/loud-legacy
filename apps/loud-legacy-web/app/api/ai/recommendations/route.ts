@@ -31,9 +31,16 @@ export async function POST(request: NextRequest) {
         include: { images: true },
       });
 
-      // Verify the authenticated user owns this property
-      if (property && userId && property.userId !== userId) {
-        return NextResponse.json({ error: 'Not authorized to access this property' }, { status: 403 });
+      // Verify the authenticated user has a valuation for this property
+      // (Property model has no direct userId — ownership is through Valuation)
+      if (property && userId) {
+        const ownsProperty = await prisma.valuation.findFirst({
+          where: { propertyId, userId },
+          select: { id: true },
+        });
+        if (!ownsProperty) {
+          return NextResponse.json({ error: 'Not authorized to access this property' }, { status: 403 });
+        }
       }
 
       if (property) {

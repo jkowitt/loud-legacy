@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
     // Initialize Anthropic client
     const anthropic = new Anthropic({
       apiKey: apiKey,
+      timeout: 30000,
     });
 
     // Analyze the building image
@@ -113,8 +114,7 @@ Important:
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to parse AI analysis',
-          rawResponse: responseText,
+          error: 'Failed to parse AI analysis. Please try again.',
         },
         { status: 500 }
       );

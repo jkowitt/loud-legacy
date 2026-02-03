@@ -20,9 +20,12 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const folder = (formData.get('folder') as string) || 'general';
+    const rawFolder = (formData.get('folder') as string) || 'general';
     const alt = formData.get('alt') as string;
     const caption = formData.get('caption') as string;
+
+    // Sanitize folder to prevent path traversal (allow only alphanumeric, hyphens, underscores)
+    const folder = rawFolder.replace(/[^a-zA-Z0-9_-]/g, '') || 'general';
 
     if (!file) {
       return NextResponse.json(
@@ -55,10 +58,12 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadsDir, { recursive: true });
     }
 
-    // Generate unique filename
+    // Generate unique filename with sanitized extension
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(7);
-    const extension = file.name.split('.').pop();
+    const rawExt = (file.name.split('.').pop() || '').toLowerCase();
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const extension = allowedExtensions.includes(rawExt) ? rawExt : 'jpg';
     const fileName = `${timestamp}-${randomStr}.${extension}`;
     const filePath = join(uploadsDir, fileName);
 
