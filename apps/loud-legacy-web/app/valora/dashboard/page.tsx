@@ -162,6 +162,33 @@ interface UnderwritingData {
   pricePerSqft?: number;
 }
 
+// Sale History Record
+interface SaleRecord {
+  date: string;
+  price: number;
+  buyer?: string;
+  seller?: string;
+  type?: string;
+}
+
+// Property Records Data (from public records / RentCast)
+interface PropertyRecordsData {
+  source: "rentcast" | "openai" | "fallback";
+  lotSizeAcres: number | null;
+  lotSizeSqft: number | null;
+  saleHistory: SaleRecord[];
+  propertyDetails?: {
+    bedrooms?: number;
+    bathrooms?: number;
+    squareFeet?: number;
+    yearBuilt?: number;
+    propertyType?: string;
+    lastSaleDate?: string;
+    lastSalePrice?: number;
+  };
+  disclaimer?: string;
+}
+
 // Property Enrichment Data Interface
 interface PropertyEnrichmentData {
   propertyTax?: {
@@ -285,6 +312,7 @@ export default function ValoraDashboard() {
   // Photo State (optional)
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const analysisAbortRef = useRef<AbortController | null>(null);
 
   // Underwriting State
   const [underwriting, setUnderwriting] = useState<UnderwritingData | null>(null);
@@ -321,6 +349,11 @@ export default function ValoraDashboard() {
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Property Records State (public records / RentCast)
+  const [propertyRecords, setPropertyRecords] = useState<PropertyRecordsData | null>(null);
+  const [isLoadingRecords, setIsLoadingRecords] = useState(false);
+  const [recordsLoaded, setRecordsLoaded] = useState(false);
 
   // Property Enrichment State
   const [enrichmentData, setEnrichmentData] = useState<PropertyEnrichmentData | null>(null);
@@ -393,6 +426,9 @@ export default function ValoraDashboard() {
           yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
           purchasePrice: purchasePrice ? parseFloat(purchasePrice) : undefined,
           units: units ? parseInt(units) : undefined,
+          lotSizeAcres: lotSize ? parseFloat(lotSize) : undefined,
+          saleHistory: propertyRecords?.saleHistory,
+          saleHistorySource: propertyRecords?.source,
         }),
       });
       if (res.ok) {
@@ -433,6 +469,49 @@ export default function ValoraDashboard() {
       console.error("Property enrichment error:", err);
     }
     setIsEnriching(false);
+  };
+
+  // Fetch property records (lot size, sale history) from public records
+  const fetchPropertyRecords = async (recAddr: string, recCity: string, recState: string, recZip?: string) => {
+    if (!recAddr || !recCity || !recState) return;
+    setIsLoadingRecords(true);
+    try {
+      const res = await fetch('/api/property-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: recAddr,
+          city: recCity,
+          state: recState,
+          zipCode: recZip,
+          propertyType: propertyType || "residential",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setPropertyRecords(data);
+          setRecordsLoaded(true);
+
+          // Auto-populate lot size if we got it and user hasn't entered one
+          if (data.lotSizeAcres && !lotSize) {
+            setLotSize(data.lotSizeAcres.toString());
+          }
+
+          // Auto-populate property details from records if available
+          if (data.propertyDetails) {
+            const d = data.propertyDetails;
+            if (d.squareFeet && !sqft) setSqft(d.squareFeet.toString());
+            if (d.yearBuilt && !yearBuilt) setYearBuilt(d.yearBuilt.toString());
+            if (d.bedrooms && !beds) setBeds(d.bedrooms.toString());
+            if (d.bathrooms && !baths) setBaths(d.bathrooms.toString());
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Property records error:", err);
+    }
+    setIsLoadingRecords(false);
   };
 
   // Handle Image Upload
@@ -516,7 +595,7 @@ export default function ValoraDashboard() {
     totalMonthlyRent: rentRoll.reduce((sum, u) => sum + (u.status === "occupied" ? u.monthlyRent : 0), 0),
     totalMarketRent: rentRoll.reduce((sum, u) => sum + u.marketRent, 0),
     occupancyRate: rentRoll.length > 0 ? (rentRoll.filter(u => u.status === "occupied").length / rentRoll.length * 100) : 0,
-    lossToLease: rentRoll.reduce((sum, u) => sum + (u.marketRent - u.monthlyRent), 0),
+    lossToLease: rentRoll.filter(u => u.status === "occupied").reduce((sum, u) => sum + (u.marketRent - u.monthlyRent), 0),
   };
 
   // Calculate P&L totals
@@ -531,6 +610,11 @@ export default function ValoraDashboard() {
   const runAnalysis = async () => {
     if (!address || !propertyType) return;
 
+    // Abort any in-flight analysis before starting a new one
+    if (analysisAbortRef.current) analysisAbortRef.current.abort();
+    const abortController = new AbortController();
+    analysisAbortRef.current = abortController;
+
     setIsAnalyzing(true);
 
     const baseSqft = parseInt(sqft) || 2000;
@@ -543,7 +627,14 @@ export default function ValoraDashboard() {
       const compsRes = await fetch('/api/ai/comps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice, lat: coordinates?.lat, lng: coordinates?.lng }),
+        signal: abortController.signal,
+        body: JSON.stringify({
+          address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice,
+          lat: coordinates?.lat, lng: coordinates?.lng,
+          lotSizeAcres: lotSize ? parseFloat(lotSize) : undefined,
+          saleHistory: propertyRecords?.saleHistory,
+          saleHistorySource: propertyRecords?.source,
+        }),
       });
       if (compsRes.ok) {
         const compsData = await compsRes.json();
@@ -591,11 +682,29 @@ export default function ValoraDashboard() {
       ];
     }
 
-    // Build valuation from comps data
-    const avgPricePerSqft = marketSummary?.avgPricePerSqft || Math.round(aiComps.reduce((a, b) => a + b.pricePerSqft, 0) / aiComps.length);
-    const estimatedValue = marketSummary?.suggestedValue || baseSqft * avgPricePerSqft;
+    // Build valuation from comps data, grounded by real sale records when available
+    const hasRealRecords = propertyRecords?.source === "rentcast" && propertyRecords?.saleHistory?.length > 0;
+    const lastRealSalePrice = hasRealRecords ? propertyRecords!.saleHistory[0].price : null;
+    const lastRealPpsf = lastRealSalePrice && baseSqft > 0 ? Math.round(lastRealSalePrice / baseSqft) : null;
+
+    // Use real $/sqft from public records as primary anchor when available
+    const avgPricePerSqft = lastRealPpsf
+      || marketSummary?.avgPricePerSqft
+      || Math.round(aiComps.reduce((a, b) => a + b.pricePerSqft, 0) / aiComps.length);
+
+    // Blend AI suggested value with real last sale when both are available
+    let estimatedValue: number;
+    if (lastRealSalePrice && marketSummary?.suggestedValue) {
+      // 60% weight on real sale records, 40% on AI market estimate
+      estimatedValue = Math.round(lastRealSalePrice * 0.6 + marketSummary.suggestedValue * 0.4);
+    } else {
+      estimatedValue = lastRealSalePrice || marketSummary?.suggestedValue || baseSqft * avgPricePerSqft;
+    }
+
     const valueRange = marketSummary?.valueRange || { low: Math.round(estimatedValue * 0.92), high: Math.round(estimatedValue * 1.08) };
-    const confidence = marketSummary?.confidence || 75;
+    // Boost confidence when grounded by real sale data
+    const baseConfidence = marketSummary?.confidence || 45;
+    const confidence = hasRealRecords ? Math.min(baseConfidence + 15, 80) : baseConfidence;
 
     // If photos uploaded, get AI image analysis for improvements
     let improvementItems: ImprovementItem[] = [];
@@ -607,6 +716,7 @@ export default function ValoraDashboard() {
         const imgRes = await fetch('/api/ai/improvements', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
           body: JSON.stringify({ imageBase64: base64Data, area: 'exterior-front' }),
         });
         if (imgRes.ok) {
@@ -649,6 +759,7 @@ export default function ValoraDashboard() {
           const svRes = await fetch('/api/ai/improvements', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: abortController.signal,
             body: JSON.stringify({ imageUrl: streetViewUrl, area: 'exterior-front' }),
           });
           if (svRes.ok) {
@@ -689,6 +800,7 @@ export default function ValoraDashboard() {
         const recRes = await fetch('/api/ai/recommendations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
           body: JSON.stringify({
             propertyType,
             condition: 75,
@@ -736,26 +848,56 @@ export default function ValoraDashboard() {
       ];
     }
 
-    const marketFactors = marketSummary?.keyInsights || [
-      `Average price per sqft in ${city || "the area"}: $${avgPricePerSqft}`,
-      `Market trend: ${marketSummary?.marketTrend || "stable"}`,
-      `${aiComps.length} comparable sales analyzed`,
-      `Confidence level: ${confidence}%`,
+    const marketFactors = [
+      ...(hasRealRecords ? [`Last recorded sale: ${formatCurrency(lastRealSalePrice!)} ($${lastRealPpsf}/sqft) — from public records`] : []),
+      ...(marketSummary?.keyInsights || []),
+      ...(marketSummary?.keyInsights ? [] : [
+        `Average price per sqft in ${city || "the area"}: $${avgPricePerSqft}`,
+        `Market trend: ${marketSummary?.marketTrend || "stable"}`,
+        `${aiComps.length} comparable sales analyzed`,
+        `Confidence level: ${confidence}%`,
+      ]),
     ];
+
+    // Income approach: use actual rent roll NOI when available, otherwise estimate from area cap rate
+    const actualGrossRent = rentRoll.length > 0 ? rentRollTotals.totalMonthlyRent * 12 : (parseFloat(grossRent) * 12 || 0);
+    const actualVacancy = parseFloat(vacancyRate) / 100 || 0.05;
+    const actualEGI = actualGrossRent * (1 - actualVacancy);
+    const actualOpex = rentRoll.length > 0 ? totalExpenses : actualEGI * (parseFloat(operatingExpenseRatio) / 100 || 0.35);
+    const actualNOI = actualEGI - actualOpex;
+    const areaCapRate = enrichmentData?.areaStatistics?.averageCapRate || (marketSummary as Record<string, unknown>)?.avgCapRate as number || 0;
+    const incomeApproachCapRate = areaCapRate > 0 ? areaCapRate : 6.0;
+    const incomeApproachValue = actualNOI > 0 ? Math.round(actualNOI / (incomeApproachCapRate / 100)) : Math.round(estimatedValue * 1.0);
+
+    // Cost approach: estimate replacement cost from sqft if available
+    const buildCostPerSqft = propertyType === "commercial" ? 175 : propertyType === "industrial" ? 100 : 150;
+    const propertyAge = yearBuilt ? new Date().getFullYear() - parseInt(yearBuilt) : 20;
+    const depreciationRate = Math.min(propertyAge * 0.012, 0.40); // 1.2% per year, max 40%
+    // Use lot size for land value estimate when available (price per acre varies by area)
+    const lotAcres = lotSize ? parseFloat(lotSize) : 0;
+    const estLandValue = lotAcres > 0
+      ? Math.round(lotAcres * (estimatedValue / (lotAcres + 1)) * 0.30) // Land typically 25-35% of total value, adjusted by lot size
+      : Math.round(estimatedValue * 0.20);
+    const replacementCost = baseSqft * buildCostPerSqft;
+    const depreciationAmount = Math.round(replacementCost * depreciationRate);
+    const costApproachValue = estLandValue + replacementCost - depreciationAmount;
 
     const valuationResult: ValuationResult = {
       estimatedValue,
       valueRange,
       confidence,
       approaches: {
-        income: { value: Math.round(estimatedValue * 1.02), capRate: 5.8, noi: Math.round(estimatedValue * 0.058) },
+        income: { value: incomeApproachValue, capRate: incomeApproachCapRate, noi: actualNOI > 0 ? Math.round(actualNOI) : Math.round(estimatedValue * (incomeApproachCapRate / 100)) },
         sales: { value: estimatedValue, pricePerSqft: avgPricePerSqft, adjustedComps: aiComps.length },
-        cost: { value: Math.round(estimatedValue * 0.95), landValue: Math.round(estimatedValue * 0.25), improvements: Math.round(estimatedValue * 0.85), depreciation: Math.round(estimatedValue * 0.15) },
+        cost: { value: costApproachValue, landValue: estLandValue, improvements: replacementCost, depreciation: depreciationAmount },
       },
       marketFactors,
       improvements: improvementItems,
       conditionScore,
     };
+
+    // Don't update state if this analysis was aborted
+    if (abortController.signal.aborted) return;
 
     setComps(aiComps);
     setValuation(valuationResult);
@@ -779,7 +921,10 @@ export default function ValoraDashboard() {
     const loan = price - downPmt;
     const rate = parseFloat(interestRate) / 100 / 12;
     const term = parseFloat(loanTerm) * 12;
-    const monthly = loan * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1);
+    // Guard against 0% interest rate: amortization formula divides by zero when rate is 0
+    const monthly = rate > 0
+      ? loan * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1)
+      : term > 0 ? loan / term : 0;
     const annualDebt = monthly * 12;
 
     // Closing costs from enrichment data or estimate
@@ -939,6 +1084,7 @@ export default function ValoraDashboard() {
 
   // Reset Analysis
   const resetAnalysis = () => {
+    if (analysisAbortRef.current) { analysisAbortRef.current.abort(); analysisAbortRef.current = null; }
     setAddress(""); setCity(""); setState(""); setZipCode(""); setPropertyType("");
     setSqft(""); setLotSize(""); setYearBuilt(""); setUnits("1"); setBeds(""); setBaths("");
     setUploadedImages([]); setValuation(null); setUnderwriting(null); setComps([]);
@@ -948,6 +1094,19 @@ export default function ValoraDashboard() {
     setDownPaymentPercent("25"); setInterestRate(liveRates.commercial.toString()); setLoanTerm("30");
     setVacancyRate("5"); setOperatingExpenseRatio("35");
     setEnrichmentData(null); setEnrichmentLoaded(false); setCoordinates(null);
+    setPropertyRecords(null); setRecordsLoaded(false);
+  };
+
+  // Sanitize HTML to prevent XSS in export windows
+  const escapeHtml = (str: string): string =>
+    str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  // Sanitize CSV field to prevent formula injection and quote escaping
+  const escapeCSV = (str: string): string => {
+    const escaped = str.replace(/"/g, '""');
+    // Prefix with single-quote if field starts with a formula trigger character
+    if (/^[=+\-@\t\r]/.test(escaped)) return `'${escaped}`;
+    return escaped;
   };
 
   // Build summary rows used by both the on-screen table and exports
@@ -1008,7 +1167,7 @@ export default function ValoraDashboard() {
     const rows = buildSummaryRows();
     const propertyLabel = address ? `${address}, ${city}, ${state}` : "Property Analysis";
     const header = `"Legacy RE Investment Summary"\n"${propertyLabel}"\n"Generated: ${new Date().toLocaleDateString()}"\n\n"Line Item","Value","Notes"\n`;
-    const csvRows = rows.map(r => `"${r[0]}","${r[1]}","${r[2]}"`).join("\n");
+    const csvRows = rows.map(r => `"${escapeCSV(r[0])}","${escapeCSV(r[1])}","${escapeCSV(r[2])}"`).join("\n");
     const csv = header + csvRows;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -1022,7 +1181,7 @@ export default function ValoraDashboard() {
   // Export as Excel (HTML table that Excel/Sheets can open)
   const exportExcel = () => {
     const rows = buildSummaryRows();
-    const propertyLabel = address ? `${address}, ${city}, ${state}` : "Property Analysis";
+    const propertyLabel = escapeHtml(address ? `${address}, ${city}, ${state}` : "Property Analysis");
     const sectionStyle = 'style="background:#1e293b;color:#fff;font-weight:700;font-size:11pt;padding:8px 12px;"';
     const headerStyle = 'style="background:#f1f5f9;font-weight:600;padding:6px 12px;border-bottom:2px solid #334155;"';
     const rowStyle = 'style="padding:5px 12px;border-bottom:1px solid #e2e8f0;"';
@@ -1060,13 +1219,13 @@ export default function ValoraDashboard() {
   // Export as PDF (print-optimized new window)
   const exportPDF = () => {
     const rows = buildSummaryRows();
-    const propertyLabel = address ? `${address}, ${city}, ${state} ${zipCode}` : "Property Analysis";
-    const propInfo = [
+    const propertyLabel = escapeHtml(address ? `${address}, ${city}, ${state} ${zipCode}` : "Property Analysis");
+    const propInfo = escapeHtml([
       propertyType && PROPERTY_TYPES.find(t => t.id === propertyType)?.name,
       sqft && `${parseInt(sqft).toLocaleString()} SF`,
       units && parseInt(units) > 1 && `${units} Units`,
       yearBuilt && `Built ${yearBuilt}`,
-    ].filter(Boolean).join(" · ");
+    ].filter(Boolean).join(" · "));
 
     let html = `<!DOCTYPE html><html><head><title>Legacy RE — ${propertyLabel}</title><style>
       @page { margin: 0.6in; size: letter; }
@@ -1236,6 +1395,10 @@ export default function ValoraDashboard() {
                     if (place.components.city && place.components.stateShort) {
                       fetchEnrichmentData(place.components.city, place.components.stateShort, place.components.zip);
                     }
+                    // Auto-fetch property records (lot size, sale history)
+                    if (place.address && place.components.city && place.components.stateShort) {
+                      fetchPropertyRecords(place.address, place.components.city, place.components.stateShort, place.components.zip);
+                    }
                   }}
                 />
                 {isEnriching && (
@@ -1248,6 +1411,20 @@ export default function ValoraDashboard() {
                   <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.375rem", fontSize: "0.75rem", color: "#16A34A" }}>
                     <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                     Area data loaded &mdash; tax rates, insurance, and expenses auto-populated
+                  </div>
+                )}
+                {isLoadingRecords && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.375rem", fontSize: "0.75rem", color: "#3B82F6" }}>
+                    <span className="val-spinner" style={{ width: 12, height: 12, borderWidth: 2 }}></span>
+                    Loading property records (lot size, sale history)...
+                  </div>
+                )}
+                {recordsLoaded && !isLoadingRecords && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.375rem", fontSize: "0.75rem", color: "#16A34A" }}>
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    Property records loaded{propertyRecords?.lotSizeAcres ? ` \u2014 ${propertyRecords.lotSizeAcres} acres` : ""}{propertyRecords?.saleHistory?.length ? `, ${propertyRecords.saleHistory.length} sale record${propertyRecords.saleHistory.length !== 1 ? "s" : ""}` : ""}
+                    {propertyRecords?.source === "rentcast" && <span style={{ marginLeft: "0.25rem", color: "#9CA3AF" }}>(public records)</span>}
+                    {propertyRecords?.source === "openai" && <span style={{ marginLeft: "0.25rem", color: "#9CA3AF" }}>(AI estimate)</span>}
                   </div>
                 )}
                 <div className="val-input-row" style={{ marginTop: "0.5rem" }}>
@@ -1417,6 +1594,60 @@ export default function ValoraDashboard() {
               </div>
             )}
 
+            {/* Property Records — Lot Size & Sale History */}
+            {recordsLoaded && propertyRecords && (propertyRecords.lotSizeAcres || (propertyRecords.saleHistory && propertyRecords.saleHistory.length > 0)) && (
+              <div className="val-rates-card">
+                <h4>Property Records</h4>
+                <div className="val-rates-list">
+                  {propertyRecords.lotSizeAcres && (
+                    <div className="val-rate-item">
+                      <span>Lot Size</span>
+                      <span className="rate">{propertyRecords.lotSizeAcres} acres{propertyRecords.lotSizeSqft ? ` (${propertyRecords.lotSizeSqft.toLocaleString()} sqft)` : ""}</span>
+                    </div>
+                  )}
+                  {propertyRecords.propertyDetails?.lastSalePrice && (
+                    <div className="val-rate-item">
+                      <span>Last Sale Price</span>
+                      <span className="rate">{formatCurrency(propertyRecords.propertyDetails.lastSalePrice)}</span>
+                    </div>
+                  )}
+                  {propertyRecords.propertyDetails?.lastSaleDate && (
+                    <div className="val-rate-item">
+                      <span>Last Sale Date</span>
+                      <span className="rate">{new Date(propertyRecords.propertyDetails.lastSaleDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                </div>
+                {propertyRecords.saleHistory.length > 0 && (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    <h5 style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>Sale History</h5>
+                    <table className="val-sale-history-tbl">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Price</th>
+                          <th>Type</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {propertyRecords.saleHistory.map((sale, idx) => (
+                          <tr key={idx}>
+                            <td>{new Date(sale.date).toLocaleDateString()}</td>
+                            <td>{formatCurrency(sale.price)}</td>
+                            <td>{sale.type || "Sale"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <span className="val-rates-updated">
+                  Source: {propertyRecords.source === "rentcast" ? "Public Records (RentCast)" : propertyRecords.source === "openai" ? "AI Estimate" : "Estimates"}
+                  {propertyRecords.disclaimer && <> &mdash; {propertyRecords.disclaimer}</>}
+                </span>
+              </div>
+            )}
+
             {/* Quick Links */}
             <div className="val-quick-links-card">
               <h4>Quick Links</h4>
@@ -1583,7 +1814,8 @@ export default function ValoraDashboard() {
                                 const consOpex = underwriting.operatingExpenses * 1.1;
                                 const consNoi = consEgi - consOpex;
                                 const consCf = consNoi - underwriting.annualDebtService;
-                                const consCoc = underwriting.downPayment > 0 ? (consCf / underwriting.downPayment) * 100 : 0;
+                                const consTotalCash = underwriting.totalCashRequired || underwriting.downPayment;
+                                const consCoc = consTotalCash > 0 ? (consCf / consTotalCash) * 100 : 0;
                                 return (
                                   <div style={{ padding: "0.75rem", borderRadius: "8px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)" }}>
                                     <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#EF4444", marginBottom: "0.5rem" }}>Conservative</div>
@@ -1614,7 +1846,8 @@ export default function ValoraDashboard() {
                                 const optOpex = underwriting.operatingExpenses * 0.95;
                                 const optNoi = optEgi - optOpex;
                                 const optCf = optNoi - underwriting.annualDebtService;
-                                const optCoc = underwriting.downPayment > 0 ? (optCf / underwriting.downPayment) * 100 : 0;
+                                const optTotalCash = underwriting.totalCashRequired || underwriting.downPayment;
+                                const optCoc = optTotalCash > 0 ? (optCf / optTotalCash) * 100 : 0;
                                 return (
                                   <div style={{ padding: "0.75rem", borderRadius: "8px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
                                     <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#16A34A", marginBottom: "0.5rem" }}>Optimistic</div>
@@ -1768,9 +2001,19 @@ export default function ValoraDashboard() {
                   {/* Valuation Tab */}
                   {activeTab === "valuation" && valuation && (
                     <div className="val-valuation-content">
+                      <div className="val-ai-disclaimer" style={propertyRecords?.source === "rentcast" ? { background: "#ecfdf5", borderColor: "#10b981", color: "#065f46" } : undefined}>
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        <div>
+                          {propertyRecords?.source === "rentcast" ? (
+                            <><strong>Grounded by Public Records</strong> — This valuation uses real sale history from county deed records to calibrate AI estimates. Comps and market data remain AI-generated and should be verified with local MLS data.</>
+                          ) : (
+                            <><strong>AI Estimate</strong> — This valuation is generated by AI based on market knowledge, not MLS transaction records. Values, comps, and market data are estimates and should be verified with local MLS data and a licensed appraiser before making investment decisions.</>
+                          )}
+                        </div>
+                      </div>
                       <div className="val-main-value">
                         <div className="val-value-card primary">
-                          <span className="label">Estimated Market Value</span>
+                          <span className="label">AI Estimated Market Value</span>
                           <span className="value">{formatCurrency(valuation.estimatedValue)}</span>
                           <div className="range">
                             <span>{formatCurrency(valuation.valueRange.low)}</span>
@@ -1829,9 +2072,19 @@ export default function ValoraDashboard() {
                   {/* Comps Tab */}
                   {activeTab === "comps" && (
                     <div className="val-comps-content">
+                      <div className="val-ai-disclaimer" style={propertyRecords?.source === "rentcast" ? { background: "#ecfdf5", borderColor: "#10b981", color: "#065f46" } : undefined}>
+                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        <div>
+                          {propertyRecords?.source === "rentcast" ? (
+                            <><strong>Comps Calibrated by Public Records</strong> — AI-generated comps have been calibrated using real sale history from county deed records for the subject property. Comp addresses and prices are still AI estimates — verify with local MLS data.</>
+                          ) : (
+                            <><strong>AI Estimated Comps</strong> — These comparable sales are AI-generated estimates, not actual MLS records. Addresses, sale prices, and dates are approximations based on market knowledge for this area. Always verify with local MLS data.</>
+                          )}
+                        </div>
+                      </div>
                       <div className="val-comps-header">
-                        <h4>Comparable Sales</h4>
-                        <span>{comps.length} properties {comps.some(c => c.googleValidated) ? "- distances verified via Google Maps" : "nearby"} &bull; 6-month lookback</span>
+                        <h4>Estimated Comparable Sales</h4>
+                        <span>{comps.length} AI-estimated comps {comps.some(c => c.googleValidated) ? "- distances verified via Google Maps" : ""} &bull; 6-month lookback</span>
                       </div>
                       <div className="val-comps-table">
                         <div className="val-comps-row header"><span>Address</span><span>Distance</span><span>Sale Price</span><span>Date</span><span>Sq Ft</span><span>$/SF</span></div>

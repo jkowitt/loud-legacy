@@ -25,10 +25,16 @@ export async function POST(request: NextRequest) {
 
     // If propertyId provided and user is authenticated, fetch from DB
     if (propertyId && session?.user) {
+      const userId = (session.user as { id?: string }).id;
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
         include: { images: true },
       });
+
+      // Verify the authenticated user owns this property
+      if (property && userId && property.userId !== userId) {
+        return NextResponse.json({ error: 'Not authorized to access this property' }, { status: 403 });
+      }
 
       if (property) {
         recPropertyType = property.propertyType || recPropertyType;
@@ -65,7 +71,7 @@ export async function POST(request: NextRequest) {
         });
         await prisma.activityLog.create({
           data: {
-            userId: (session.user as any).id,
+            userId: (session.user as { id?: string }).id || 'unknown',
             action: 'generated_property_recommendations',
             entityType: 'property',
             entityId: propertyId,

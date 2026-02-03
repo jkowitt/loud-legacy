@@ -26,7 +26,7 @@ async function geocodeServer(address: string): Promise<{ lat: number; lng: numbe
 
   try {
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
     const data = await res.json();
     if (data.status === "OK" && data.results?.[0]) {
@@ -199,7 +199,7 @@ function generateFallbackComps(propertyData: {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice, lat, lng } = body;
+    const { address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice, lat, lng, lotSizeAcres, saleHistory, saleHistorySource } = body;
 
     if (!propertyType) {
       return NextResponse.json({ error: "Property type is required" }, { status: 400 });
@@ -232,6 +232,9 @@ export async function POST(request: NextRequest) {
           yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
           units: units ? parseInt(units) : undefined,
           purchasePrice: purchasePrice ? parseFloat(purchasePrice) : undefined,
+          lotSizeAcres: lotSizeAcres ? parseFloat(lotSizeAcres) : undefined,
+          saleHistory: Array.isArray(saleHistory) ? saleHistory : undefined,
+          saleHistorySource: saleHistorySource || undefined,
         });
 
         // Add IDs to comps if missing

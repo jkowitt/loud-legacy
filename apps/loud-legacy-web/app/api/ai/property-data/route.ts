@@ -18,12 +18,15 @@ interface PropertyDataRequest {
   yearBuilt?: number;
   purchasePrice?: number;
   units?: number;
+  lotSizeAcres?: number;
+  saleHistory?: Array<{ date: string; price: number; type?: string }>;
+  saleHistorySource?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: PropertyDataRequest = await request.json();
-    const { city, state, zipCode, propertyType, sqft, yearBuilt, purchasePrice, units } = body;
+    const { city, state, zipCode, propertyType, sqft, yearBuilt, purchasePrice, units, lotSizeAcres, saleHistory, saleHistorySource } = body;
 
     if (!city || !state) {
       return NextResponse.json({ error: "City and state are required" }, { status: 400 });
@@ -36,14 +39,37 @@ export async function POST(request: NextRequest) {
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
         const today = new Date().toISOString().split('T')[0];
-        const estimatedValue = purchasePrice || (sqft ? sqft * 200 : 400000);
+
+        // Use most recent public sale record for value estimate when available
+        const lastSalePrice = saleHistory && saleHistory.length > 0 ? saleHistory[0].price : null;
+        const estimatedValue = purchasePrice || lastSalePrice || (sqft ? sqft * 200 : 400000);
+        const hasRealSaleData = lastSalePrice && saleHistorySource === "rentcast";
+
+        // Build sale history context
+        let saleHistoryContext = "";
+        if (saleHistory && saleHistory.length > 0) {
+          const label = saleHistorySource === "rentcast" ? "PUBLIC RECORDS (verified)" : "estimated";
+          saleHistoryContext = `\n\nSale History (${label}):\n${saleHistory.map(s => `  - ${s.date}: $${s.price.toLocaleString()}`).join("\n")}`;
+          if (hasRealSaleData) {
+            saleHistoryContext += `\nThe most recent recorded sale price ($${lastSalePrice.toLocaleString()}) is the best available basis for property tax assessment calculations.`;
+          }
+        }
 
         const response = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: `You are a real estate data analyst with deep knowledge of property tax rates, insurance costs, operating expenses, and market statistics across the United States. Provide accurate, location-specific estimates based on current data as of ${today}. Base your estimates on the specific city, state, and property type provided.`,
+              content: `You are a real estate data analyst providing ESTIMATES of property costs and area statistics. ${hasRealSaleData
+                ? "You have been given REAL public records data including verified sale history. Use the most recent sale price as a strong basis for tax assessments, insurance valuations, and operating cost calculations."
+                : "You do NOT have access to live county assessor databases, MLS, or insurance quote systems. Your estimates are based on your training data about typical costs for specific locations and property types."}
+
+RULES:
+- Be CONSERVATIVE. Underestimates are better than overestimates.
+- Property tax rates by state are relatively well-known public data — use accurate state-level rates. County-level variation exists, so note this.
+- Insurance and maintenance costs should use industry benchmarks, not guesses.
+- For area statistics (median prices, cap rates, vacancy), acknowledge these are estimates from your training data, not live market data.
+- Today's date is ${today}. Your training data may not reflect the most recent market shifts.${hasRealSaleData ? "\n- Use the real sale price data provided to ground your property tax and insurance estimates." : ""}`,
             },
             {
               role: "user",
@@ -52,9 +78,10 @@ export async function POST(request: NextRequest) {
 Location: ${city}, ${state} ${zipCode || ""}
 Property Type: ${propertyType}
 Square Feet: ${sqft || "Unknown"}
+${lotSizeAcres ? `Lot Size: ${lotSizeAcres} acres` : ""}
 Year Built: ${yearBuilt || "Unknown"}
-Estimated Value: $${estimatedValue.toLocaleString()}
-Units: ${units || 1}
+Estimated Value: $${estimatedValue.toLocaleString()}${hasRealSaleData ? " (based on recorded sale price)" : ""}
+Units: ${units || 1}${saleHistoryContext}
 
 Provide ALL of the following data points with realistic, location-specific values:
 
@@ -141,7 +168,8 @@ Return ONLY valid JSON matching the structure described above. Use realistic val
     }
 
     // Fallback estimates when OpenAI is not available
-    const estimatedValue = purchasePrice || (sqft ? sqft * 200 : 400000);
+    const fallbackLastSale = saleHistory && saleHistory.length > 0 ? saleHistory[0].price : null;
+    const estimatedValue = purchasePrice || fallbackLastSale || (sqft ? sqft * 200 : 400000);
     const estSqft = sqft || 2000;
     const estUnits = units || 1;
 
@@ -249,28 +277,30 @@ Return ONLY valid JSON matching the structure described above. Use realistic val
 }
 
 /**
- * Fetch live mortgage rates from the /api/interest-rates endpoint (internal call).
- * Falls back to static defaults if the fetch fails.
+ * Get mortgage rates by querying FRED directly (same logic as /api/interest-rates).
+ * Avoids self-referential HTTP calls that fail in serverless environments.
+ * Falls back to static defaults if the FRED fetch fails.
  */
 async function getLiveRates(): Promise<{ conventional30: number; conventional15: number; commercial: number; bridge: number }> {
   const defaults = { conventional30: 6.875, conventional15: 6.125, commercial: 7.50, bridge: 10.25 };
+  const fredKey = process.env.FRED_API_KEY;
+  if (!fredKey) return defaults;
+
   try {
-    // Use the same host since this is a server-side internal call
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/interest-rates`, { signal: AbortSignal.timeout(5000) });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.conventional30) {
-        return {
-          conventional30: data.conventional30,
-          conventional15: data.conventional15 || defaults.conventional15,
-          commercial: data.commercial || defaults.commercial,
-          bridge: data.bridge || defaults.bridge,
-        };
-      }
-    }
+    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=MORTGAGE30US&api_key=${fredKey}&file_type=json&sort_order=desc&limit=5`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return defaults;
+    const json = await res.json();
+    const obs = json.observations?.find((o: { value: string }) => o.value !== '.');
+    const rate30 = obs ? parseFloat(obs.value) : null;
+    if (!rate30) return defaults;
+    return {
+      conventional30: rate30,
+      conventional15: Math.round((rate30 - 0.60) * 100) / 100,
+      commercial: Math.round((rate30 + 0.75) * 100) / 100,
+      bridge: Math.round((rate30 + 3.0) * 100) / 100,
+    };
   } catch {
-    // Silently fall back to defaults
+    return defaults;
   }
-  return defaults;
 }
