@@ -91,6 +91,14 @@ interface ValuationResult {
   marketFactors: string[];
   improvements: ImprovementItem[];
   conditionScore: number;
+  marketTrendAdjustment?: {
+    adjustmentPercent: number;
+    adjustmentAmount: number;
+    preAdjustmentValue: number;
+    marketTemperature: string;
+    trendDirection: string;
+    annualAppreciationRate: number;
+  };
 }
 
 // Comp Property Interface
@@ -198,6 +206,29 @@ interface PropertyRecordsData {
     overageCostCents: number;
     wasOverage: boolean;
   };
+}
+
+// Market Trends Data (from OpenAI real-time analysis)
+interface MarketTrendsData {
+  marketTemperature: "hot" | "warm" | "neutral" | "cool" | "cold";
+  temperatureScore: number;
+  annualAppreciationRate: number;
+  trendDirection: "appreciating" | "stable" | "declining";
+  trendVelocity: "rapid" | "moderate" | "slow";
+  valueAdjustmentPercent: number;
+  medianDaysOnMarket: number;
+  inventoryLevel: string;
+  buyerDemand: string;
+  pricePerSqftTrend: {
+    current: number;
+    sixMonthsAgo: number;
+    oneYearAgo: number;
+    changePercent: number;
+  };
+  keyDrivers: string[];
+  areaHighlights: string[];
+  outlook12Month: string;
+  confidenceInTrend: number;
 }
 
 // Property Enrichment Data Interface
@@ -373,6 +404,9 @@ export default function ValoraDashboard() {
   const [enrichmentData, setEnrichmentData] = useState<PropertyEnrichmentData | null>(null);
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichmentLoaded, setEnrichmentLoaded] = useState(false);
+
+  // Market Trends State
+  const [marketTrends, setMarketTrends] = useState<MarketTrendsData | null>(null);
 
   // Live Interest Rates State
   const [liveRates, setLiveRates] = useState(DEFAULT_RATES);
@@ -696,6 +730,33 @@ export default function ValoraDashboard() {
       ];
     }
 
+    // Fetch real-time market trends for the area (runs in parallel with nothing — called after comps so we can pass comp data)
+    let trendData: MarketTrendsData | null = null;
+    try {
+      const trendRes = await fetch('/api/ai/market-trends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: abortController.signal,
+        body: JSON.stringify({
+          city, state, zipCode, propertyType, address,
+          sqft,
+          saleHistory: propertyRecords?.saleHistory,
+          saleHistorySource: propertyRecords?.source,
+          comps: aiComps.map(c => ({ salePrice: c.salePrice, saleDate: c.saleDate, sqft: c.sqft, pricePerSqft: c.pricePerSqft })),
+          currentEstimatedValue: marketSummary?.suggestedValue,
+        }),
+      });
+      if (trendRes.ok) {
+        const trendJson = await trendRes.json();
+        if (trendJson.marketTrends) {
+          trendData = trendJson.marketTrends;
+          setMarketTrends(trendData);
+        }
+      }
+    } catch (err) {
+      console.error("Market trends API error:", err);
+    }
+
     // Build valuation from comps data, grounded by real sale records when available
     const hasRealRecords = propertyRecords?.source === "rentcast" && propertyRecords?.saleHistory?.length > 0;
     const lastRealSalePrice = hasRealRecords ? propertyRecords!.saleHistory[0].price : null;
@@ -707,15 +768,25 @@ export default function ValoraDashboard() {
       || Math.round(aiComps.reduce((a, b) => a + b.pricePerSqft, 0) / aiComps.length);
 
     // Blend AI suggested value with real last sale when both are available
-    let estimatedValue: number;
+    let preAdjustmentValue: number;
     if (lastRealSalePrice && marketSummary?.suggestedValue) {
       // 60% weight on real sale records, 40% on AI market estimate
-      estimatedValue = Math.round(lastRealSalePrice * 0.6 + marketSummary.suggestedValue * 0.4);
+      preAdjustmentValue = Math.round(lastRealSalePrice * 0.6 + marketSummary.suggestedValue * 0.4);
     } else {
-      estimatedValue = lastRealSalePrice || marketSummary?.suggestedValue || baseSqft * avgPricePerSqft;
+      preAdjustmentValue = lastRealSalePrice || marketSummary?.suggestedValue || baseSqft * avgPricePerSqft;
     }
 
-    const valueRange = marketSummary?.valueRange || { low: Math.round(estimatedValue * 0.92), high: Math.round(estimatedValue * 1.08) };
+    // Apply market trend adjustment to reflect current area conditions
+    const trendAdjustmentPct = trendData?.valueAdjustmentPercent ?? 0;
+    const trendAdjustmentAmount = Math.round(preAdjustmentValue * (trendAdjustmentPct / 100));
+    const estimatedValue = preAdjustmentValue + trendAdjustmentAmount;
+
+    const baseRange = marketSummary?.valueRange || { low: Math.round(preAdjustmentValue * 0.92), high: Math.round(preAdjustmentValue * 1.08) };
+    // Shift value range by the same trend adjustment
+    const valueRange = {
+      low: baseRange.low + trendAdjustmentAmount,
+      high: baseRange.high + trendAdjustmentAmount,
+    };
     // Boost confidence when grounded by real sale data
     const baseConfidence = marketSummary?.confidence || 45;
     const confidence = hasRealRecords ? Math.min(baseConfidence + 15, 80) : baseConfidence;
@@ -864,6 +935,11 @@ export default function ValoraDashboard() {
 
     const marketFactors = [
       ...(hasRealRecords ? [`Last recorded sale: ${formatCurrency(lastRealSalePrice!)} ($${lastRealPpsf}/sqft) — from public records`] : []),
+      ...(trendData ? [
+        `Market temperature: ${trendData.marketTemperature.toUpperCase()} — ${trendData.trendDirection} at ${trendData.trendVelocity} pace`,
+        `Annual appreciation: ${trendData.annualAppreciationRate > 0 ? "+" : ""}${trendData.annualAppreciationRate}%${trendAdjustmentPct !== 0 ? ` (${trendAdjustmentPct > 0 ? "+" : ""}${trendAdjustmentPct}% applied to valuation)` : ""}`,
+        ...(trendData.areaHighlights || []),
+      ] : []),
       ...(marketSummary?.keyInsights || []),
       ...(marketSummary?.keyInsights ? [] : [
         `Average price per sqft in ${city || "the area"}: $${avgPricePerSqft}`,
@@ -908,6 +984,16 @@ export default function ValoraDashboard() {
       marketFactors,
       improvements: improvementItems,
       conditionScore,
+      ...(trendData && trendAdjustmentPct !== 0 ? {
+        marketTrendAdjustment: {
+          adjustmentPercent: trendAdjustmentPct,
+          adjustmentAmount: trendAdjustmentAmount,
+          preAdjustmentValue,
+          marketTemperature: trendData.marketTemperature,
+          trendDirection: trendData.trendDirection,
+          annualAppreciationRate: trendData.annualAppreciationRate,
+        },
+      } : {}),
     };
 
     // Don't update state if this analysis was aborted
@@ -2110,6 +2196,76 @@ export default function ValoraDashboard() {
                           </div>
                         </div>
                       </div>
+                      {/* Market Trend Analysis */}
+                      {marketTrends && (
+                        <div className="val-market-trends" style={{ marginBottom: "1.25rem" }}>
+                          <h4>Local Market Trend Analysis</h4>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                            <div style={{ background: marketTrends.marketTemperature === "hot" ? "#FEF2F2" : marketTrends.marketTemperature === "warm" ? "#FFFBEB" : marketTrends.marketTemperature === "cool" ? "#EFF6FF" : marketTrends.marketTemperature === "cold" ? "#EEF2FF" : "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "0.75rem", textAlign: "center" }}>
+                              <div style={{ fontSize: "0.7rem", color: "#6B7280", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>Market Temp</div>
+                              <div style={{ fontSize: "1.25rem", fontWeight: 700, color: marketTrends.marketTemperature === "hot" ? "#DC2626" : marketTrends.marketTemperature === "warm" ? "#D97706" : marketTrends.marketTemperature === "cool" ? "#2563EB" : marketTrends.marketTemperature === "cold" ? "#4338CA" : "#6B7280" }}>
+                                {marketTrends.marketTemperature.toUpperCase()}
+                              </div>
+                              <div style={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{marketTrends.temperatureScore}/100</div>
+                            </div>
+                            <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "0.75rem", textAlign: "center" }}>
+                              <div style={{ fontSize: "0.7rem", color: "#6B7280", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>Appreciation</div>
+                              <div style={{ fontSize: "1.25rem", fontWeight: 700, color: marketTrends.annualAppreciationRate > 0 ? "#16A34A" : marketTrends.annualAppreciationRate < 0 ? "#DC2626" : "#6B7280" }}>
+                                {marketTrends.annualAppreciationRate > 0 ? "+" : ""}{marketTrends.annualAppreciationRate}%
+                              </div>
+                              <div style={{ fontSize: "0.7rem", color: "#9CA3AF" }}>annual rate</div>
+                            </div>
+                            <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "0.75rem", textAlign: "center" }}>
+                              <div style={{ fontSize: "0.7rem", color: "#6B7280", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>Days on Market</div>
+                              <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#1B2A4A" }}>
+                                {marketTrends.medianDaysOnMarket}
+                              </div>
+                              <div style={{ fontSize: "0.7rem", color: "#9CA3AF" }}>median DOM</div>
+                            </div>
+                            <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "0.75rem", textAlign: "center" }}>
+                              <div style={{ fontSize: "0.7rem", color: "#6B7280", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>$/sqft Trend</div>
+                              <div style={{ fontSize: "1.25rem", fontWeight: 700, color: marketTrends.pricePerSqftTrend.changePercent > 0 ? "#16A34A" : marketTrends.pricePerSqftTrend.changePercent < 0 ? "#DC2626" : "#6B7280" }}>
+                                {marketTrends.pricePerSqftTrend.changePercent > 0 ? "+" : ""}{marketTrends.pricePerSqftTrend.changePercent}%
+                              </div>
+                              <div style={{ fontSize: "0.7rem", color: "#9CA3AF" }}>12-month change</div>
+                            </div>
+                            <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "0.75rem", textAlign: "center" }}>
+                              <div style={{ fontSize: "0.7rem", color: "#6B7280", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>Buyer Demand</div>
+                              <div style={{ fontSize: "1rem", fontWeight: 700, color: "#1B2A4A" }}>
+                                {(marketTrends.buyerDemand || "").replace(/_/g, " ").toUpperCase()}
+                              </div>
+                              <div style={{ fontSize: "0.7rem", color: "#9CA3AF" }}>inventory: {(marketTrends.inventoryLevel || "").replace(/_/g, " ")}</div>
+                            </div>
+                          </div>
+                          {/* Trend adjustment callout */}
+                          {valuation.marketTrendAdjustment && valuation.marketTrendAdjustment.adjustmentPercent !== 0 && (
+                            <div style={{ background: valuation.marketTrendAdjustment.adjustmentPercent > 0 ? "#ECFDF5" : "#FEF2F2", border: `1px solid ${valuation.marketTrendAdjustment.adjustmentPercent > 0 ? "#10B981" : "#EF4444"}`, borderRadius: "8px", padding: "0.75rem", marginBottom: "0.75rem", fontSize: "0.8rem" }}>
+                              <strong style={{ color: valuation.marketTrendAdjustment.adjustmentPercent > 0 ? "#065F46" : "#991B1B" }}>
+                                Market Trend Adjustment: {valuation.marketTrendAdjustment.adjustmentPercent > 0 ? "+" : ""}{valuation.marketTrendAdjustment.adjustmentPercent}% ({valuation.marketTrendAdjustment.adjustmentAmount > 0 ? "+" : ""}{formatCurrency(valuation.marketTrendAdjustment.adjustmentAmount)})
+                              </strong>
+                              <div style={{ marginTop: "0.25rem", color: valuation.marketTrendAdjustment.adjustmentPercent > 0 ? "#047857" : "#B91C1C" }}>
+                                Base value {formatCurrency(valuation.marketTrendAdjustment.preAdjustmentValue)} adjusted to {formatCurrency(valuation.estimatedValue)} to reflect the {valuation.marketTrendAdjustment.marketTemperature} {valuation.marketTrendAdjustment.trendDirection} market in this area ({valuation.marketTrendAdjustment.annualAppreciationRate > 0 ? "+" : ""}{valuation.marketTrendAdjustment.annualAppreciationRate}% annual appreciation).
+                              </div>
+                            </div>
+                          )}
+                          {/* Key drivers */}
+                          {marketTrends.keyDrivers && marketTrends.keyDrivers.length > 0 && (
+                            <div style={{ marginBottom: "0.5rem" }}>
+                              <strong style={{ fontSize: "0.8rem", color: "#374151" }}>Key Market Drivers:</strong>
+                              <ul style={{ margin: "0.25rem 0 0 1rem", fontSize: "0.8rem", color: "#4B5563" }}>
+                                {marketTrends.keyDrivers.map((d, i) => <li key={i}>{d}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                          {/* 12-month outlook */}
+                          {marketTrends.outlook12Month && (
+                            <div style={{ fontSize: "0.8rem", color: "#374151", fontStyle: "italic", padding: "0.5rem", background: "#F3F4F6", borderRadius: "6px" }}>
+                              <strong>12-Month Outlook:</strong> {marketTrends.outlook12Month}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="val-market-factors">
                         <h4>Market Factors</h4>
                         <ul>{valuation.marketFactors.map((factor, i) => <li key={i}>{factor}</li>)}</ul>
