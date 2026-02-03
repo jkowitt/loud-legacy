@@ -10039,6 +10039,32 @@ textarea:focus-visible {
   color: #94a3b8;
 }
 
+/* AI Disclaimer Banner */
+.val-ai-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #92400e;
+}
+
+.val-ai-disclaimer svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #d97706;
+}
+
+.val-ai-disclaimer strong {
+  font-weight: 700;
+  color: #78350f;
+}
+
 /* Notes Section */
 .val-notes-section {
   margin-top: 1.5rem;

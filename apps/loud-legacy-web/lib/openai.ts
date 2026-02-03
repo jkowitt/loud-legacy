@@ -235,8 +235,9 @@ Return ONLY valid JSON with this structure:
 }
 
 /**
- * Generate comparable property sales using AI analysis
- * Provides realistic comps based on property details and location
+ * Generate ESTIMATED comparable sales using AI market knowledge.
+ * These are NOT real MLS records — they are AI-generated estimates
+ * based on the model's training data about real estate pricing.
  */
 export async function analyzeComparables(propertyData: {
   address: string;
@@ -252,18 +253,27 @@ export async function analyzeComparables(propertyData: {
 }) {
   try {
     const openai = getOpenAIClient();
+    const today = new Date().toISOString().split('T')[0];
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a real estate comparable sales analyst. Given a subject property, generate realistic comparable sales that would be used in a professional appraisal. Comps should be nearby properties with similar characteristics that sold recently. Use realistic addresses, prices, and metrics for the given market area. Base your analysis on typical market data for the location and property type.
+          content: `You are a real estate market analyst. You do NOT have access to MLS, public records, or live transaction databases. You are providing ESTIMATES based on your training data about real estate pricing patterns, neighborhood values, and market conditions.
 
-CRITICAL: Today's date is ${new Date().toISOString().split('T')[0]}. A good comp MUST have sold within the last 6 months. More recent sales are more reliable indicators of current market value. The farther from the sale date, the lower the confidence in that comp. If a comp is older than 6 months it should not be included. Prioritize the most recent sales first.`,
+RULES YOU MUST FOLLOW:
+1. Be CONSERVATIVE. It is far better to underestimate values than to overestimate. Brokers will compare your numbers to real MLS data — if you are too high, you lose all credibility.
+2. Use REAL street names that actually exist in ${propertyData.city}, ${propertyData.state}. Do not invent streets.
+3. Base $/sqft estimates on your knowledge of median home prices and typical $/sqft for this specific city and property type. Do NOT anchor on any listed price the user provides — analyze the market independently.
+4. Provide meaningful VALUE RANGES (at least +/- 10-15%) to reflect the uncertainty in AI estimates.
+5. Your confidence score should NEVER exceed 55 because you lack real transaction data. This is inherently an estimate.
+6. For sale prices: think about what the Zillow/Redfin median is for this zip code, then adjust for property specifics. If you are uncertain about a market, widen your ranges and lower confidence.
+7. Today's date is ${today}. Set estimated sale dates within the last 6 months.`,
         },
         {
           role: "user",
-          content: `Generate 5-7 comparable sales for this subject property:
+          content: `Provide estimated comparable sales for this property:
 
 Address: ${propertyData.address}, ${propertyData.city}, ${propertyData.state}
 Property Type: ${propertyData.propertyType}
@@ -272,43 +282,43 @@ Beds: ${propertyData.beds || 'N/A'}
 Baths: ${propertyData.baths || 'N/A'}
 Year Built: ${propertyData.yearBuilt || 'Unknown'}
 Units: ${propertyData.units || '1'}
-${propertyData.purchasePrice ? `Listed/Purchase Price: $${propertyData.purchasePrice.toLocaleString()}` : ''}
+${propertyData.purchasePrice ? `User-Provided Price Reference: $${propertyData.purchasePrice.toLocaleString()} (DO NOT simply echo this back — provide your own independent estimate)` : ''}
 
-Today's date is ${new Date().toISOString().split('T')[0]}. ALL comps must have sold within the last 6 months. Prefer the most recent sales.
-
-For each comp provide:
-- address: A realistic nearby street address (use real street name patterns for ${propertyData.city}, ${propertyData.state})
-- distance: Distance from subject (e.g., "0.3 mi")
-- salePrice: Recent sale price in dollars
-- saleDate: Sale date in YYYY-MM-DD format (MUST be within the last 6 months from today)
-- daysAgo: Number of days between sale date and today
-- sqft: Square footage
-- pricePerSqft: Price per square foot (calculated)
+Generate 4-6 estimated comps. For each:
+- address: A REAL street name in ${propertyData.city}, ${propertyData.state} with a plausible house number
+- distance: Estimated distance (keep within 1.5 miles)
+- salePrice: Your best conservative estimate of a realistic sale price
+- salePriceRange: { low: number, high: number } — realistic range (+/- 8-12%)
+- saleDate: Within last 6 months from ${today}
+- daysAgo: Days between sale date and today
+- sqft: Similar to subject (+/- 15%)
+- pricePerSqft: Calculated from salePrice / sqft
 - propertyType: Same as subject
-- yearBuilt: Year built
-- beds: Number of bedrooms (if residential)
-- baths: Number of bathrooms (if residential)
-- units: Number of units (if multifamily)
-- capRate: Cap rate percentage (if income property)
-- adjustments: Brief note on how this comp compares to subject (e.g., "Superior location, inferior condition")
+- yearBuilt: Similar vintage
+- beds, baths, units: Similar to subject
+- capRate: If income property, estimated area cap rate
+- adjustments: What adjustments a real appraiser would make vs. the subject
 
-Also provide a market summary with:
-- avgPricePerSqft: Average price per sqft across comps
-- medianSalePrice: Median sale price
-- suggestedValue: Your estimated fair market value for the subject
-- valueRange: { low: number, high: number }
-- confidence: Confidence level 0-100 (reduce confidence if comps are older; comps within 30 days = highest confidence, 30-90 days = high, 90-150 days = moderate, 150-180 days = low)
+Market summary:
+- avgPricePerSqft: Best estimate of $/sqft for this property type in this market
+- pricePerSqftRange: { low: number, high: number }
+- medianSalePrice: Estimated median for similar properties
+- suggestedValue: Conservative estimate of fair market value
+- valueRange: { low: number, high: number } — meaningful range reflecting uncertainty (at least +/- 12%)
+- confidence: 0-55 MAX. Be honest about the limits of AI estimation without MLS data.
 - marketTrend: "appreciating", "stable", or "declining"
-- keyInsights: Array of 3-5 market insight strings
+- keyInsights: 3-5 insights about this specific market
+- disclaimer: "These are AI-generated estimates based on market knowledge, not actual MLS transaction records. Verify all values with local MLS data before making investment decisions."
 
 Return ONLY valid JSON:
 {
-  "comps": [{ ... }],
-  "marketSummary": { "avgPricePerSqft": 0, "medianSalePrice": 0, "suggestedValue": 0, "valueRange": { "low": 0, "high": 0 }, "confidence": 0, "marketTrend": "", "keyInsights": [""] }
+  "comps": [{ "address": "", "distance": "", "salePrice": 0, "salePriceRange": { "low": 0, "high": 0 }, "saleDate": "", "daysAgo": 0, "sqft": 0, "pricePerSqft": 0, "propertyType": "", "yearBuilt": 0, "beds": 0, "baths": 0, "units": 0, "capRate": 0, "adjustments": "" }],
+  "marketSummary": { "avgPricePerSqft": 0, "pricePerSqftRange": { "low": 0, "high": 0 }, "medianSalePrice": 0, "suggestedValue": 0, "valueRange": { "low": 0, "high": 0 }, "confidence": 0, "marketTrend": "", "keyInsights": [""], "disclaimer": "" }
 }`,
         },
       ],
       max_tokens: 3000,
+      temperature: 0.3,
       response_format: { type: "json_object" },
     });
 
