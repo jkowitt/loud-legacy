@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50")));
     const userIdFilter = searchParams.get("userId");
 
-    const where: Record<string, unknown> = {
+    const where: { action: string; userId?: string } = {
       action: "evaluation_completed",
     };
     if (userIdFilter) {
@@ -63,7 +63,14 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Parse the details JSON for each evaluation
-    const formatted = evaluations.map((e: { id: string; userId: string | null; details: unknown; createdAt: Date; user: { name: string | null; email: string; role: string } | null }) => {
+    // Explicit annotation matches Prisma schema (userId is String?, user is optional relation)
+    const formatted = evaluations.map((e: {
+      id: string;
+      userId: string | null;
+      details: unknown;
+      createdAt: Date;
+      user: { name: string | null; email: string; role: string } | null;
+    }) => {
       const details = (e.details || {}) as Record<string, unknown>;
       return {
         id: e.id,
