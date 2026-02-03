@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { verifyRecaptchaToken } from '@/lib/recaptcha';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, email, password } = body;
+    const { name, email, password, recaptchaToken } = body;
+
+    // Google Cloud reCAPTCHA Enterprise verification
+    const recaptchaResult = await verifyRecaptchaToken(recaptchaToken || '', 'signup');
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: 'Security verification failed. Please try again.' },
+        { status: 403 }
+      );
+    }
 
     if (!email || !password) {
       return NextResponse.json(

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn as nextAuthSignIn } from "next-auth/react";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -22,6 +24,33 @@ export default function SignUpPage() {
   const plan = searchParams.get("plan");
   const trial = searchParams.get("trial");
 
+  // Load Google reCAPTCHA Enterprise script
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY) return;
+    const id = "recaptcha-enterprise-script";
+    if (document.getElementById(id)) return;
+    const script = document.createElement("script");
+    script.id = id;
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${RECAPTCHA_SITE_KEY}`;
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
+
+  const getRecaptchaToken = useCallback(async (): Promise<string | null> => {
+    if (!RECAPTCHA_SITE_KEY) return null;
+    try {
+      const grecaptcha = (window as unknown as { grecaptcha: { enterprise: { ready: (cb: () => void) => void; execute: (key: string, opts: { action: string }) => Promise<string> } } }).grecaptcha;
+      return await new Promise<string>((resolve) => {
+        grecaptcha.enterprise.ready(async () => {
+          const token = await grecaptcha.enterprise.execute(RECAPTCHA_SITE_KEY, { action: "signup" });
+          resolve(token);
+        });
+      });
+    } catch {
+      return null;
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -39,6 +68,9 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
+      // Get reCAPTCHA token (null if not configured)
+      const recaptchaToken = await getRecaptchaToken();
+
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,6 +81,7 @@ export default function SignUpPage() {
           isBeta: isBeta || true, // Always mark as BETA for now
           plan: plan || "BETA",
           trialDays: trial ? parseInt(trial) : 0,
+          recaptchaToken,
         }),
       });
 

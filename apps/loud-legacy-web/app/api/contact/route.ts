@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { verifyRecaptchaToken } from "@/lib/recaptcha";
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Google Cloud reCAPTCHA Enterprise verification
+    const recaptchaResult = await verifyRecaptchaToken(body.recaptchaToken || '', 'contact');
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: "Security verification failed. Please try again." },
+        { status: 403 }
+      );
+    }
 
     // Validate input
     const validationResult = contactSchema.safeParse(body);
