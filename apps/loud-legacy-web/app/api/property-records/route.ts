@@ -42,9 +42,10 @@ interface PropertyRecordsResponse {
   disclaimer?: string;
 }
 
-// Simple in-memory cache (5-minute TTL)
+// Simple in-memory cache (5-minute TTL, max 200 entries)
 const recordsCache = new Map<string, { data: PropertyRecordsResponse; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_MAX_SIZE = 200;
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,6 +61,18 @@ export async function POST(request: NextRequest) {
     const cached = recordsCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       return NextResponse.json(cached.data);
+    }
+    // Evict stale and excess entries to prevent unbounded memory growth
+    if (recordsCache.size >= CACHE_MAX_SIZE) {
+      const now = Date.now();
+      for (const [key, entry] of recordsCache) {
+        if (now - entry.timestamp > CACHE_TTL) recordsCache.delete(key);
+      }
+      // If still at limit, remove oldest entries
+      if (recordsCache.size >= CACHE_MAX_SIZE) {
+        const oldest = [...recordsCache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
+        for (let i = 0; i < Math.ceil(CACHE_MAX_SIZE / 4); i++) recordsCache.delete(oldest[i][0]);
+      }
     }
 
     // Try RentCast API first

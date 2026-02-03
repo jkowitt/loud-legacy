@@ -312,6 +312,7 @@ export default function ValoraDashboard() {
   // Photo State (optional)
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const analysisAbortRef = useRef<AbortController | null>(null);
 
   // Underwriting State
   const [underwriting, setUnderwriting] = useState<UnderwritingData | null>(null);
@@ -594,7 +595,7 @@ export default function ValoraDashboard() {
     totalMonthlyRent: rentRoll.reduce((sum, u) => sum + (u.status === "occupied" ? u.monthlyRent : 0), 0),
     totalMarketRent: rentRoll.reduce((sum, u) => sum + u.marketRent, 0),
     occupancyRate: rentRoll.length > 0 ? (rentRoll.filter(u => u.status === "occupied").length / rentRoll.length * 100) : 0,
-    lossToLease: rentRoll.reduce((sum, u) => sum + (u.marketRent - u.monthlyRent), 0),
+    lossToLease: rentRoll.filter(u => u.status === "occupied").reduce((sum, u) => sum + (u.marketRent - u.monthlyRent), 0),
   };
 
   // Calculate P&L totals
@@ -609,6 +610,11 @@ export default function ValoraDashboard() {
   const runAnalysis = async () => {
     if (!address || !propertyType) return;
 
+    // Abort any in-flight analysis before starting a new one
+    if (analysisAbortRef.current) analysisAbortRef.current.abort();
+    const abortController = new AbortController();
+    analysisAbortRef.current = abortController;
+
     setIsAnalyzing(true);
 
     const baseSqft = parseInt(sqft) || 2000;
@@ -621,6 +627,7 @@ export default function ValoraDashboard() {
       const compsRes = await fetch('/api/ai/comps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: abortController.signal,
         body: JSON.stringify({
           address, city, state, propertyType, sqft, beds, baths, yearBuilt, units, purchasePrice,
           lat: coordinates?.lat, lng: coordinates?.lng,
@@ -709,6 +716,7 @@ export default function ValoraDashboard() {
         const imgRes = await fetch('/api/ai/improvements', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
           body: JSON.stringify({ imageBase64: base64Data, area: 'exterior-front' }),
         });
         if (imgRes.ok) {
@@ -751,6 +759,7 @@ export default function ValoraDashboard() {
           const svRes = await fetch('/api/ai/improvements', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: abortController.signal,
             body: JSON.stringify({ imageUrl: streetViewUrl, area: 'exterior-front' }),
           });
           if (svRes.ok) {
@@ -791,6 +800,7 @@ export default function ValoraDashboard() {
         const recRes = await fetch('/api/ai/recommendations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
           body: JSON.stringify({
             propertyType,
             condition: 75,
@@ -886,6 +896,9 @@ export default function ValoraDashboard() {
       conditionScore,
     };
 
+    // Don't update state if this analysis was aborted
+    if (abortController.signal.aborted) return;
+
     setComps(aiComps);
     setValuation(valuationResult);
     if (!purchasePrice) {
@@ -908,7 +921,10 @@ export default function ValoraDashboard() {
     const loan = price - downPmt;
     const rate = parseFloat(interestRate) / 100 / 12;
     const term = parseFloat(loanTerm) * 12;
-    const monthly = loan * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1);
+    // Guard against 0% interest rate: amortization formula divides by zero when rate is 0
+    const monthly = rate > 0
+      ? loan * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1)
+      : term > 0 ? loan / term : 0;
     const annualDebt = monthly * 12;
 
     // Closing costs from enrichment data or estimate
@@ -1068,6 +1084,7 @@ export default function ValoraDashboard() {
 
   // Reset Analysis
   const resetAnalysis = () => {
+    if (analysisAbortRef.current) { analysisAbortRef.current.abort(); analysisAbortRef.current = null; }
     setAddress(""); setCity(""); setState(""); setZipCode(""); setPropertyType("");
     setSqft(""); setLotSize(""); setYearBuilt(""); setUnits("1"); setBeds(""); setBaths("");
     setUploadedImages([]); setValuation(null); setUnderwriting(null); setComps([]);
@@ -1078,6 +1095,18 @@ export default function ValoraDashboard() {
     setVacancyRate("5"); setOperatingExpenseRatio("35");
     setEnrichmentData(null); setEnrichmentLoaded(false); setCoordinates(null);
     setPropertyRecords(null); setRecordsLoaded(false);
+  };
+
+  // Sanitize HTML to prevent XSS in export windows
+  const escapeHtml = (str: string): string =>
+    str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  // Sanitize CSV field to prevent formula injection and quote escaping
+  const escapeCSV = (str: string): string => {
+    const escaped = str.replace(/"/g, '""');
+    // Prefix with single-quote if field starts with a formula trigger character
+    if (/^[=+\-@\t\r]/.test(escaped)) return `'${escaped}`;
+    return escaped;
   };
 
   // Build summary rows used by both the on-screen table and exports
@@ -1138,7 +1167,7 @@ export default function ValoraDashboard() {
     const rows = buildSummaryRows();
     const propertyLabel = address ? `${address}, ${city}, ${state}` : "Property Analysis";
     const header = `"Legacy RE Investment Summary"\n"${propertyLabel}"\n"Generated: ${new Date().toLocaleDateString()}"\n\n"Line Item","Value","Notes"\n`;
-    const csvRows = rows.map(r => `"${r[0]}","${r[1]}","${r[2]}"`).join("\n");
+    const csvRows = rows.map(r => `"${escapeCSV(r[0])}","${escapeCSV(r[1])}","${escapeCSV(r[2])}"`).join("\n");
     const csv = header + csvRows;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -1152,7 +1181,7 @@ export default function ValoraDashboard() {
   // Export as Excel (HTML table that Excel/Sheets can open)
   const exportExcel = () => {
     const rows = buildSummaryRows();
-    const propertyLabel = address ? `${address}, ${city}, ${state}` : "Property Analysis";
+    const propertyLabel = escapeHtml(address ? `${address}, ${city}, ${state}` : "Property Analysis");
     const sectionStyle = 'style="background:#1e293b;color:#fff;font-weight:700;font-size:11pt;padding:8px 12px;"';
     const headerStyle = 'style="background:#f1f5f9;font-weight:600;padding:6px 12px;border-bottom:2px solid #334155;"';
     const rowStyle = 'style="padding:5px 12px;border-bottom:1px solid #e2e8f0;"';
@@ -1190,13 +1219,13 @@ export default function ValoraDashboard() {
   // Export as PDF (print-optimized new window)
   const exportPDF = () => {
     const rows = buildSummaryRows();
-    const propertyLabel = address ? `${address}, ${city}, ${state} ${zipCode}` : "Property Analysis";
-    const propInfo = [
+    const propertyLabel = escapeHtml(address ? `${address}, ${city}, ${state} ${zipCode}` : "Property Analysis");
+    const propInfo = escapeHtml([
       propertyType && PROPERTY_TYPES.find(t => t.id === propertyType)?.name,
       sqft && `${parseInt(sqft).toLocaleString()} SF`,
       units && parseInt(units) > 1 && `${units} Units`,
       yearBuilt && `Built ${yearBuilt}`,
-    ].filter(Boolean).join(" · ");
+    ].filter(Boolean).join(" · "));
 
     let html = `<!DOCTYPE html><html><head><title>Legacy RE — ${propertyLabel}</title><style>
       @page { margin: 0.6in; size: letter; }
@@ -1785,7 +1814,8 @@ export default function ValoraDashboard() {
                                 const consOpex = underwriting.operatingExpenses * 1.1;
                                 const consNoi = consEgi - consOpex;
                                 const consCf = consNoi - underwriting.annualDebtService;
-                                const consCoc = underwriting.downPayment > 0 ? (consCf / underwriting.downPayment) * 100 : 0;
+                                const consTotalCash = underwriting.totalCashRequired || underwriting.downPayment;
+                                const consCoc = consTotalCash > 0 ? (consCf / consTotalCash) * 100 : 0;
                                 return (
                                   <div style={{ padding: "0.75rem", borderRadius: "8px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)" }}>
                                     <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#EF4444", marginBottom: "0.5rem" }}>Conservative</div>
@@ -1816,7 +1846,8 @@ export default function ValoraDashboard() {
                                 const optOpex = underwriting.operatingExpenses * 0.95;
                                 const optNoi = optEgi - optOpex;
                                 const optCf = optNoi - underwriting.annualDebtService;
-                                const optCoc = underwriting.downPayment > 0 ? (optCf / underwriting.downPayment) * 100 : 0;
+                                const optTotalCash = underwriting.totalCashRequired || underwriting.downPayment;
+                                const optCoc = optTotalCash > 0 ? (optCf / optTotalCash) * 100 : 0;
                                 return (
                                   <div style={{ padding: "0.75rem", borderRadius: "8px", background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
                                     <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#16A34A", marginBottom: "0.5rem" }}>Optimistic</div>

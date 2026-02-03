@@ -277,28 +277,30 @@ Return ONLY valid JSON matching the structure described above. Use realistic val
 }
 
 /**
- * Fetch live mortgage rates from the /api/interest-rates endpoint (internal call).
- * Falls back to static defaults if the fetch fails.
+ * Get mortgage rates by querying FRED directly (same logic as /api/interest-rates).
+ * Avoids self-referential HTTP calls that fail in serverless environments.
+ * Falls back to static defaults if the FRED fetch fails.
  */
 async function getLiveRates(): Promise<{ conventional30: number; conventional15: number; commercial: number; bridge: number }> {
   const defaults = { conventional30: 6.875, conventional15: 6.125, commercial: 7.50, bridge: 10.25 };
+  const fredKey = process.env.FRED_API_KEY;
+  if (!fredKey) return defaults;
+
   try {
-    // Use the same host since this is a server-side internal call
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/interest-rates`, { signal: AbortSignal.timeout(5000) });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.conventional30) {
-        return {
-          conventional30: data.conventional30,
-          conventional15: data.conventional15 || defaults.conventional15,
-          commercial: data.commercial || defaults.commercial,
-          bridge: data.bridge || defaults.bridge,
-        };
-      }
-    }
+    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=MORTGAGE30US&api_key=${fredKey}&file_type=json&sort_order=desc&limit=5`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return defaults;
+    const json = await res.json();
+    const obs = json.observations?.find((o: { value: string }) => o.value !== '.');
+    const rate30 = obs ? parseFloat(obs.value) : null;
+    if (!rate30) return defaults;
+    return {
+      conventional30: rate30,
+      conventional15: Math.round((rate30 - 0.60) * 100) / 100,
+      commercial: Math.round((rate30 + 0.75) * 100) / 100,
+      bridge: Math.round((rate30 + 3.0) * 100) / 100,
+    };
   } catch {
-    // Silently fall back to defaults
+    return defaults;
   }
-  return defaults;
 }

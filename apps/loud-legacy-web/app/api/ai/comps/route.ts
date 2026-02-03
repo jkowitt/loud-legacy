@@ -26,7 +26,7 @@ async function geocodeServer(address: string): Promise<{ lat: number; lng: numbe
 
   try {
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
     const data = await res.json();
     if (data.status === "OK" && data.results?.[0]) {

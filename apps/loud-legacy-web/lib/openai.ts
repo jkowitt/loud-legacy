@@ -11,10 +11,25 @@ function getOpenAIClient(): OpenAI {
   if (!openaiClient) {
     openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
+      timeout: 30000, // 30-second request timeout
+      maxRetries: 1,
     });
   }
 
   return openaiClient;
+}
+
+/**
+ * Safely parse JSON from OpenAI responses.
+ * Strips markdown fences and handles common formatting issues.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function safeJsonParse(content: string): any {
+  let cleaned = content.trim();
+  // Strip markdown code fences (```json ... ``` or ``` ... ```)
+  const fenceMatch = cleaned.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/);
+  if (fenceMatch) cleaned = fenceMatch[1].trim();
+  return JSON.parse(cleaned);
 }
 
 /**
@@ -57,7 +72,7 @@ Format the response as JSON with keys: conditionScore, issues, recommendations, 
     }
 
     // Parse JSON response
-    const analysis = JSON.parse(content);
+    const analysis = safeJsonParse(content);
     return analysis;
   } catch (error) {
     console.error('Error analyzing image:', error);
@@ -112,7 +127,7 @@ Format as JSON array with keys: priority, recommendation, estimatedCost, valueIn
       throw new Error('No response from OpenAI');
     }
 
-    return JSON.parse(content);
+    return safeJsonParse(content);
   } catch (error) {
     console.error('Error generating recommendations:', error);
     throw error;
@@ -159,7 +174,7 @@ Format as JSON with keys: visibleAddress, propertyType, features, locationClues`
       throw new Error('No response from OpenAI');
     }
 
-    return JSON.parse(content);
+    return safeJsonParse(content);
   } catch (error) {
     console.error('Error geocoding image:', error);
     throw error;
@@ -227,7 +242,7 @@ Return ONLY valid JSON with this structure:
 
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error('No response from OpenAI');
-    return JSON.parse(content);
+    return safeJsonParse(content);
   } catch (error) {
     console.error('Error analyzing improvements from image:', error);
     throw error;
@@ -358,7 +373,7 @@ Return ONLY valid JSON:
 
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error('No response from OpenAI');
-    return JSON.parse(content);
+    return safeJsonParse(content);
   } catch (error) {
     console.error('Error analyzing comparables:', error);
     throw error;
@@ -408,7 +423,7 @@ Format as JSON with keys: trend, avgPricePerSF, velocity, keyFactors, outlook`,
       throw new Error('No response from OpenAI');
     }
 
-    return JSON.parse(content);
+    return safeJsonParse(content);
   } catch (error) {
     console.error('Error analyzing market trends:', error);
     throw error;
