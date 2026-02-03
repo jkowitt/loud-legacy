@@ -123,6 +123,8 @@ interface CompProperty {
   daysAgo?: number;
   recencyScore?: number;
   recencyLabel?: string;
+  verified?: boolean;         // true = from RentCast real sales data
+  distanceMiles?: number;
 }
 
 // Improvement Item Interface
@@ -408,6 +410,15 @@ export default function ValoraDashboard() {
   // Market Trends State
   const [marketTrends, setMarketTrends] = useState<MarketTrendsData | null>(null);
 
+  // Real Comps State (opt-in RentCast pulls)
+  const [useRealComps, setUseRealComps] = useState(false);
+  const [realCompsLookback, setRealCompsLookback] = useState<"6" | "9" | "12">("6");
+  const [realCompsLimit, setRealCompsLimit] = useState("6");
+  const [realComps, setRealComps] = useState<CompProperty[]>([]);
+  const [isLoadingRealComps, setIsLoadingRealComps] = useState(false);
+  const [realCompsLoaded, setRealCompsLoaded] = useState(false);
+  const [realCompsMessage, setRealCompsMessage] = useState<string | null>(null);
+
   // Live Interest Rates State
   const [liveRates, setLiveRates] = useState(DEFAULT_RATES);
   const [ratesLoading, setRatesLoading] = useState(true);
@@ -560,6 +571,76 @@ export default function ValoraDashboard() {
       console.error("Property records error:", err);
     }
     setIsLoadingRecords(false);
+  };
+
+  // Fetch real comparable sales from RentCast (opt-in, counts against usage)
+  const fetchRealComps = async () => {
+    if (!address || !city || !state) return;
+    setIsLoadingRealComps(true);
+    setRealCompsMessage(null);
+    try {
+      const res = await fetch('/api/ai/real-comps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address, city, state, zipCode,
+          latitude: coordinates?.lat,
+          longitude: coordinates?.lng,
+          propertyType: propertyType || "single-family",
+          lookbackMonths: realCompsLookback,
+          limit: realCompsLimit,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.comps && data.comps.length > 0) {
+          const mapped: CompProperty[] = data.comps.map((c: Record<string, unknown>, i: number) => ({
+            id: (c.id as string) || `rc_${i}`,
+            address: (c.address as string) || `Comp ${i + 1}`,
+            distance: c.distance != null ? `${(c.distance as number).toFixed(1)} mi` : "N/A",
+            salePrice: (c.lastSalePrice as number) || 0,
+            saleDate: (c.lastSaleDate as string) || "N/A",
+            sqft: (c.squareFeet as number) || 0,
+            pricePerSqft: (c.pricePerSqft as number) || 0,
+            propertyType: (c.propertyType as string) || propertyType,
+            yearBuilt: (c.yearBuilt as number) || 0,
+            beds: (c.bedrooms as number) || undefined,
+            baths: (c.bathrooms as number) || undefined,
+            googleValidated: false,
+            lat: (c.latitude as number) || undefined,
+            lng: (c.longitude as number) || undefined,
+            verified: true,
+            distanceMiles: (c.distance as number) || undefined,
+          }));
+          setRealComps(mapped);
+          setRealCompsLoaded(true);
+          setRealCompsMessage(data.disclaimer || `${mapped.length} verified sales loaded.`);
+
+          // Update usage display from property records if usage info returned
+          if (data.usage && propertyRecords) {
+            setPropertyRecords({
+              ...propertyRecords,
+              usage: {
+                used: data.usage.used,
+                limit: data.usage.limit,
+                remaining: data.usage.remaining,
+                plan: data.usage.plan,
+                overageCount: data.usage.overageCount,
+                overageCostCents: data.usage.overageCostCents,
+                wasOverage: data.usage.wasOverage,
+              },
+            });
+          }
+        } else {
+          setRealCompsMessage(data.message || "No recent sales found in this area.");
+          setRealCompsLoaded(true);
+        }
+      }
+    } catch (err) {
+      console.error("Real comps error:", err);
+      setRealCompsMessage("Failed to fetch real comparable sales.");
+    }
+    setIsLoadingRealComps(false);
   };
 
   // Handle Image Upload
@@ -730,6 +811,16 @@ export default function ValoraDashboard() {
       ];
     }
 
+    // Merge real (RentCast) comps with AI comps if the user pulled them
+    const hasRealComps = realCompsLoaded && realComps.length > 0;
+    let mergedComps = aiComps;
+    if (hasRealComps) {
+      // Real comps go first (verified data), then AI comps that don't duplicate
+      const realAddresses = new Set(realComps.map(c => c.address.toLowerCase()));
+      const uniqueAiComps = aiComps.filter(c => !realAddresses.has(c.address.toLowerCase()));
+      mergedComps = [...realComps, ...uniqueAiComps];
+    }
+
     // Fetch real-time market trends for the area (runs in parallel with nothing — called after comps so we can pass comp data)
     let trendData: MarketTrendsData | null = null;
     try {
@@ -742,7 +833,7 @@ export default function ValoraDashboard() {
           sqft,
           saleHistory: propertyRecords?.saleHistory,
           saleHistorySource: propertyRecords?.source,
-          comps: aiComps.map(c => ({ salePrice: c.salePrice, saleDate: c.saleDate, sqft: c.sqft, pricePerSqft: c.pricePerSqft })),
+          comps: mergedComps.map(c => ({ salePrice: c.salePrice, saleDate: c.saleDate, sqft: c.sqft, pricePerSqft: c.pricePerSqft })),
           currentEstimatedValue: marketSummary?.suggestedValue,
         }),
       });
@@ -762,15 +853,43 @@ export default function ValoraDashboard() {
     const lastRealSalePrice = hasRealRecords ? propertyRecords!.saleHistory[0].price : null;
     const lastRealPpsf = lastRealSalePrice && baseSqft > 0 ? Math.round(lastRealSalePrice / baseSqft) : null;
 
-    // Use real $/sqft from public records as primary anchor when available
-    const avgPricePerSqft = lastRealPpsf
-      || marketSummary?.avgPricePerSqft
-      || Math.round(aiComps.reduce((a, b) => a + b.pricePerSqft, 0) / aiComps.length);
+    // Compute avg $/sqft from verified real comps when available (strongest anchor)
+    const realCompsPpsf = hasRealComps
+      ? (() => {
+          const withPpsf = realComps.filter(c => c.pricePerSqft > 0);
+          return withPpsf.length > 0 ? Math.round(withPpsf.reduce((a, b) => a + b.pricePerSqft, 0) / withPpsf.length) : null;
+        })()
+      : null;
 
-    // Blend AI suggested value with real last sale when both are available
+    // Priority: real comps $/sqft > public records $/sqft > AI market summary > AI comps average
+    const avgPricePerSqft = realCompsPpsf
+      || lastRealPpsf
+      || marketSummary?.avgPricePerSqft
+      || Math.round(mergedComps.reduce((a, b) => a + b.pricePerSqft, 0) / mergedComps.length);
+
+    // Compute value from real comps when available
+    const realCompsValue = hasRealComps
+      ? (() => {
+          const withPrice = realComps.filter(c => c.salePrice > 0 && c.sqft > 0);
+          if (withPrice.length === 0) return null;
+          const avgPpsf = withPrice.reduce((a, b) => a + b.pricePerSqft, 0) / withPrice.length;
+          return Math.round(baseSqft * avgPpsf);
+        })()
+      : null;
+
+    // Blend values: real comps (strongest) > real sale history > AI market estimate
     let preAdjustmentValue: number;
-    if (lastRealSalePrice && marketSummary?.suggestedValue) {
-      // 60% weight on real sale records, 40% on AI market estimate
+    if (hasRealComps && realCompsValue && lastRealSalePrice && marketSummary?.suggestedValue) {
+      // All three sources: 50% real comps, 30% real sale history, 20% AI
+      preAdjustmentValue = Math.round(realCompsValue * 0.50 + lastRealSalePrice * 0.30 + marketSummary.suggestedValue * 0.20);
+    } else if (hasRealComps && realCompsValue && marketSummary?.suggestedValue) {
+      // Real comps + AI: 65% real comps, 35% AI
+      preAdjustmentValue = Math.round(realCompsValue * 0.65 + marketSummary.suggestedValue * 0.35);
+    } else if (hasRealComps && realCompsValue) {
+      // Real comps only
+      preAdjustmentValue = realCompsValue;
+    } else if (lastRealSalePrice && marketSummary?.suggestedValue) {
+      // Real sale history + AI (original logic)
       preAdjustmentValue = Math.round(lastRealSalePrice * 0.6 + marketSummary.suggestedValue * 0.4);
     } else {
       preAdjustmentValue = lastRealSalePrice || marketSummary?.suggestedValue || baseSqft * avgPricePerSqft;
@@ -782,14 +901,25 @@ export default function ValoraDashboard() {
     const estimatedValue = preAdjustmentValue + trendAdjustmentAmount;
 
     const baseRange = marketSummary?.valueRange || { low: Math.round(preAdjustmentValue * 0.92), high: Math.round(preAdjustmentValue * 1.08) };
-    // Shift value range by the same trend adjustment
+    // Shift value range by the same trend adjustment — tighten range with real comps
+    const rangeWidth = hasRealComps ? 0.05 : 0; // ±5% tighter when grounded by real comps
     const valueRange = {
-      low: baseRange.low + trendAdjustmentAmount,
-      high: baseRange.high + trendAdjustmentAmount,
+      low: Math.round((baseRange.low + trendAdjustmentAmount) * (1 + rangeWidth)),
+      high: Math.round((baseRange.high + trendAdjustmentAmount) * (1 - rangeWidth)),
     };
-    // Boost confidence when grounded by real sale data
+    // Ensure low < high
+    if (valueRange.low > valueRange.high) {
+      const mid = Math.round((valueRange.low + valueRange.high) / 2);
+      valueRange.low = Math.round(mid * 0.95);
+      valueRange.high = Math.round(mid * 1.05);
+    }
+
+    // Boost confidence when grounded by real data:
+    //   Base AI confidence (~45-72) → +15 for real sale history → +20 for real comps (max 92)
     const baseConfidence = marketSummary?.confidence || 45;
-    const confidence = hasRealRecords ? Math.min(baseConfidence + 15, 80) : baseConfidence;
+    let confidence = baseConfidence;
+    if (hasRealRecords) confidence = Math.min(confidence + 15, 80);
+    if (hasRealComps) confidence = Math.min(confidence + 20, 92);
 
     // If photos uploaded, get AI image analysis for improvements
     let improvementItems: ImprovementItem[] = [];
@@ -934,6 +1064,7 @@ export default function ValoraDashboard() {
     }
 
     const marketFactors = [
+      ...(hasRealComps ? [`${realComps.length} verified comparable sales from county records (avg $${realCompsPpsf || avgPricePerSqft}/sqft)`] : []),
       ...(hasRealRecords ? [`Last recorded sale: ${formatCurrency(lastRealSalePrice!)} ($${lastRealPpsf}/sqft) — from public records`] : []),
       ...(trendData ? [
         `Market temperature: ${trendData.marketTemperature.toUpperCase()} — ${trendData.trendDirection} at ${trendData.trendVelocity} pace`,
@@ -944,7 +1075,7 @@ export default function ValoraDashboard() {
       ...(marketSummary?.keyInsights ? [] : [
         `Average price per sqft in ${city || "the area"}: $${avgPricePerSqft}`,
         `Market trend: ${marketSummary?.marketTrend || "stable"}`,
-        `${aiComps.length} comparable sales analyzed`,
+        `${mergedComps.length} comparable sales analyzed${hasRealComps ? ` (${realComps.length} verified + ${mergedComps.length - realComps.length} AI)` : ""}`,
         `Confidence level: ${confidence}%`,
       ]),
     ];
@@ -978,7 +1109,7 @@ export default function ValoraDashboard() {
       confidence,
       approaches: {
         income: { value: incomeApproachValue, capRate: incomeApproachCapRate, noi: actualNOI > 0 ? Math.round(actualNOI) : Math.round(estimatedValue * (incomeApproachCapRate / 100)) },
-        sales: { value: estimatedValue, pricePerSqft: avgPricePerSqft, adjustedComps: aiComps.length },
+        sales: { value: estimatedValue, pricePerSqft: avgPricePerSqft, adjustedComps: mergedComps.length },
         cost: { value: costApproachValue, landValue: estLandValue, improvements: replacementCost, depreciation: depreciationAmount },
       },
       marketFactors,
@@ -999,7 +1130,7 @@ export default function ValoraDashboard() {
     // Don't update state if this analysis was aborted
     if (abortController.signal.aborted) return;
 
-    setComps(aiComps);
+    setComps(mergedComps);
     setValuation(valuationResult);
     if (!purchasePrice) {
       setPurchasePrice(estimatedValue.toString());
@@ -1509,10 +1640,12 @@ export default function ValoraDashboard() {
                     if (place.components.city && place.components.stateShort) {
                       fetchEnrichmentData(place.components.city, place.components.stateShort, place.components.zip);
                     }
-                    // Auto-fetch property records (lot size, sale history)
-                    if (place.address && place.components.city && place.components.stateShort) {
-                      fetchPropertyRecords(place.address, place.components.city, place.components.stateShort, place.components.zip);
-                    }
+                    // Reset property records (user must opt-in to pull)
+                    setPropertyRecords(null);
+                    setRecordsLoaded(false);
+                    setRealComps([]);
+                    setRealCompsLoaded(false);
+                    setRealCompsMessage(null);
                   }}
                 />
                 {isEnriching && (
@@ -1525,6 +1658,22 @@ export default function ValoraDashboard() {
                   <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.375rem", fontSize: "0.75rem", color: "#16A34A" }}>
                     <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                     Area data loaded &mdash; tax rates, insurance, and expenses auto-populated
+                  </div>
+                )}
+                {!recordsLoaded && !isLoadingRecords && address && city && state && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.375rem" }}>
+                    <button
+                      onClick={() => fetchPropertyRecords(address, city, state, zipCode)}
+                      style={{
+                        padding: "0.3rem 0.6rem", fontSize: "0.75rem", fontWeight: 600,
+                        background: "#1D4ED8", color: "#fff", border: "none", borderRadius: "5px",
+                        cursor: "pointer", display: "flex", alignItems: "center", gap: "0.25rem",
+                      }}
+                    >
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>
+                      Pull Public Records
+                    </button>
+                    <span style={{ fontSize: "0.65rem", color: "#6B7280" }}>Uses 1 lookup from your plan. Additional: $2.00 each.</span>
                   </div>
                 )}
                 {isLoadingRecords && (
@@ -1642,6 +1791,88 @@ export default function ValoraDashboard() {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+
+              {/* Pull Real Comps (opt-in) */}
+              <div className="val-form-section" style={{ background: useRealComps ? "#F0FDF4" : "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "0.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: useRealComps ? "0.5rem" : 0 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, color: "#1B2A4A", margin: 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={useRealComps}
+                      onChange={(e) => setUseRealComps(e.target.checked)}
+                      style={{ width: 16, height: 16, accentColor: "#16A34A" }}
+                    />
+                    Pull Real Comparable Sales
+                  </label>
+                  <span style={{ fontSize: "0.65rem", color: "#6B7280", background: "#E5E7EB", padding: "2px 6px", borderRadius: "4px" }}>
+                    Uses 1 lookup from your plan
+                  </span>
+                </div>
+                {useRealComps && (
+                  <>
+                    <div style={{ fontSize: "0.75rem", color: "#4B5563", marginBottom: "0.5rem" }}>
+                      Fetch verified recent sales from county records near this property. Each pull counts as 1 evaluation from your plan. Additional pulls beyond your plan limit are <strong>$2.00 each</strong>.
+                    </div>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                      <div style={{ flex: "1 1 120px" }}>
+                        <label style={{ fontSize: "0.7rem", color: "#6B7280", display: "block", marginBottom: "2px" }}>Lookback Period</label>
+                        <select
+                          value={realCompsLookback}
+                          onChange={(e) => setRealCompsLookback(e.target.value as "6" | "9" | "12")}
+                          className="val-input"
+                          style={{ fontSize: "0.8rem", padding: "0.35rem" }}
+                        >
+                          <option value="6">6 months</option>
+                          <option value="9">9 months</option>
+                          <option value="12">12 months</option>
+                        </select>
+                      </div>
+                      <div style={{ flex: "1 1 100px" }}>
+                        <label style={{ fontSize: "0.7rem", color: "#6B7280", display: "block", marginBottom: "2px" }}>Max Comps</label>
+                        <select
+                          value={realCompsLimit}
+                          onChange={(e) => setRealCompsLimit(e.target.value)}
+                          className="val-input"
+                          style={{ fontSize: "0.8rem", padding: "0.35rem" }}
+                        >
+                          <option value="4">4 comps</option>
+                          <option value="6">6 comps</option>
+                          <option value="8">8 comps</option>
+                          <option value="10">10 comps</option>
+                        </select>
+                      </div>
+                      <div style={{ flex: "0 0 auto", alignSelf: "flex-end" }}>
+                        <button
+                          onClick={fetchRealComps}
+                          disabled={!address || !city || !state || isLoadingRealComps}
+                          style={{
+                            padding: "0.4rem 0.75rem", fontSize: "0.8rem", fontWeight: 600,
+                            background: isLoadingRealComps ? "#9CA3AF" : "#16A34A", color: "#fff",
+                            border: "none", borderRadius: "6px", cursor: isLoadingRealComps ? "not-allowed" : "pointer",
+                            display: "flex", alignItems: "center", gap: "0.375rem",
+                          }}
+                        >
+                          {isLoadingRealComps ? (
+                            <><span className="val-spinner" style={{ width: 12, height: 12, borderWidth: 2 }}></span>Pulling...</>
+                          ) : (
+                            <>Pull Comps</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    {realCompsMessage && (
+                      <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: realComps.length > 0 ? "#16A34A" : "#D97706", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                        {realComps.length > 0 ? (
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                        ) : (
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        )}
+                        {realCompsMessage}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -2288,7 +2519,12 @@ export default function ValoraDashboard() {
                       </div>
                       <div className="val-comps-header">
                         <h4>Estimated Comparable Sales</h4>
-                        <span>{comps.length} AI-estimated comps {comps.some(c => c.googleValidated) ? "- distances verified via Google Maps" : ""} &bull; 6-month lookback</span>
+                        <span>
+                          {comps.filter(c => c.verified).length > 0
+                            ? `${comps.filter(c => c.verified).length} verified + ${comps.filter(c => !c.verified).length} AI-estimated comps`
+                            : `${comps.length} AI-estimated comps`}
+                          {comps.some(c => c.googleValidated) ? " - distances verified via Google Maps" : ""}
+                        </span>
                       </div>
                       <div className="val-comps-table">
                         <div className="val-comps-row header"><span>Address</span><span>Distance</span><span>Sale Price</span><span>Date</span><span>Sq Ft</span><span>$/SF</span></div>
@@ -2299,7 +2535,10 @@ export default function ValoraDashboard() {
                             <div style={{ display: "grid", gridTemplateColumns: "2fr 0.8fr 1fr 0.8fr 0.8fr 0.6fr", gap: "0.5rem", alignItems: "center", width: "100%" }}>
                               <span className="address" style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
                                 {comp.address}
-                                {comp.googleValidated && (
+                                {comp.verified && (
+                                  <span title="Verified sale from county records (RentCast)" style={{ display: "inline-flex", alignItems: "center", padding: "1px 5px", borderRadius: "4px", background: "#DBEAFE", color: "#1D4ED8", fontSize: "0.6rem", fontWeight: 600 }}>VERIFIED</span>
+                                )}
+                                {comp.googleValidated && !comp.verified && (
                                   <span title="Address verified via Google Maps" style={{ display: "inline-flex", alignItems: "center", padding: "1px 5px", borderRadius: "4px", background: "#DCFCE7", color: "#16A34A", fontSize: "0.6rem", fontWeight: 600 }}>GPS</span>
                                 )}
                               </span>
