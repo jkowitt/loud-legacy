@@ -15,6 +15,7 @@ export const PLAN_LIMITS: Record<string, number> = {
   PROFESSIONAL: 100,
   ENTERPRISE: 500,
   BETA: 10, // Beta users get 10 free lookups/month
+  OWNER: Infinity, // Site owner/developer — unlimited, no billing
 };
 
 export const OVERAGE_PRICE_CENTS = 200; // $2.00 per additional request
@@ -47,8 +48,15 @@ async function getBillingPeriod(userId: string): Promise<{ start: Date; end: Dat
 
 /**
  * Get the user's current plan type.
+ * SUPER_ADMIN users (site owner/developer) get the OWNER plan — unlimited, no billing.
  */
 async function getUserPlan(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (user?.role === 'SUPER_ADMIN') return 'OWNER';
+
   const subscription = await prisma.subscription.findFirst({
     where: { userId, platform: 'VALORA', status: 'ACTIVE' },
     select: { planType: true },
