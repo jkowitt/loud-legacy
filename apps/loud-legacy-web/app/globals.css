@@ -3680,6 +3680,12 @@ main {
   object-fit: contain;
 }
 
+.logo-image--square {
+  height: 36px;
+  width: 36px;
+  border-radius: 8px;
+}
+
 .nav-dropdown--logos {
   display: none;
   position: absolute;
