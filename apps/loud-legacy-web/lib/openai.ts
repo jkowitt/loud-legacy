@@ -381,41 +381,94 @@ Return ONLY valid JSON:
 }
 
 /**
- * Analyze market trends and provide insights
+ * Analyze real-time market trends for a specific area and return a value
+ * adjustment factor that should be applied to the property valuation.
+ *
+ * The adjustment factor accounts for whether the local market is hot
+ * (appreciating rapidly → higher values) or cold (declining → lower values).
  */
 export async function analyzeMarketTrends(marketData: {
   city: string;
   state: string;
+  zipCode?: string;
   propertyType: string;
-  recentSales: Array<{ price: number; date: string; sqft: number }>;
+  address?: string;
+  sqft?: number;
+  recentSales?: Array<{ price: number; date: string; sqft?: number }>;
+  saleHistory?: Array<{ date: string; price: number; type?: string }>;
+  saleHistorySource?: "rentcast" | "openai" | "fallback";
+  compsAvgPricePerSqft?: number;
+  currentEstimatedValue?: number;
 }) {
   try {
     const openai = getOpenAIClient();
+    const today = new Date().toISOString().split('T')[0];
+
+    const hasRealSaleHistory = marketData.saleHistorySource === "rentcast" && marketData.saleHistory && marketData.saleHistory.length > 0;
+
+    let saleContext = "";
+    if (marketData.saleHistory && marketData.saleHistory.length > 0) {
+      const label = hasRealSaleHistory ? "VERIFIED PUBLIC RECORDS" : "AI-estimated (lower confidence)";
+      saleContext = `\n\nSUBJECT PROPERTY SALE HISTORY (${label}):\n${marketData.saleHistory.map(s => `  - ${s.date}: $${s.price.toLocaleString()} (${s.type || "Sale"})`).join("\n")}`;
+    }
+
+    let compsContext = "";
+    if (marketData.recentSales && marketData.recentSales.length > 0) {
+      compsContext = `\n\nRECENT COMPARABLE SALES IN THE AREA:\n${marketData.recentSales.map(s => `  - ${s.date}: $${s.price.toLocaleString()}${s.sqft ? ` ($${Math.round(s.price / s.sqft)}/sqft)` : ""}`).join("\n")}`;
+    }
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You are a real estate market analyst with expertise in property valuation and market trends.",
+          content: `You are a senior real estate market analyst specializing in local market trend analysis. Today is ${today}. Your job is to analyze the CURRENT real estate market conditions in a specific area and determine how those conditions should affect property valuations.
+
+You must analyze:
+- Whether the area is a "hot market" (high demand, rising prices, low inventory, bidding wars) or "cold market" (declining prices, high inventory, long days on market)
+- The annual appreciation/depreciation rate for the area
+- Supply and demand dynamics
+- How these trends should adjust a property's estimated value
+
+IMPORTANT: Be data-driven and specific to the exact city, zip code, and property type. Different neighborhoods within the same city can have very different trends. ${hasRealSaleHistory ? "You have real sale history data — use the price changes between transactions to gauge actual appreciation." : ""}`,
         },
         {
           role: "user",
-          content: `Analyze the ${marketData.propertyType} market in ${marketData.city}, ${marketData.state}.
+          content: `Analyze the current real estate market trends for:
 
-Recent sales data:
-${JSON.stringify(marketData.recentSales, null, 2)}
+Location: ${marketData.address ? `${marketData.address}, ` : ""}${marketData.city}, ${marketData.state}${marketData.zipCode ? ` ${marketData.zipCode}` : ""}
+Property Type: ${marketData.propertyType}
+${marketData.sqft ? `Square Feet: ${marketData.sqft}` : ""}
+${marketData.compsAvgPricePerSqft ? `Current Area Avg $/sqft: $${marketData.compsAvgPricePerSqft}` : ""}
+${marketData.currentEstimatedValue ? `Current Estimated Value: $${marketData.currentEstimatedValue.toLocaleString()}` : ""}${saleContext}${compsContext}
 
-Provide:
-1. Market trend direction (appreciating, stable, declining)
-2. Average price per square foot
-3. Market velocity (fast, moderate, slow)
-4. Key factors driving the market
-5. 12-month outlook
-
-Format as JSON with keys: trend, avgPricePerSF, velocity, keyFactors, outlook`,
+Analyze the market and return ONLY valid JSON:
+{
+  "marketTemperature": "hot" | "warm" | "neutral" | "cool" | "cold",
+  "temperatureScore": <number 0-100, where 100 is the hottest market>,
+  "annualAppreciationRate": <number, e.g. 5.2 for 5.2% annual appreciation, negative for declining>,
+  "trendDirection": "appreciating" | "stable" | "declining",
+  "trendVelocity": "rapid" | "moderate" | "slow",
+  "valueAdjustmentPercent": <number, e.g. 3.5 means add 3.5% to estimated value to reflect current market heat. Can be negative for declining markets. Range: -10 to +15>,
+  "medianDaysOnMarket": <number>,
+  "inventoryLevel": "very_low" | "low" | "balanced" | "high" | "very_high",
+  "buyerDemand": "very_high" | "high" | "moderate" | "low" | "very_low",
+  "pricePerSqftTrend": {
+    "current": <number, current avg $/sqft for this property type in this area>,
+    "sixMonthsAgo": <number>,
+    "oneYearAgo": <number>,
+    "changePercent": <number, percent change over last 12 months>
+  },
+  "keyDrivers": ["<3-5 specific factors driving the market in this area, e.g. 'New Amazon HQ2 driving employment growth', 'Limited new construction permits', 'Rising mortgage rates cooling demand'>"],
+  "areaHighlights": ["<2-3 specific facts about this area's real estate market, e.g. 'Median home price up 8% YoY to $425,000', 'Average 3.2 offers per listing'>"],
+  "outlook12Month": "<1-2 sentence forecast for next 12 months>",
+  "confidenceInTrend": <number 0-100, how confident you are in this trend assessment>
+}`,
         },
       ],
-      max_tokens: 1200,
+      max_tokens: 1500,
+      temperature: 0.3,
+      response_format: { type: "json_object" },
     });
 
     const content = response.choices[0]?.message?.content;

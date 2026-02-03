@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkPropertyRecordAccess, recordPropertyRecordUsage, OVERAGE_PRICE_CENTS } from "@/lib/usage";
+import { getCachedRecord, cachePropertyRecord } from "@/lib/property-cache";
 
 export const dynamic = 'force-dynamic';
 
@@ -100,6 +101,41 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Check persistent database cache (no charge, no RentCast call)
+    const dbCached = await getCachedRecord(address, city, state);
+    if (dbCached && dbCached.lastSalePrice) {
+      const { usage: currentUsage } = await checkPropertyRecordAccess(userId);
+      const cachedResponse: PropertyRecordsResponse = {
+        success: true,
+        source: "rentcast",
+        lotSizeAcres: dbCached.lotSizeSqft ? Math.round((dbCached.lotSizeSqft / 43560) * 1000) / 1000 : null,
+        lotSizeSqft: dbCached.lotSizeSqft,
+        saleHistory: Array.isArray(dbCached.saleHistory) ? (dbCached.saleHistory as SaleRecord[]) : [],
+        propertyDetails: {
+          bedrooms: dbCached.bedrooms ?? undefined,
+          bathrooms: dbCached.bathrooms ?? undefined,
+          squareFeet: dbCached.squareFeet ?? undefined,
+          yearBuilt: dbCached.yearBuilt ?? undefined,
+          propertyType: dbCached.propertyType ?? undefined,
+          lastSaleDate: dbCached.lastSaleDate ?? undefined,
+          lastSalePrice: dbCached.lastSalePrice ?? undefined,
+        },
+        disclaimer: "Data served from Legacy RE cache (originally from public records). No lookup charged.",
+        usage: {
+          used: currentUsage.used,
+          limit: currentUsage.limit,
+          remaining: currentUsage.remaining,
+          plan: currentUsage.plan,
+          overageCount: currentUsage.overageCount,
+          overageCostCents: currentUsage.overageCostCents,
+          wasOverage: false,
+        },
+      };
+      // Also update the in-memory cache
+      recordsCache.set(cacheKey, { data: cachedResponse, timestamp: Date.now() });
+      return NextResponse.json(cachedResponse);
+    }
+
     // Check usage limits (always allowed, but may be flagged as overage)
     const { willBeOverage, usage } = await checkPropertyRecordAccess(userId);
     // Evict stale and excess entries to prevent unbounded memory growth
@@ -148,6 +184,22 @@ export async function POST(request: NextRequest) {
           }
 
           recordsCache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+          // Persist to database cache for future users
+          cachePropertyRecord({
+            address, city, state, zipCode,
+            propertyType: result.propertyDetails?.propertyType,
+            bedrooms: result.propertyDetails?.bedrooms,
+            bathrooms: result.propertyDetails?.bathrooms,
+            squareFeet: result.propertyDetails?.squareFeet,
+            yearBuilt: result.propertyDetails?.yearBuilt,
+            lotSizeSqft: result.lotSizeSqft ?? undefined,
+            lastSaleDate: result.propertyDetails?.lastSaleDate,
+            lastSalePrice: result.propertyDetails?.lastSalePrice,
+            saleHistory: result.saleHistory,
+            source: "rentcast",
+          }).catch(() => {});
+
           return NextResponse.json(responseData);
         }
       } catch (err) {

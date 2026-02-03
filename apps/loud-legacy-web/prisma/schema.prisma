@@ -476,6 +476,57 @@ model ActivityLog {
 }
 
 // ==========================================
+// PROPERTY DATA CACHE (RentCast + Evaluation Comps)
+// ==========================================
+// Persisted cache of RentCast data and evaluated properties.
+// Reduces duplicate RentCast API calls across users and builds
+// an internal comp database that grows stronger over time.
+
+model PropertyCache {
+  id            String   @id @default(cuid())
+
+  // Normalized address fields for lookup
+  addressHash   String   @unique   // SHA-256 of normalized address
+  address       String
+  city          String
+  state         String
+  zipCode       String?
+
+  // Property attributes (from RentCast or evaluation)
+  propertyType  String?
+  bedrooms      Int?
+  bathrooms     Float?
+  squareFeet    Int?
+  yearBuilt     Int?
+  lotSizeSqft   Float?
+  latitude      Float?
+  longitude     Float?
+
+  // Sale data
+  lastSaleDate  String?
+  lastSalePrice Float?
+  saleHistory   Json?             // Array of { date, price, buyer, seller, type }
+
+  // Source tracking
+  source        String            // "rentcast", "rentcast-comps", "evaluation"
+  rawData       Json?             // Full original API response for reference
+
+  // Comp metadata (for area-based searches)
+  isComp        Boolean  @default(false)
+
+  // Cache lifecycle
+  fetchedAt     DateTime @default(now())
+  expiresAt     DateTime            // After this date, re-fetch from RentCast
+  hitCount      Int      @default(0) // Track reuse across users
+
+  @@index([city, state])
+  @@index([zipCode])
+  @@index([source])
+  @@index([expiresAt])
+  @@index([isComp, city, state])
+}
+
+// ==========================================
 // SYSTEM CONFIGURATION
 // ==========================================
 

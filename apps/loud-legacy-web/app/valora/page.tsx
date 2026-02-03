@@ -79,7 +79,7 @@ export default function ValoraPage() {
               priority
             />
           </Link>
-          <div className="badge" style={{ background: '#1B2A4A', color: '#D4A843' }}>Built to Last</div>
+          <p style={{ fontStyle: 'italic', color: '#1B2A4A', fontSize: '1.1rem', letterSpacing: '0.05em', marginTop: '0.25rem', marginBottom: '0' }}>Built to Last</p>
           <p className="tagline" style={{ color: '#1E293B' }}>
             Know what a property is worth, what it costs to own, and how to make it worth more — all from one place.
           </p>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 
 const productLogos = [
@@ -14,6 +15,8 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, isAuthenticated, isDemo, signOut } = useAuth();
+  const pathname = usePathname();
+  const isValoraPage = pathname.startsWith("/valora");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,16 +40,29 @@ export function Header() {
   return (
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
       <div className="container header-content">
-        <Link href="/" className="logo" aria-label="Loud Legacy Home">
-          <Image
-            src="/logos/loud-legacy.svg"
-            alt="Loud Legacy"
-            width={140}
-            height={40}
-            className="logo-image"
-            priority
-          />
-        </Link>
+        {isValoraPage ? (
+          <Link href="/valora" className="logo" aria-label="Legacy RE Home">
+            <Image
+              src="/logos/legacy-re-icon.svg"
+              alt="Legacy RE"
+              width={36}
+              height={36}
+              className="logo-image logo-image--square"
+              priority
+            />
+          </Link>
+        ) : (
+          <Link href="/" className="logo" aria-label="Loud Legacy Home">
+            <Image
+              src="/logos/loud-legacy.svg"
+              alt="Loud Legacy"
+              width={140}
+              height={40}
+              className="logo-image"
+              priority
+            />
+          </Link>
+        )}
 
         <nav className={`nav ${isOpen ? 'open' : ''}`}>
           <a href="https://loud-legacy.com" className="nav-link nav-link--home">
