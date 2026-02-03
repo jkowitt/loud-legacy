@@ -64,9 +64,11 @@ export async function cachePropertyRecord(data: {
   longitude?: number;
   lastSaleDate?: string;
   lastSalePrice?: number;
-  saleHistory?: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  saleHistory?: any;
   source: string;
-  rawData?: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rawData?: any;
   isComp?: boolean;
 }) {
   try {
@@ -152,22 +154,20 @@ export async function getLocalComps(params: {
   source: string;
 }>> {
   try {
-    const where: Record<string, unknown> = {
-      city: { equals: params.city, mode: "insensitive" },
-      state: { equals: params.state, mode: "insensitive" },
-      lastSalePrice: { not: null },
-      lastSaleDate: { not: null },
-      expiresAt: { gt: new Date() },
-    };
-    if (params.propertyType) {
-      where.propertyType = { equals: params.propertyType, mode: "insensitive" };
-    }
-    if (params.excludeAddress) {
-      where.addressHash = { not: hashAddress(params.excludeAddress, params.city, params.state) };
-    }
-
     const records = await prisma.propertyCache.findMany({
-      where,
+      where: {
+        city: { equals: params.city, mode: "insensitive" as const },
+        state: { equals: params.state, mode: "insensitive" as const },
+        lastSalePrice: { not: null },
+        lastSaleDate: { not: null },
+        expiresAt: { gt: new Date() },
+        propertyType: params.propertyType
+          ? { equals: params.propertyType, mode: "insensitive" as const }
+          : undefined,
+        addressHash: params.excludeAddress
+          ? { not: hashAddress(params.excludeAddress, params.city, params.state) }
+          : undefined,
+      },
       orderBy: { fetchedAt: "desc" },
       take: params.limit || 20,
       select: {

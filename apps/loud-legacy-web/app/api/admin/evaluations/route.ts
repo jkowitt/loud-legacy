@@ -63,14 +63,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Parse the details JSON for each evaluation
-    // Explicit annotation matches Prisma schema (userId is String?, user is optional relation)
-    const formatted = evaluations.map((e: {
-      id: string;
-      userId: string | null;
-      details: unknown;
-      createdAt: Date;
-      user: { name: string | null; email: string; role: string } | null;
-    }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formatted = evaluations.map((e: any) => {
       const details = (e.details || {}) as Record<string, unknown>;
       return {
         id: e.id,

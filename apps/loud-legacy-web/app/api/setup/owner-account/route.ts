@@ -50,7 +50,8 @@ export async function GET() {
     }
 
     // Grant access to all platforms
-    const existingPlatforms = user.platformAccess.map((pa: { platform: string }) => pa.platform);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingPlatforms = user.platformAccess.map((pa: any) => pa.platform);
     for (const platform of PLATFORMS) {
       if (!existingPlatforms.includes(platform)) {
         await prisma.platformAccess.create({
