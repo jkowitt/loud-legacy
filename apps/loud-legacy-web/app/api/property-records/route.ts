@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { checkPropertyRecordAccess, recordPropertyRecordUsage, OVERAGE_PRICE_CENTS } from "@/lib/usage";
+import { checkPropertyRecordAccess, recordPropertyRecordUsage, OVERAGE_PRICE_CENTS, hasPaidAccess } from "@/lib/usage";
 import { getCachedRecord, cachePropertyRecord } from "@/lib/property-cache";
 
 export const dynamic = 'force-dynamic';
@@ -72,6 +72,16 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    // Beta / free users cannot use property record lookups — must upgrade to a paid plan
+    const { allowed, plan } = await hasPaidAccess(userId);
+    if (!allowed) {
+      return NextResponse.json({
+        error: "Property record lookups require a paid plan. Please upgrade to access public records, comps, and property data.",
+        plan,
+        upgradeRequired: true,
+      }, { status: 403 });
     }
 
     const body: PropertyRecordsRequest = await request.json();

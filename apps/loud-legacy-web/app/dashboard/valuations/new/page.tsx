@@ -274,6 +274,21 @@ export default function NewValuationPage() {
     }
   };
 
+  /**
+   * Parse a free-form address string into components.
+   * Expects formats like "123 Main St, Miami, FL 33101" or "123 Main St, Miami, FL".
+   */
+  const parseAddress = (fullAddress: string) => {
+    const parts = fullAddress.split(',').map(s => s.trim());
+    const address = parts[0] || fullAddress;
+    const city = parts[1] || '';
+    // Last part may contain "FL 33101" or just "FL"
+    const stateZip = (parts[2] || '').trim().split(/\s+/);
+    const state = stateZip[0] || '';
+    const zipCode = stateZip[1] || '';
+    return { address, city, state, zipCode };
+  };
+
   const calculateValuation = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -282,11 +297,15 @@ export default function NewValuationPage() {
 
     try {
       // First create a property if needed
+      const parsed = parseAddress(propertyAddress);
       const propertyResponse = await fetch('/api/properties', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          address: propertyAddress,
+          address: parsed.address,
+          city: parsed.city,
+          state: parsed.state,
+          zip: parsed.zipCode,
           propertyType,
         }),
       });
@@ -333,14 +352,75 @@ export default function NewValuationPage() {
 
       const valuation = await valuationResponse.json();
 
-      // Generate comparables and calculate FMV
-      const comparables = generateComparables(valuation.currentValue || valuation.purchasePrice, propertyAddress);
-      const fairMarketValue = calculateFairMarketValue(comparables);
+      // Fetch real comparable sales (expanding radius: 0.5mi → 1mi → 1.5mi → 2mi → 3mi)
+      let comparables: any[] = [];
+      let compSource = 'none';
+      let compDisclaimer = '';
+
+      if (parsed.city && parsed.state) {
+        try {
+          const compsResponse = await fetch('/api/ai/real-comps', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              address: parsed.address,
+              city: parsed.city,
+              state: parsed.state,
+              zipCode: parsed.zipCode,
+              propertyType: propertyType.toLowerCase(),
+              lookbackMonths: '12',
+              limit: 6,
+            }),
+          });
+
+          if (compsResponse.ok) {
+            const compsData = await compsResponse.json();
+            if (compsData.success && compsData.comps?.length > 0) {
+              comparables = compsData.comps.slice(0, 6);
+              compSource = compsData.source;
+              compDisclaimer = compsData.disclaimer || '';
+            }
+          }
+        } catch (compErr) {
+          console.error('Error fetching real comps:', compErr);
+        }
+      }
+
+      // Save comps to database if we have any and a real valuation ID
+      if (comparables.length > 0 && valuation.id && !valuation.id.startsWith('demo-')) {
+        try {
+          await fetch(`/api/valuations/${valuation.id}/comps`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comps: comparables }),
+          });
+        } catch (saveErr) {
+          console.error('Error saving comps:', saveErr);
+        }
+      }
+
+      // Calculate FMV from real comps
+      const prices = comparables
+        .map((c: any) => c.lastSalePrice || c.salePrice)
+        .filter((p: number) => p > 0);
+      const fairMarketValue = prices.length > 0
+        ? prices.reduce((sum: number, p: number) => sum + p, 0) / prices.length
+        : null;
 
       setResults({
         ...valuation,
-        comparables,
+        comparables: comparables.map((c: any) => ({
+          address: c.address || c.formattedAddress,
+          salePrice: c.lastSalePrice || c.salePrice || 0,
+          saleDate: c.lastSaleDate || c.saleDate,
+          pricePerSF: c.pricePerSqft || c.pricePerSF || null,
+          distance: c.distance != null ? `${c.distance.toFixed(1)} mi` : (compSource === 'legacy-cache' ? 'cached' : '-'),
+          squareFeet: c.squareFeet,
+          yearBuilt: c.yearBuilt,
+        })),
         fairMarketValue,
+        compSource,
+        compDisclaimer,
       });
       // Clear draft after successful calculation
       clearDraft();
@@ -360,39 +440,6 @@ export default function NewValuationPage() {
     }).format(amount);
   };
 
-  const generateComparables = (baseValue: number, propertyAddress: string) => {
-    // Generate 3 mock comparables based on the property value
-    const variance = 0.15; // 15% variance
-    return [
-      {
-        address: propertyAddress.replace(/\d+/, (match) => String(Number(match) + 100)),
-        salePrice: baseValue * (1 - variance * 0.5),
-        saleDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000), // 45 days ago
-        pricePerSF: (baseValue * (1 - variance * 0.5)) / 2000,
-        distance: '0.3 miles',
-      },
-      {
-        address: propertyAddress.replace(/\d+/, (match) => String(Number(match) + 200)),
-        salePrice: baseValue * (1 + variance * 0.3),
-        saleDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
-        pricePerSF: (baseValue * (1 + variance * 0.3)) / 2000,
-        distance: '0.5 miles',
-      },
-      {
-        address: propertyAddress.replace(/\d+/, (match) => String(Number(match) - 50)),
-        salePrice: baseValue * (1 - variance * 0.1),
-        saleDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-        pricePerSF: (baseValue * (1 - variance * 0.1)) / 2000,
-        distance: '0.2 miles',
-      },
-    ];
-  };
-
-  const calculateFairMarketValue = (comparables: any[]) => {
-    if (!comparables || comparables.length === 0) return null;
-    const avgPrice = comparables.reduce((sum, comp) => sum + comp.salePrice, 0) / comparables.length;
-    return avgPrice;
-  };
 
   return (
     <div className="dashboard-page">

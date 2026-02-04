@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -81,33 +81,6 @@ const ActivityIcons = {
   ),
 };
 
-const platforms = [
-  {
-    id: "valora",
-    name: "Legacy RE",
-    tagline: "Real Estate Intelligence",
-    description: "AI-powered property valuations, underwriting, and portfolio management",
-    color: "#1B2A4A",
-    href: "/valora/dashboard",
-    stats: [
-      { label: "Properties", value: "12" },
-      { label: "Valuations", value: "28" },
-    ],
-    quickActions: [
-      { label: "New Valuation", href: "/valora/dashboard" },
-      { label: "View Properties", href: "/valora/properties" },
-    ],
-  },
-];
-
-const recentActivity = [
-  { platform: "Legacy RE", action: "New valuation created", item: "123 Main St", time: "2 hours ago", type: "valuation" },
-  { platform: "Legacy RE", action: "Underwriting completed", item: "456 Oak Avenue", time: "4 hours ago", type: "deal" },
-  { platform: "Legacy RE", action: "Comp analysis run", item: "789 Pine Road", time: "Yesterday", type: "valuation" },
-  { platform: "Legacy RE", action: "Property saved to portfolio", item: "321 Elm Blvd", time: "Yesterday", type: "valuation" },
-  { platform: "Legacy RE", action: "Listed on marketplace", item: "654 Cedar Lane", time: "2 days ago", type: "deal" },
-];
-
 const quickStartItems = [
   { icon: "valuation", label: "Create Property Valuation", href: "/valora/dashboard" },
   { icon: "deal", label: "Run Underwriting Analysis", href: "/valora/dashboard" },
@@ -116,15 +89,52 @@ const quickStartItems = [
   { icon: "valuation", label: "Broker Portal", href: "/valora/brokers" },
 ];
 
+interface DashboardStats {
+  properties: number;
+  valuations: number;
+  recentActivity: Array<{
+    id: string;
+    platform: string;
+    action: string;
+    item: string;
+    time: string;
+    type: string;
+  }>;
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [hoveredPlatform, setHoveredPlatform] = useState<string | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   const firstName = user?.name?.split(" ")[0] || "there";
+
+  // Fetch real dashboard stats
+  useEffect(() => {
+    fetch('/api/dashboard/stats')
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(() => {});
+  }, []);
+
+  const platform = {
+    id: "valora",
+    name: "Legacy RE",
+    tagline: "Real Estate Intelligence",
+    description: "AI-powered property valuations, underwriting, and portfolio management",
+    color: "#1B2A4A",
+    href: "/valora/dashboard",
+    quickActions: [
+      { label: "New Valuation", href: "/valora/dashboard" },
+      { label: "View Properties", href: "/valora/properties" },
+    ],
+  };
 
   const getActivityIcon = (type: string) => {
     return ActivityIcons[type as keyof typeof ActivityIcons] || ActivityIcons.valuation;
   };
+
+  const activity = stats?.recentActivity || [];
 
   return (
     <div className="hub-dashboard">
@@ -154,49 +164,48 @@ export default function DashboardPage() {
         <div className="container">
           <h2 className="hub-section-title">Your Platform</h2>
           <div className="hub-platforms-grid">
-            {platforms.map((platform) => (
-              <div
-                key={platform.id}
-                className={`hub-platform-card ${hoveredPlatform === platform.id ? "hovered" : ""}`}
-                onMouseEnter={() => setHoveredPlatform(platform.id)}
-                onMouseLeave={() => setHoveredPlatform(null)}
-                style={{ "--platform-color": platform.color } as React.CSSProperties}
-              >
-                <div className="hub-platform-header">
-                  <div className="hub-platform-icon-wrapper" style={{ backgroundColor: `${platform.color}15`, color: platform.color }}>
-                    {PlatformIcons[platform.id as keyof typeof PlatformIcons]}
-                  </div>
-                  <div>
-                    <h3>{platform.name}</h3>
-                    <span className="hub-platform-tagline">{platform.tagline}</span>
-                  </div>
+            <div
+              className={`hub-platform-card ${hoveredPlatform === platform.id ? "hovered" : ""}`}
+              onMouseEnter={() => setHoveredPlatform(platform.id)}
+              onMouseLeave={() => setHoveredPlatform(null)}
+              style={{ "--platform-color": platform.color } as React.CSSProperties}
+            >
+              <div className="hub-platform-header">
+                <div className="hub-platform-icon-wrapper" style={{ backgroundColor: `${platform.color}15`, color: platform.color }}>
+                  {PlatformIcons[platform.id as keyof typeof PlatformIcons]}
                 </div>
-                <p className="hub-platform-desc">{platform.description}</p>
-                <div className="hub-platform-stats">
-                  {platform.stats.map((stat, i) => (
-                    <div key={i} className="hub-platform-stat">
-                      <span className="hub-stat-value">{stat.value}</span>
-                      <span className="hub-stat-label">{stat.label}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="hub-platform-actions">
-                  <Link href={platform.href} className="hub-platform-btn primary">
-                    Open Dashboard
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                  <div className="hub-quick-links">
-                    {platform.quickActions.map((action, i) => (
-                      <Link key={i} href={action.href} className="hub-quick-link">
-                        {action.label}
-                      </Link>
-                    ))}
-                  </div>
+                <div>
+                  <h3>{platform.name}</h3>
+                  <span className="hub-platform-tagline">{platform.tagline}</span>
                 </div>
               </div>
-            ))}
+              <p className="hub-platform-desc">{platform.description}</p>
+              <div className="hub-platform-stats">
+                <div className="hub-platform-stat">
+                  <span className="hub-stat-value">{stats?.properties ?? '-'}</span>
+                  <span className="hub-stat-label">Properties</span>
+                </div>
+                <div className="hub-platform-stat">
+                  <span className="hub-stat-value">{stats?.valuations ?? '-'}</span>
+                  <span className="hub-stat-label">Valuations</span>
+                </div>
+              </div>
+              <div className="hub-platform-actions">
+                <Link href={platform.href} className="hub-platform-btn primary">
+                  Open Dashboard
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <div className="hub-quick-links">
+                  {platform.quickActions.map((action, i) => (
+                    <Link key={i} href={action.href} className="hub-quick-link">
+                      {action.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -208,8 +217,13 @@ export default function DashboardPage() {
             <div className="hub-activity-main">
               <h2 className="hub-section-title">Recent Activity</h2>
               <div className="hub-activity-list">
-                {recentActivity.map((item, i) => (
-                  <div key={i} className="hub-activity-item">
+                {activity.length === 0 && (
+                  <div className="hub-activity-item" style={{ justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                    No activity yet. Create your first valuation to get started.
+                  </div>
+                )}
+                {activity.map((item, i) => (
+                  <div key={item.id || i} className="hub-activity-item">
                     <span className="hub-activity-icon">
                       {getActivityIcon(item.type)}
                     </span>
@@ -217,7 +231,9 @@ export default function DashboardPage() {
                       <span className="hub-activity-action">
                         <strong>{item.platform}:</strong> {item.action}
                       </span>
-                      <span className="hub-activity-item-name">{item.item}</span>
+                      {item.item && (
+                        <span className="hub-activity-item-name">{item.item}</span>
+                      )}
                     </div>
                     <span className="hub-activity-time">{item.time}</span>
                   </div>

@@ -356,8 +356,10 @@ export default function ValoraDashboard() {
   const [comps, setComps] = useState<CompProperty[]>([]);
   const [activeTab, setActiveTab] = useState<"underwriting" | "rentroll" | "pnl" | "valuation" | "comps" | "improvements" | "map">("underwriting");
 
-  // Photo State (optional)
+  // Photo State (optional) — each photo can have a label
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [imageLabels, setImageLabels] = useState<Record<number, string>>({});
+  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const analysisAbortRef = useRef<AbortController | null>(null);
 
@@ -422,6 +424,9 @@ export default function ValoraDashboard() {
   // Live Interest Rates State
   const [liveRates, setLiveRates] = useState(DEFAULT_RATES);
   const [ratesLoading, setRatesLoading] = useState(true);
+
+  // Direct underwrite mode (skip AI analysis)
+  const [directUnderwrite, setDirectUnderwrite] = useState(false);
 
   // Marketplace State
   const [isPublic, setIsPublic] = useState(false);
@@ -643,16 +648,35 @@ export default function ValoraDashboard() {
     setIsLoadingRealComps(false);
   };
 
-  // Handle Image Upload
+  // Handle Image Upload (supports replacing a specific photo via replaceIndex)
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
+    if (!files || files.length === 0) return;
+
+    if (replaceIndex !== null) {
+      // Replace a single photo at the given index
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) {
+          setUploadedImages(prev => {
+            const updated = [...prev];
+            updated[replaceIndex] = ev.target!.result as string;
+            return updated;
+          });
+          // Preserve existing label for replaced photo
+        }
+        setReplaceIndex(null);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Add new photos
       const newImages: string[] = [];
       Array.from(files).forEach(file => {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            newImages.push(e.target.result as string);
+        reader.onload = (ev) => {
+          if (ev.target?.result) {
+            newImages.push(ev.target.result as string);
             if (newImages.length === files.length) {
               setUploadedImages(prev => [...prev, ...newImages]);
             }
@@ -661,6 +685,30 @@ export default function ValoraDashboard() {
         reader.readAsDataURL(file);
       });
     }
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  // Remove a photo and clean up its label
+  const removePhoto = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setImageLabels(prev => {
+      const updated: Record<number, string> = {};
+      // Re-index labels after removal
+      Object.entries(prev).forEach(([k, v]) => {
+        const ki = parseInt(k);
+        if (ki < index) updated[ki] = v;
+        else if (ki > index) updated[ki - 1] = v;
+        // skip the removed index
+      });
+      return updated;
+    });
+  };
+
+  // Trigger file input for replacing a specific photo
+  const triggerReplace = (index: number) => {
+    setReplaceIndex(index);
+    fileInputRef.current?.click();
   };
 
   // Add Unit to Rent Roll
@@ -1308,6 +1356,8 @@ export default function ValoraDashboard() {
     setUnderwriting(workspace.underwriting);
     setComps(workspace.comps);
     setUploadedImages(workspace.images);
+    setImageLabels({});
+    setReplaceIndex(null);
     setNotes(workspace.notes);
     setWorkspaceName(workspace.name);
     setCurrentWorkspaceId(workspace.id);
@@ -1345,7 +1395,7 @@ export default function ValoraDashboard() {
     if (analysisAbortRef.current) { analysisAbortRef.current.abort(); analysisAbortRef.current = null; }
     setAddress(""); setCity(""); setState(""); setZipCode(""); setPropertyType("");
     setSqft(""); setLotSize(""); setYearBuilt(""); setUnits("1"); setBeds(""); setBaths("");
-    setUploadedImages([]); setValuation(null); setUnderwriting(null); setComps([]);
+    setUploadedImages([]); setImageLabels({}); setReplaceIndex(null); setValuation(null); setUnderwriting(null); setComps([]);
     setAnalysisComplete(false); setCurrentWorkspaceId(null); setWorkspaceName(""); setNotes("");
     setPurchasePrice(""); setGrossRent(""); setActiveTab("underwriting");
     setRentRoll([]); setExpenses(DEFAULT_EXPENSES); setIsPublic(false); setAskingPrice("");
@@ -1608,6 +1658,17 @@ export default function ValoraDashboard() {
               <p>AI-powered valuations, comps, and underwriting for all property types</p>
             </div>
             <div className="val-dash-actions">
+              <button
+                className="val-dash-btn secondary"
+                onClick={() => { resetAnalysis(); setDirectUnderwrite(true); setActiveTab("underwriting"); }}
+                title="Go straight to underwriting — no AI analysis needed"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <rect x="2" y="3" width="20" height="18" rx="2" />
+                  <path d="M8 7h8M8 11h8M8 15h5" />
+                </svg>
+                New Property
+              </button>
               <Link href="/valora/marketplace" className="val-dash-btn secondary">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -1629,8 +1690,8 @@ export default function ValoraDashboard() {
                   Saved ({savedWorkspaces.length})
                 </button>
               )}
-              {(analysisComplete || isIncomeProperty) && (
-                <button className="val-dash-btn secondary" onClick={resetAnalysis}>
+              {(analysisComplete || isIncomeProperty || directUnderwrite) && (
+                <button className="val-dash-btn secondary" onClick={() => { resetAnalysis(); setDirectUnderwrite(false); }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
@@ -1802,21 +1863,61 @@ export default function ValoraDashboard() {
               {/* Photo Upload */}
               <div className="val-form-section">
                 <label>Property Photos <span className="optional">(optional)</span></label>
-                <div className="val-photo-dropzone" onClick={() => fileInputRef.current?.click()}>
-                  <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
-                    <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
-                  </svg>
-                  <span>Drop photos or click to upload</span>
-                </div>
+                <input ref={fileInputRef} type="file" multiple={replaceIndex === null} accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                 {uploadedImages.length > 0 && (
-                  <div className="val-uploaded-photos">
+                  <div className="val-photo-gallery">
                     {uploadedImages.map((img, index) => (
-                      <div key={index} className="val-photo-thumb">
-                        <img src={img} alt={`Photo ${index + 1}`} />
-                        <button onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}>×</button>
+                      <div key={index} className="val-photo-card">
+                        <div className="val-photo-card-img">
+                          <img src={img} alt={imageLabels[index] || `Photo ${index + 1}`} />
+                          <div className="val-photo-card-actions">
+                            <button
+                              className="val-photo-action-btn"
+                              title="Replace photo"
+                              onClick={(e) => { e.stopPropagation(); triggerReplace(index); }}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                <path d="M23 4v6h-6M1 20v-6h6" />
+                                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                              </svg>
+                            </button>
+                            <button
+                              className="val-photo-action-btn danger"
+                              title="Remove photo"
+                              onClick={(e) => { e.stopPropagation(); removePhoto(index); }}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                        <input
+                          className="val-photo-label-input"
+                          type="text"
+                          placeholder={`Photo ${index + 1} label`}
+                          value={imageLabels[index] || ""}
+                          onChange={(e) => setImageLabels(prev => ({ ...prev, [index]: e.target.value }))}
+                        />
                       </div>
                     ))}
+                    {/* Add more photos card */}
+                    <div className="val-photo-card val-photo-add-card" onClick={() => { setReplaceIndex(null); fileInputRef.current?.click(); }}>
+                      <div className="val-photo-card-img val-photo-add-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
+                          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                        </svg>
+                        <span>Add Photo</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {uploadedImages.length === 0 && (
+                  <div className="val-photo-dropzone" onClick={() => { setReplaceIndex(null); fileInputRef.current?.click(); }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
+                      <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+                    </svg>
+                    <span>Drop photos or click to upload</span>
                   </div>
                 )}
               </div>
@@ -2051,14 +2152,14 @@ export default function ValoraDashboard() {
 
           {/* Right Panel - Underwriting Workspace / Results */}
           <div className="val-results-panel">
-            {!isIncomeProperty && !analysisComplete ? (
+            {!isIncomeProperty && !analysisComplete && !directUnderwrite ? (
               <div className="val-empty-results">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="64" height="64">
                   <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
                   <path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 <h3>Select a Property Type</h3>
-                <p>Choose a non-single-family property type (Multifamily, Commercial, Industrial, etc.) to open the underwriting workspace, or enter an address to run AI analysis.</p>
+                <p>Choose a property type to open the underwriting workspace, click <strong>New Property</strong> above to start underwriting directly, or enter an address to run AI analysis.</p>
               </div>
             ) : (
               <>

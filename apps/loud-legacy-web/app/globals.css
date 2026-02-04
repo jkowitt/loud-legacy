@@ -8025,19 +8025,23 @@ textarea:focus-visible {
    VALORA DASHBOARD
    =========================== */
 .valora-dashboard-page {
-  --val-primary: #10B981;
-  --val-primary-dark: #059669;
-  --val-primary-light: #ECFDF5;
+  --val-primary: #1B2A4A;
+  --val-primary-dark: #0F1B2E;
+  --val-primary-light: #E8EDF4;
+  --val-accent: #D4A843;
+  --val-accent-dark: #B8922F;
+  --val-accent-light: #FBF5E8;
+  --val-positive: #16A34A;
   --val-text: #1E293B;
   --val-text-secondary: #64748B;
-  --val-border: #E2E8F0;
-  --val-bg: #F8FAFC;
+  --val-border: #D1D9E6;
+  --val-bg: #EFF2F7;
   --val-card: #FFFFFF;
 }
 
 .val-dash-header {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  padding: 3rem 0;
+  background: linear-gradient(135deg, #1B2A4A 0%, #0F1B2E 100%);
+  padding: 2.5rem 0;
   color: white;
 }
 
@@ -8790,7 +8794,7 @@ textarea:focus-visible {
 }
 
 .val-type-option:hover { background: #F8FAFC; }
-.val-type-option.active { background: #ECFDF5; color: var(--val-primary); font-weight: 500; }
+.val-type-option.active { background: var(--val-primary-light); color: var(--val-primary); font-weight: 500; }
 
 .val-photo-dropzone {
   border: 2px dashed var(--val-border);
@@ -8808,17 +8812,130 @@ textarea:focus-visible {
 
 .val-photo-dropzone:hover {
   border-color: var(--val-primary);
-  background: #ECFDF5;
+  background: var(--val-primary-light);
   color: var(--val-primary);
 }
 
-.val-uploaded-photos {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
+/* Photo gallery grid */
+.val-photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
 }
 
+.val-photo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.val-photo-card-img {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--val-border);
+}
+
+.val-photo-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.val-photo-card-actions {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 4px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.val-photo-card:hover .val-photo-card-actions {
+  opacity: 1;
+}
+
+.val-photo-action-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.val-photo-action-btn:hover {
+  background: #fff;
+  color: var(--val-primary);
+}
+
+.val-photo-action-btn.danger:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.val-photo-label-input {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--val-border);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: #334155;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.val-photo-label-input:focus {
+  border-color: var(--val-primary);
+}
+
+.val-photo-label-input::placeholder {
+  color: #94A3B8;
+}
+
+/* Add photo placeholder card */
+.val-photo-add-card {
+  cursor: pointer;
+}
+
+.val-photo-add-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: #F8FAFC;
+  border: 2px dashed var(--val-border);
+  color: #94A3B8;
+  transition: all 0.15s;
+}
+
+.val-photo-add-placeholder span {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.val-photo-add-card:hover .val-photo-add-placeholder {
+  border-color: var(--val-primary);
+  color: var(--val-primary);
+  background: var(--val-primary-light);
+}
+
+/* Legacy compat - keep thumb style for other uses */
 .val-photo-thumb {
   position: relative;
   width: 64px;
@@ -9459,7 +9576,7 @@ textarea:focus-visible {
   color: var(--val-text);
 }
 
-.val-uw-metric.positive .metric-value { color: var(--val-primary); }
+.val-uw-metric.positive .metric-value { color: var(--val-positive); }
 .val-uw-metric.negative .metric-value { color: #EF4444; }
 
 .val-uw-breakdown {
@@ -9568,7 +9685,7 @@ textarea:focus-visible {
   color: var(--val-text);
 }
 
-.val-rentroll-summary .summary-stat .positive { color: var(--val-primary); }
+.val-rentroll-summary .summary-stat .positive { color: var(--val-positive); }
 .val-rentroll-summary .summary-stat .negative { color: #EF4444; }
 
 .val-rentroll-table { overflow-x: auto; }
@@ -9604,7 +9721,7 @@ textarea:focus-visible {
   text-align: center;
 }
 
-.val-rentroll-row .status.occupied { background: #ECFDF5; color: var(--val-primary); }
+.val-rentroll-row .status.occupied { background: #ECFDF5; color: var(--val-positive); }
 .val-rentroll-row .status.vacant { background: #FEF2F2; color: #EF4444; }
 .val-rentroll-row .status.notice { background: #FFFBEB; color: #F59E0B; }
 
@@ -9709,7 +9826,7 @@ textarea:focus-visible {
 
 .val-pnl-section.income { background: #ECFDF5; }
 .val-pnl-section.expenses { background: #F8FAFC; }
-.val-pnl-section.noi { background: linear-gradient(135deg, var(--val-primary) 0%, var(--val-primary-dark) 100%); color: white; }
+.val-pnl-section.noi { background: linear-gradient(135deg, var(--val-accent) 0%, var(--val-accent-dark) 100%); color: white; }
 
 .val-pnl-section h5 {
   font-size: 0.875rem;
@@ -9817,7 +9934,7 @@ textarea:focus-visible {
 }
 
 .val-improvements-summary span { color: var(--val-text-secondary); }
-.val-improvements-summary .roi { font-weight: 600; color: var(--val-primary); }
+.val-improvements-summary .roi { font-weight: 600; color: var(--val-accent-dark); }
 
 .val-improvements-list {
   display: grid;
@@ -9890,7 +10007,7 @@ textarea:focus-visible {
 }
 
 .val-improvement-item .cost { font-weight: 600; color: var(--val-text); }
-.val-improvement-item .value-add { font-weight: 600; color: var(--val-primary); }
+.val-improvement-item .value-add { font-weight: 600; color: var(--val-positive); }
 .val-improvement-item .item-roi { font-weight: 600; color: #3B82F6; }
 
 /* Map Content */
@@ -11409,7 +11526,7 @@ textarea:focus-visible {
   margin-bottom: 1rem;
 }
 
-.val-improve-analysis-header .condition-badge[data-condition="excellent"] { background: #ECFDF5; color: var(--val-primary); }
+.val-improve-analysis-header .condition-badge[data-condition="excellent"] { background: #ECFDF5; color: var(--val-positive); }
 .val-improve-analysis-header .condition-badge[data-condition="good"] { background: #DBEAFE; color: #3B82F6; }
 .val-improve-analysis-header .condition-badge[data-condition="fair"] { background: #FFFBEB; color: #F59E0B; }
 .val-improve-analysis-header .condition-badge[data-condition="poor"] { background: #FEE2E2; color: #EF4444; }

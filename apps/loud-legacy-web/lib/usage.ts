@@ -10,13 +10,25 @@ import { prisma } from '@/lib/prisma';
 
 // Monthly property-record lookup limits per plan
 export const PLAN_LIMITS: Record<string, number> = {
-  FREE: 5,
+  FREE: 0,       // Free / beta accounts — no RentCast lookups (must upgrade)
   STARTER: 25,
   PROFESSIONAL: 100,
   ENTERPRISE: 500,
-  BETA: 10, // Beta users get 10 free lookups/month
+  BETA: 0,       // Beta users — no lookups until they register and pay
   OWNER: Infinity, // Site owner/developer — unlimited, no billing
 };
+
+// Plans that are considered "paid" and can access RentCast lookups
+const PAID_PLANS = new Set(['STARTER', 'PROFESSIONAL', 'ENTERPRISE', 'OWNER']);
+
+/**
+ * Check if a user has a paid plan that allows RentCast / property-record / comp lookups.
+ * Beta and free users are blocked — they can only use AI photo analysis.
+ */
+export async function hasPaidAccess(userId: string): Promise<{ allowed: boolean; plan: string }> {
+  const plan = await getUserPlan(userId);
+  return { allowed: PAID_PLANS.has(plan), plan };
+}
 
 export const OVERAGE_PRICE_CENTS = 200; // $2.00 per additional request
 
