@@ -50,9 +50,9 @@ export async function POST(
             propertyType: comp.propertyType || null,
             squareFeet: comp.squareFeet ? parseFloat(comp.squareFeet) : null,
             salePrice: parseFloat(comp.lastSalePrice || comp.salePrice) || 0,
-            saleDate: comp.lastSaleDate || comp.saleDate
+            saleDate: (comp.lastSaleDate || comp.saleDate)
               ? new Date(comp.lastSaleDate || comp.saleDate)
-              : null,
+              : new Date(),
             pricePerSF: comp.pricePerSqft || comp.pricePerSF
               ? parseFloat(comp.pricePerSqft || comp.pricePerSF)
               : null,

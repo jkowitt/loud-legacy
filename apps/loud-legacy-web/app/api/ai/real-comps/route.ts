@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { checkPropertyRecordAccess, recordPropertyRecordUsage, OVERAGE_PRICE_CENTS } from "@/lib/usage";
+import { checkPropertyRecordAccess, recordPropertyRecordUsage, OVERAGE_PRICE_CENTS, hasPaidAccess } from "@/lib/usage";
 import { fetchRecentSales } from "@/lib/rentcast";
 import { cachePropertyRecord, getLocalComps } from "@/lib/property-cache";
 
@@ -26,6 +26,18 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    // Beta / free users cannot use comp lookups — must upgrade to a paid plan
+    const { allowed, plan } = await hasPaidAccess(userId);
+    if (!allowed) {
+      return NextResponse.json({
+        error: "Comparable sales lookups require a paid plan. Please upgrade to access verified comps.",
+        plan,
+        upgradeRequired: true,
+        comps: [],
+        source: "blocked",
+      }, { status: 403 });
     }
 
     const body = await request.json();
