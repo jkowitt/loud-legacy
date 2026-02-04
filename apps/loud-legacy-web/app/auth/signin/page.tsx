@@ -17,12 +17,28 @@ export default function SignInPage() {
   const [hasGoogle, setHasGoogle] = useState(false);
 
   const justRegistered = searchParams.get("registered") === "true";
+  const oauthError = searchParams.get("error");
 
   useEffect(() => {
     getProviders().then((providers) => {
       setHasGoogle(!!providers?.google);
     });
   }, []);
+
+  useEffect(() => {
+    if (oauthError) {
+      const messages: Record<string, string> = {
+        OAuthAccountNotLinked: "This email is already linked to another sign-in method.",
+        OAuthCallback: "Could not complete Google sign-in. Please try again.",
+        OAuthSignin: "Could not start Google sign-in. Please try again.",
+        OAuthCreateAccount: "Could not create account via Google. Please try signing up first.",
+        Callback: "Authentication callback failed. Please try again.",
+        AccessDenied: "Access denied. Please try again.",
+        Configuration: "Server configuration error. Please try again later.",
+      };
+      setError(messages[oauthError] || `Authentication error (${oauthError}). Please try again.`);
+    }
+  }, [oauthError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +61,12 @@ export default function SignInPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password. Please try again.");
+        // NextAuth returns status 401 for credential errors, 500+ for server errors
+        if (result.status === 401) {
+          setError("Invalid email or password. Please try again.");
+        } else {
+          setError("Unable to sign in — a server error occurred. Please try again later.");
+        }
       } else {
         router.push("/dashboard");
       }
