@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, email, password, recaptchaToken } = body;
+    const { name, password, recaptchaToken } = body;
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : body.email;
 
     // Google Cloud reCAPTCHA Enterprise verification
     const recaptchaResult = await verifyRecaptchaToken(recaptchaToken || '', 'signup');
