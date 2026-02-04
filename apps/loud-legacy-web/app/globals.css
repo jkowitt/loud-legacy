@@ -9742,35 +9742,97 @@ textarea:focus-visible {
   color: #EF4444;
 }
 
+/* Inline editing for rent roll rows */
+.val-rentroll-row.editable .rr-inline {
+  width: 100%;
+  min-width: 0;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  background: transparent;
+  color: var(--val-text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.val-rentroll-row.editable .rr-inline:hover {
+  border-color: var(--val-border);
+  background: white;
+}
+
+.val-rentroll-row.editable .rr-inline:focus {
+  outline: none;
+  border-color: var(--val-primary);
+  background: white;
+}
+
+.val-rentroll-row.editable .rr-inline.unit-num {
+  font-weight: 600;
+}
+
+.val-rentroll-row.editable select.rr-inline {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.val-rentroll-row.editable select.rr-inline:hover,
+.val-rentroll-row.editable select.rr-inline:focus {
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+/* Number inputs: hide spinners until focus */
+.val-rentroll-row.editable input[type="number"].rr-inline {
+  -moz-appearance: textfield;
+}
+.val-rentroll-row.editable input[type="number"].rr-inline:focus {
+  -moz-appearance: auto;
+}
+.val-rentroll-row.editable input[type="number"].rr-inline::-webkit-inner-spin-button,
+.val-rentroll-row.editable input[type="number"].rr-inline::-webkit-outer-spin-button {
+  opacity: 0;
+}
+.val-rentroll-row.editable input[type="number"].rr-inline:focus::-webkit-inner-spin-button,
+.val-rentroll-row.editable input[type="number"].rr-inline:focus::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+.val-rentroll-row.editable .status-select {
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
 .val-add-unit-form {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
   background: #F8FAFC;
   border-radius: 12px;
   border: 1px solid var(--val-border);
 }
 
 .val-add-unit-form h5 {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--val-text);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .val-add-unit-form .add-unit-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .val-add-unit-form input,
 .val-add-unit-form select {
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid var(--val-border);
-  border-radius: 8px;
-  font-size: 0.875rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
   background: white;
+  min-width: 0;
 }
 
 .val-add-unit-form input:focus,
@@ -9847,14 +9909,82 @@ textarea:focus-visible {
 .val-pnl-section .pnl-row.negative span:last-child { color: #EF4444; }
 .val-pnl-section .pnl-row.total { font-weight: 600; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 0.5rem; padding-top: 0.75rem; }
 
+.val-pnl-section .pnl-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.val-pnl-section .pnl-section-header h5 {
+  margin-bottom: 0;
+}
+
+.pnl-add-btn {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--val-border);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: white;
+  color: var(--val-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pnl-add-btn:hover {
+  background: var(--val-primary);
+  color: white;
+  border-color: var(--val-primary);
+}
+
 .val-pnl-section .pnl-row.editable {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.val-pnl-section .pnl-row.editable > span:first-child {
+.pnl-category-input {
   flex: 1;
-  min-width: 150px;
+  min-width: 120px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: transparent;
+  color: var(--val-text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pnl-category-input:hover {
+  border-color: var(--val-border);
+  background: white;
+}
+
+.pnl-category-input:focus {
+  outline: none;
+  border-color: var(--val-primary);
+  background: white;
+}
+
+.pnl-remove-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.pnl-remove-btn:hover {
+  background: #FEE2E2;
+  color: #DC2626;
 }
 
 .val-pnl-section .expense-inputs {
