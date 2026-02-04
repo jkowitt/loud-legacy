@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { verifyRecaptchaToken } from '@/lib/recaptcha';
 
@@ -23,6 +24,8 @@ function checkSignupRateLimit(ip: string): boolean {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const BETA_PLATFORMS = ['VALORA', 'BUSINESS_NOW', 'LEGACY_CRM', 'HUB', 'VENUEVR', 'LOUD_WORKS'] as const;
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,70 +81,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
-      );
-    }
-
-    // Hash password
+    // Hash password before the transaction to keep the transaction short
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: 'USER',
-        emailVerified: new Date(),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-      },
-    });
+    // Use a transaction so user + platform access + activity log are atomic.
+    // If any step fails the entire signup is rolled back cleanly.
+    const user = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Check if user already exists (inside transaction to prevent race conditions)
+      const existingUser = await tx.user.findUnique({
+        where: { email },
+      });
 
-    // Grant free BETA access to all platforms
-    const platforms = ['VALORA', 'BUSINESS_NOW', 'LEGACY_CRM', 'HUB', 'VENUEVR', 'LOUD_WORKS'] as const;
-    for (const platform of platforms) {
-      await prisma.platformAccess.upsert({
-        where: {
-          userId_platform: {
-            userId: user.id,
-            platform,
-          },
+      if (existingUser) {
+        throw new Error('USER_ALREADY_EXISTS');
+      }
+
+      // Create user
+      const newUser = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: 'USER',
+          emailVerified: new Date(),
         },
-        update: { enabled: true },
-        create: {
-          userId: user.id,
-          platform,
-          enabled: true,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
         },
       });
-    }
 
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: user.id,
-        action: 'beta_user_registered',
-        entityType: 'user',
-        entityId: user.id,
-        details: {
-          email: user.email,
-          isBeta: true,
-          platformsGranted: platforms.length,
+      // Grant free BETA access to all platforms in parallel
+      await Promise.all(
+        BETA_PLATFORMS.map((platform) =>
+          tx.platformAccess.create({
+            data: {
+              userId: newUser.id,
+              platform,
+              enabled: true,
+            },
+          })
+        )
+      );
+
+      // Log activity
+      await tx.activityLog.create({
+        data: {
+          userId: newUser.id,
+          action: 'beta_user_registered',
+          entityType: 'user',
+          entityId: newUser.id,
+          details: {
+            email: newUser.email,
+            isBeta: true,
+            platformsGranted: BETA_PLATFORMS.length,
+          },
         },
-      },
+      });
+
+      return newUser;
     });
 
     return NextResponse.json(
@@ -149,9 +149,62 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error('Error creating user:', error);
+    console.error('Signup error:', error);
 
-    // Handle specific database errors
+    // Handle our custom "user exists" sentinel from inside the transaction
+    if (error instanceof Error && error.message === 'USER_ALREADY_EXISTS') {
+      return NextResponse.json(
+        { error: 'An account with this email already exists.' },
+        { status: 400 }
+      );
+    }
+
+    // Handle Prisma-specific errors with proper error codes
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      switch (error.code) {
+        case 'P2002': // Unique constraint violation (race condition on email)
+          return NextResponse.json(
+            { error: 'An account with this email already exists.' },
+            { status: 400 }
+          );
+        case 'P2021': // Table does not exist
+        case 'P2022': // Column does not exist
+          console.error('Database schema mismatch — migrations may need to be run:', error.code, error.message);
+          return NextResponse.json(
+            { error: 'Database setup incomplete. Please contact support.' },
+            { status: 503 }
+          );
+        case 'P2024': // Timed out fetching a connection from the pool
+          return NextResponse.json(
+            { error: 'The server is experiencing high load. Please try again in a moment.' },
+            { status: 503 }
+          );
+        default:
+          console.error('Prisma known error:', error.code, error.message);
+          return NextResponse.json(
+            { error: 'A database error occurred. Please try again.' },
+            { status: 500 }
+          );
+      }
+    }
+
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      console.error('Prisma initialization error:', error.message);
+      return NextResponse.json(
+        { error: 'Unable to connect to the database. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      console.error('Prisma validation error:', error.message);
+      return NextResponse.json(
+        { error: 'Invalid data provided. Please check your input and try again.' },
+        { status: 400 }
+      );
+    }
+
+    // Fallback string-based checks for non-Prisma errors
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     if (errorMessage.includes('DATABASE_URL')) {
@@ -161,7 +214,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (errorMessage.includes('Connection') || errorMessage.includes('connect')) {
+    if (errorMessage.includes('Connection') || errorMessage.includes('connect') || errorMessage.includes('ECONNREFUSED')) {
       return NextResponse.json(
         { error: 'Unable to connect to the database. Please try again later.' },
         { status: 503 }
