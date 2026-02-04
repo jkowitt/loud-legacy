@@ -327,7 +327,7 @@ const DEFAULT_EXPENSES: OperatingExpense[] = [
 ];
 
 export default function ValoraDashboard() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const authRouter = useRouter();
 
   // Address & Property State
@@ -746,6 +746,17 @@ export default function ValoraDashboard() {
   // Delete Unit from Rent Roll
   const deleteUnit = (id: string) => {
     setRentRoll(prev => prev.filter(u => u.id !== id));
+  };
+
+  // Update a field on an existing unit
+  const updateUnit = (id: string, field: keyof RentRollUnit, value: string | number) => {
+    setRentRoll(prev => prev.map(u => {
+      if (u.id !== id) return u;
+      if (field === "sqft" || field === "monthlyRent" || field === "marketRent") {
+        return { ...u, [field]: parseInt(value as string) || 0 };
+      }
+      return { ...u, [field]: value };
+    }));
   };
 
   // Update Expense
@@ -1293,24 +1304,53 @@ export default function ValoraDashboard() {
     }
   }, [purchasePrice, downPaymentPercent, interestRate, loanTerm, grossRent, vacancyRate, operatingExpenseRatio, rentRoll, expenses, enrichmentData, sqft, units]);
 
-  // Save Workspace
-  const saveWorkspace = () => {
-    const workspace: SavedWorkspace = {
-      id: currentWorkspaceId || Date.now().toString(),
-      name: workspaceName || `${propertyType ? PROPERTY_TYPES.find(t => t.id === propertyType)?.name : "Property"} - ${address || "Underwriting"}`,
-      date: new Date().toLocaleDateString(),
-      address: address ? `${address}, ${city}, ${state} ${zipCode}` : "No address",
+  // Load saved workspaces from API on mount
+  useEffect(() => {
+    const loadSavedWorkspaces = async () => {
+      try {
+        const res = await fetch('/api/workspaces');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.workspaces) {
+            setSavedWorkspaces(data.workspaces);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load workspaces:", err);
+      }
+    };
+    if (session?.user) {
+      loadSavedWorkspaces();
+    }
+  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save Workspace (persists to database)
+  const saveWorkspace = async () => {
+    const workspaceName_ = workspaceName || `${propertyType ? PROPERTY_TYPES.find(t => t.id === propertyType)?.name : "Property"} - ${address || "Underwriting"}`;
+
+    const payload = {
+      id: currentWorkspaceId || undefined,
+      name: workspaceName_,
+      address,
+      city,
+      state,
+      zipCode,
       propertyType,
+      sqft,
+      lotSize,
+      yearBuilt,
+      units,
+      beds,
+      baths,
       valuation,
       underwriting,
-      comps,
       images: uploadedImages,
+      imageLabels,
       notes,
       rentRoll,
       expenses,
       isPublic,
-      askingPrice: askingPrice ? parseFloat(askingPrice) : undefined,
-      listingDate: isPublic ? new Date().toISOString() : undefined,
+      askingPrice,
       purchasePrice,
       downPaymentPercent,
       interestRate,
@@ -1320,15 +1360,38 @@ export default function ValoraDashboard() {
       operatingExpenseRatio,
     };
 
-    if (currentWorkspaceId) {
-      setSavedWorkspaces(prev => prev.map(w => w.id === currentWorkspaceId ? workspace : w));
-    } else {
-      setSavedWorkspaces(prev => [workspace, ...prev]);
-      setCurrentWorkspaceId(workspace.id);
-    }
+    try {
+      const res = await fetch('/api/workspaces', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+      if (res.ok) {
+        const data = await res.json();
+        const newId = data.workspace?.id;
+        if (newId && !currentWorkspaceId) {
+          setCurrentWorkspaceId(newId);
+        }
+
+        // Refresh workspace list from server
+        const listRes = await fetch('/api/workspaces');
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          if (listData.workspaces) setSavedWorkspaces(listData.workspaces);
+        }
+
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        const err = await res.json();
+        console.error("Save failed:", err);
+        alert("Failed to save: " + (err.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Failed to save workspace. Check your connection.");
+    }
   };
 
   // Promote to Marketplace
@@ -1342,8 +1405,15 @@ export default function ValoraDashboard() {
   };
 
   // Load Workspace
-  const loadWorkspace = (workspace: SavedWorkspace) => {
-    if (workspace.address && workspace.address !== "No address") {
+  const loadWorkspace = (workspace: any) => {
+    // Restore address fields - API returns individual fields or combined address
+    if ((workspace as any).city) {
+      // API workspace with individual fields
+      setAddress(workspace.address && workspace.address !== "No address" ? workspace.address.split(",")[0]?.trim() : "");
+      setCity((workspace as any).city || "");
+      setState((workspace as any).state || "");
+      setZipCode((workspace as any).zipCode || "");
+    } else if (workspace.address && workspace.address !== "No address") {
       const addressParts = workspace.address.split(", ");
       setAddress(addressParts[0] || "");
       setCity(addressParts[1] || "");
@@ -1351,20 +1421,28 @@ export default function ValoraDashboard() {
       setState(stateZip[0] || "");
       setZipCode(stateZip[1] || "");
     }
-    setPropertyType(workspace.propertyType);
+    setPropertyType(workspace.propertyType || "");
     setValuation(workspace.valuation);
     setUnderwriting(workspace.underwriting);
-    setComps(workspace.comps);
-    setUploadedImages(workspace.images);
-    setImageLabels({});
+    setComps(workspace.comps || []);
+    setUploadedImages(workspace.images || []);
+    setImageLabels((workspace as any).imageLabels || {});
     setReplaceIndex(null);
-    setNotes(workspace.notes);
+    setNotes(workspace.notes || "");
     setWorkspaceName(workspace.name);
     setCurrentWorkspaceId(workspace.id);
     setRentRoll(workspace.rentRoll || []);
-    setExpenses(workspace.expenses || DEFAULT_EXPENSES);
+    setExpenses(workspace.expenses?.length > 0 ? workspace.expenses : DEFAULT_EXPENSES);
     setIsPublic(workspace.isPublic || false);
     setAskingPrice(workspace.askingPrice?.toString() || "");
+
+    // Restore property details
+    if ((workspace as any).sqft) setSqft((workspace as any).sqft);
+    if ((workspace as any).lotSize) setLotSize((workspace as any).lotSize);
+    if ((workspace as any).yearBuilt) setYearBuilt((workspace as any).yearBuilt);
+    if ((workspace as any).units) setUnits((workspace as any).units);
+    if ((workspace as any).beds) setBeds((workspace as any).beds);
+    if ((workspace as any).baths) setBaths((workspace as any).baths);
 
     // Restore underwriting inputs
     if (workspace.purchasePrice) setPurchasePrice(workspace.purchasePrice);
@@ -1385,7 +1463,16 @@ export default function ValoraDashboard() {
   };
 
   // Delete Workspace
-  const deleteWorkspace = (id: string) => {
+  const deleteWorkspace = async (id: string) => {
+    try {
+      await fetch('/api/workspaces', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      console.error("Delete workspace error:", err);
+    }
     setSavedWorkspaces(prev => prev.filter(w => w.id !== id));
     if (currentWorkspaceId === id) setCurrentWorkspaceId(null);
   };
@@ -2391,15 +2478,19 @@ export default function ValoraDashboard() {
                               <span>Unit</span><span>Type</span><span>Sq Ft</span><span>Rent</span><span>Market</span><span>Tenant</span><span>Lease End</span><span>Status</span><span></span>
                             </div>
                             {rentRoll.map(unit => (
-                              <div key={unit.id} className="val-rentroll-row">
-                                <span className="unit-num">{unit.unitNumber}</span>
-                                <span>{unit.unitType}</span>
-                                <span>{unit.sqft}</span>
-                                <span>{formatCurrency(unit.monthlyRent)}</span>
-                                <span>{formatCurrency(unit.marketRent)}</span>
-                                <span>{unit.tenant || "-"}</span>
-                                <span>{unit.leaseEnd || "-"}</span>
-                                <span className={`status ${unit.status}`}>{unit.status}</span>
+                              <div key={unit.id} className="val-rentroll-row editable">
+                                <input className="rr-inline unit-num" value={unit.unitNumber} onChange={(e) => updateUnit(unit.id, "unitNumber", e.target.value)} />
+                                <select className="rr-inline" value={unit.unitType} onChange={(e) => updateUnit(unit.id, "unitType", e.target.value)}>
+                                  <option>Studio</option><option>1BR</option><option>1BR/1BA</option><option>2BR/1BA</option><option>2BR/2BA</option><option>3BR/2BA</option>
+                                </select>
+                                <input className="rr-inline" type="number" value={unit.sqft || ""} onChange={(e) => updateUnit(unit.id, "sqft", e.target.value)} />
+                                <input className="rr-inline" type="number" value={unit.monthlyRent || ""} onChange={(e) => updateUnit(unit.id, "monthlyRent", e.target.value)} placeholder="$0" />
+                                <input className="rr-inline" type="number" value={unit.marketRent || ""} onChange={(e) => updateUnit(unit.id, "marketRent", e.target.value)} placeholder="$0" />
+                                <input className="rr-inline" value={unit.tenant || ""} onChange={(e) => updateUnit(unit.id, "tenant", e.target.value)} placeholder="-" />
+                                <input className="rr-inline" type="date" value={unit.leaseEnd || ""} onChange={(e) => updateUnit(unit.id, "leaseEnd", e.target.value)} />
+                                <select className="rr-inline status-select" value={unit.status} onChange={(e) => updateUnit(unit.id, "status", e.target.value)}>
+                                  <option value="occupied">Occupied</option><option value="vacant">Vacant</option><option value="notice">Notice</option>
+                                </select>
                                 <button className="delete-unit" onClick={() => deleteUnit(unit.id)}>×</button>
                               </div>
                             ))}
@@ -2454,15 +2545,23 @@ export default function ValoraDashboard() {
                         <div className="pnl-row total"><span>Effective Gross Income</span><span>{formatCurrency(effectiveGrossIncome)}</span></div>
                       </div>
                       <div className="val-pnl-section expenses">
-                        <h5>Operating Expenses</h5>
+                        <div className="pnl-section-header">
+                          <h5>Operating Expenses</h5>
+                          <button className="pnl-add-btn" onClick={() => setExpenses(prev => [...prev, { id: Date.now().toString(), category: "New Expense", annual: 0, monthly: 0 }])}>+ Add Line</button>
+                        </div>
                         {expenses.map(exp => (
                           <div key={exp.id} className="pnl-row editable">
-                            <span>{exp.category}</span>
+                            <input
+                              className="pnl-category-input"
+                              value={exp.category}
+                              onChange={(e) => setExpenses(prev => prev.map(x => x.id === exp.id ? { ...x, category: e.target.value } : x))}
+                            />
                             <div className="expense-inputs">
-                              <input type="number" value={exp.monthly || ""} onChange={(e) => updateExpense(exp.id, "monthly", parseInt(e.target.value) || 0)} placeholder="Monthly" />
+                              <input type="number" value={exp.monthly || ""} onChange={(e) => updateExpense(exp.id, "monthly", parseInt(e.target.value) || 0)} placeholder="$0" />
                               <span className="per-label">/mo</span>
-                              <input type="number" value={exp.annual || ""} onChange={(e) => updateExpense(exp.id, "annual", parseInt(e.target.value) || 0)} placeholder="Annual" />
+                              <input type="number" value={exp.annual || ""} onChange={(e) => updateExpense(exp.id, "annual", parseInt(e.target.value) || 0)} placeholder="$0" />
                               <span className="per-label">/yr</span>
+                              <button className="pnl-remove-btn" title="Remove line item" onClick={() => setExpenses(prev => prev.filter(x => x.id !== exp.id))}>×</button>
                             </div>
                           </div>
                         ))}
