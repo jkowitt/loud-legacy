@@ -106,15 +106,15 @@ export async function fetchRecentSales(params: {
     latitude, longitude,
     propertyType,
     lookbackMonths = "6",
-    limit = 10,
+    limit = 6,
     minComps = 4,
   } = params;
 
   const lookbackDays = lookbackToDays(lookbackMonths);
   const rcPropertyType = propertyType ? mapPropertyType(propertyType) : undefined;
 
-  // Try narrow radius first, then expand
-  const radii = [0.5, 1.0];
+  // Try narrow radius first, then expand incrementally
+  const radii = [0.5, 1.0, 1.5, 2.0, 3.0];
   let allComps: RentCastComp[] = [];
   let radiusUsed = radii[0];
   let expanded = false;
