@@ -18,7 +18,8 @@ const Footer = () => {
               <li><Link href="/valora">Legacy RE</Link></li>
               <li><Link href="/valora/dashboard">Dashboard</Link></li>
               <li><Link href="/valora/marketplace">Marketplace</Link></li>
-              <li><Link href="/valora/brokers">Broker Portal</Link></li>
+              <li><Link href="/rally">Rally</Link></li>
+              <li><Link href="/rally/dashboard">Rally Dashboard</Link></li>
             </ul>
           </div>
 

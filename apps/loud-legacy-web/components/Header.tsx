@@ -8,6 +8,7 @@ import { useAuth } from "./AuthProvider";
 
 const productLogos = [
   { href: "/valora", src: "/logos/legacy-re.svg", name: "Legacy RE", alt: "Legacy RE - Real Estate Intelligence" },
+  { href: "/rally", src: "/logos/rally-orange.png", name: "Rally", alt: "Rally - Fan Engagement Platform" },
 ];
 
 export function Header() {
