@@ -39,7 +39,7 @@ export default function SignInPage() {
       <div className="rally-auth-container">
         <div className="rally-auth-card">
           <Link href="/" className="rally-auth-logo">
-            <Image src="/logos/rally-white.png" alt="Rally" width={120} height={36} />
+            <Image src="/logos/rally-stacked-on-dark.png" alt="Rally" width={100} height={100} className="rally-auth-logo-img" />
           </Link>
 
           <h1 className="rally-auth-heading">Welcome Back</h1>

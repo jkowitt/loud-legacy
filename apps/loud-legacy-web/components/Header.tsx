@@ -39,9 +39,9 @@ export function Header() {
       <div className="container header-content">
         <Link href="/" className="logo" aria-label="Rally Home">
           <Image
-            src="/logos/rally-white.png"
+            src="/logos/rally-logo-transparent-white.png"
             alt="Rally"
-            width={120}
+            width={140}
             height={36}
             className="logo-image"
             priority

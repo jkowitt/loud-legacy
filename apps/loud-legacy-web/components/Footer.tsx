@@ -8,9 +8,9 @@ const Footer = () => {
         <div className="footer-grid">
           <div className="footer-section footer-brand">
             <Image
-              src="/logos/rally-white.png"
+              src="/logos/rally-logo-transparent-white.png"
               alt="Rally"
-              width={100}
+              width={120}
               height={30}
               className="footer-rally-logo"
             />

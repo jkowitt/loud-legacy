@@ -23426,6 +23426,10 @@ body {
   justify-content: center;
   margin-bottom: 2rem;
 }
+.rally-auth-logo-img {
+  border-radius: 16px;
+  object-fit: contain;
+}
 
 .rally-auth-badge {
   display: inline-block;

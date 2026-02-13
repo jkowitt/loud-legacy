@@ -130,10 +130,10 @@ export default function RallyPage() {
       <section className="rally-hero">
         <div className="container">
           <Image
-            src="/logos/rally-white.png"
+            src="/logos/rally-logo-transparent-white.png"
             alt="Rally"
-            width={200}
-            height={56}
+            width={240}
+            height={60}
             className="rally-hero-logo"
             priority
           />
