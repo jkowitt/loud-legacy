@@ -1,145 +1,130 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRallyAuth } from "@/lib/rally-auth";
-
-const triviaQuestions = [
-  { q: "Which school has won the most NCAA basketball championships?", options: ["UCLA", "Kentucky", "Duke", "North Carolina"], answer: 0 },
-  { q: "What year was the first NCAA tournament held?", options: ["1939", "1945", "1952", "1960"], answer: 0 },
-  { q: "Which conference has the most tournament wins?", options: ["Big Ten", "ACC", "SEC", "Big 12"], answer: 1 },
-];
-
-const liveGame = {
-  home: "Rally U Ralliers",
-  away: "Gonzaga Bulldogs",
-  homeScore: 45,
-  awayScore: 42,
-  period: "2nd Half",
-  clock: "12:34",
-  venue: "Rally Arena",
-  sport: "Basketball",
-};
-
-const upcomingGames = [
-  { home: "Rally U Ralliers", away: "Kent State Golden Flashes", date: "Sat, Feb 15", time: "7:00 PM", venue: "Rally Stadium", sport: "Football" },
-  { home: "Rally U Ralliers", away: "Duke Blue Devils", date: "Mon, Feb 17", time: "8:30 PM", venue: "Rally Arena", sport: "Basketball" },
-  { home: "Ohio State Buckeyes", away: "Rally U Ralliers", date: "Sat, Feb 22", time: "3:30 PM", venue: "Ohio Stadium", sport: "Football" },
-];
+import { rallyEvents } from "@/lib/rally-api";
+import type { RallyEvent } from "@/lib/rally-api";
 
 export default function GamedayPage() {
   const { trackEvent } = useRallyAuth();
+  const [liveEvents, setLiveEvents] = useState<RallyEvent[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<RallyEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      rallyEvents.list({ status: "live" }),
+      rallyEvents.list({ status: "upcoming" }),
+    ]).then(([liveRes, upRes]) => {
+      if (liveRes.ok && liveRes.data) setLiveEvents(liveRes.data.events);
+      if (upRes.ok && upRes.data) setUpcomingEvents(upRes.data.events);
+      setLoading(false);
+    });
+  }, []);
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  };
+
+  const formatTime = (iso: string) => {
+    return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  };
+
+  if (loading) {
+    return (
+      <div className="rally-dash-page">
+        <div className="rally-dash-welcome"><h1>Gameday</h1></div>
+        <div className="rally-admin-loading">Loading events...</div>
+      </div>
+    );
+  }
+
+  const noEvents = liveEvents.length === 0 && upcomingEvents.length === 0;
 
   return (
     <div className="rally-dash-page">
       <div className="rally-dash-welcome">
         <h1>Gameday</h1>
-        <p className="rally-dash-subtitle">Games, trivia, predictions, and more</p>
+        <p className="rally-dash-subtitle">Games, activations, and ways to earn points</p>
       </div>
 
-      {/* Live Game */}
-      <div className="rally-dash-section">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ef4444', animation: 'pulse 2s infinite' }} />
-          <h3 style={{ margin: 0 }}>Live Now</h3>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginLeft: '4px' }}>{liveGame.sport}</span>
+      {noEvents && (
+        <div style={{ textAlign: "center", padding: "40px 20px", color: "rgba(255,255,255,0.4)" }}>
+          <p style={{ fontSize: "15px", marginBottom: "8px" }}>No events scheduled yet.</p>
+          <p style={{ fontSize: "13px" }}>Events created by admins will appear here with earn opportunities.</p>
         </div>
-        <div className="rally-dash-game-card" style={{ border: '1px solid rgba(255,107,53,0.4)', background: 'rgba(255,107,53,0.08)' }}>
-          <div className="rally-dash-game-teams" style={{ fontSize: '18px', fontWeight: 600 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <span className="rally-dash-team">{liveGame.home}</span>
-              <span style={{ fontSize: '32px', fontWeight: 700, color: '#FF6B35' }}>{liveGame.homeScore}</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+      )}
+
+      {/* Live Events */}
+      {liveEvents.map((event) => (
+        <div key={event.id} className="rally-dash-section">
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+            <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#ef4444", animation: "pulse 2s infinite" }} />
+            <h3 style={{ margin: 0 }}>Live Now</h3>
+            <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>{event.sport}</span>
+          </div>
+          <div className="rally-dash-game-card" style={{ border: "1px solid rgba(255,107,53,0.4)", background: "rgba(255,107,53,0.08)" }}>
+            <div className="rally-dash-game-teams" style={{ fontSize: "18px", fontWeight: 600 }}>
+              <span className="rally-dash-team">{event.homeTeam || event.title}</span>
               <span className="rally-dash-vs">vs</span>
-              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>{liveGame.period} &middot; {liveGame.clock}</span>
+              <span className="rally-dash-team">{event.awayTeam}</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <span className="rally-dash-team">{liveGame.away}</span>
-              <span style={{ fontSize: '32px', fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{liveGame.awayScore}</span>
+            <div className="rally-dash-game-details">
+              <span>{event.venue}</span>
             </div>
+            {/* Earn Opportunities */}
+            {event.activations?.length > 0 && (
+              <div style={{ marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "12px" }}>
+                <span style={{ fontSize: "12px", fontWeight: 600, color: "#FF6B35", display: "block", marginBottom: "8px" }}>EARN OPPORTUNITIES</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {event.activations.map((a) => (
+                    <span key={a.id} style={{ fontSize: "12px", padding: "4px 10px", borderRadius: "8px", background: "rgba(255,107,53,0.12)", color: "#FF6B35", fontWeight: 500 }}>
+                      {a.name} +{a.points}pts
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="rally-dash-game-details">
-            <span>{liveGame.venue}</span>
+        </div>
+      ))}
+
+      {/* Upcoming Events */}
+      {upcomingEvents.length > 0 && (
+        <div className="rally-dash-section">
+          <h3>Upcoming Events</h3>
+          <div className="rally-dash-games-list">
+            {upcomingEvents.map((event) => (
+              <div key={event.id} className="rally-dash-game-card">
+                <div className="rally-dash-game-teams">
+                  <span className="rally-dash-team">{event.homeTeam || event.title}</span>
+                  {event.awayTeam && (
+                    <>
+                      <span className="rally-dash-vs">vs</span>
+                      <span className="rally-dash-team">{event.awayTeam}</span>
+                    </>
+                  )}
+                </div>
+                <div className="rally-dash-game-details">
+                  <span>{event.sport} &middot; {formatDate(event.dateTime)} &middot; {formatTime(event.dateTime)}</span>
+                  {event.venue && <span>{event.venue}</span>}
+                </div>
+                {/* Earn opportunities for this event */}
+                {event.activations?.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "8px" }}>
+                    {event.activations.map((a) => (
+                      <span key={a.id} style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "6px", background: "rgba(255,107,53,0.08)", color: "#FF6B35" }}>
+                        {a.name} +{a.points}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-
-      {/* Upcoming Games */}
-      <div className="rally-dash-section">
-        <h3>Upcoming Games</h3>
-        <div className="rally-dash-games-list">
-          {upcomingGames.map((game, i) => (
-            <div key={i} className="rally-dash-game-card">
-              <div className="rally-dash-game-teams">
-                <span className="rally-dash-team">{game.home}</span>
-                <span className="rally-dash-vs">vs</span>
-                <span className="rally-dash-team">{game.away}</span>
-              </div>
-              <div className="rally-dash-game-details">
-                <span>{game.sport} &middot; {game.date} &middot; {game.time}</span>
-                <span>{game.venue}</span>
-              </div>
-              <div className="rally-dash-game-actions">
-                <span className="rally-dash-mobile-only">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                    <circle cx="12" cy="9" r="2.5" />
-                  </svg>
-                  Check-in on mobile
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Trivia */}
-      <div className="rally-dash-section">
-        <h3>Trivia Challenge</h3>
-        <p className="rally-dash-subtitle">Answer correctly to earn points!</p>
-        <div className="rally-dash-trivia-list">
-          {triviaQuestions.map((q, i) => (
-            <div key={i} className="rally-dash-trivia-card">
-              <p className="rally-dash-trivia-q">{q.q}</p>
-              <div className="rally-dash-trivia-options">
-                {q.options.map((opt, j) => (
-                  <button
-                    key={j}
-                    className="rally-dash-trivia-opt"
-                    onClick={() => trackEvent("trivia_answer", { question: String(i), answer: String(j) })}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Predictions */}
-      <div className="rally-dash-section">
-        <h3>Score Predictions</h3>
-        <p className="rally-dash-subtitle">Predict the final score for bonus points</p>
-        <div className="rally-dash-prediction-card">
-          <div className="rally-dash-prediction-matchup">
-            <div className="rally-dash-prediction-team">
-              <span>Rally U</span>
-              <input type="number" className="rally-dash-prediction-input" placeholder="0" min="0" max="200" />
-            </div>
-            <span className="rally-dash-vs">vs</span>
-            <div className="rally-dash-prediction-team">
-              <span>Gonzaga</span>
-              <input type="number" className="rally-dash-prediction-input" placeholder="0" min="0" max="200" />
-            </div>
-          </div>
-          <button
-            className="rally-btn rally-btn--primary"
-            onClick={() => trackEvent("prediction_submit", { game: "Rally U vs Gonzaga" })}
-          >
-            Submit Prediction (+25 pts)
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Mobile-only Features Notice */}
       <div className="rally-dash-mobile-notice">

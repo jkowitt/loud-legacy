@@ -88,8 +88,67 @@ export const rallyAuth = {
 // Content
 export const rallyContent = {
   getFeed: () => rallyFetch<{ content: ContentItem[] }>('/content'),
-
   getSchools: () => rallyFetch<{ schools: School[] }>('/schools'),
+};
+
+// Events
+export const rallyEvents = {
+  list: (params?: { schoolId?: string; status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.schoolId) qs.set('schoolId', params.schoolId);
+    if (params?.status) qs.set('status', params.status);
+    const query = qs.toString();
+    return rallyFetch<{ events: RallyEvent[]; total: number }>(`/events${query ? `?${query}` : ''}`);
+  },
+
+  get: (eventId: string) => rallyFetch<RallyEvent>(`/events/${eventId}`),
+
+  create: (event: CreateEventParams) =>
+    rallyFetch<RallyEvent>('/events', {
+      method: 'POST',
+      body: JSON.stringify(event),
+    }),
+
+  update: (eventId: string, fields: Partial<CreateEventParams>) =>
+    rallyFetch<RallyEvent>(`/events/${eventId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
+
+  delete: (eventId: string) =>
+    rallyFetch<{ message: string }>(`/events/${eventId}`, { method: 'DELETE' }),
+
+  earn: (eventId: string, activationId: string) =>
+    rallyFetch<{ earned: PointsEntry; totalPoints: number }>(`/events/${eventId}/earn`, {
+      method: 'POST',
+      body: JSON.stringify({ activationId }),
+    }),
+};
+
+// Points
+export const rallyPoints = {
+  me: () => rallyFetch<{ totalPoints: number; tier: string; history: PointsEntry[] }>('/points/me'),
+};
+
+// Rewards
+export const rallyRewards = {
+  list: (schoolId: string) =>
+    rallyFetch<{ rewards: Reward[] }>(`/schools/${schoolId}/rewards`),
+
+  create: (schoolId: string, reward: { name: string; pointsCost: number; description?: string }) =>
+    rallyFetch<Reward>(`/schools/${schoolId}/rewards`, {
+      method: 'POST',
+      body: JSON.stringify(reward),
+    }),
+
+  update: (schoolId: string, rewardId: string, fields: Partial<{ name: string; pointsCost: number; description: string }>) =>
+    rallyFetch<Reward>(`/schools/${schoolId}/rewards/${rewardId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
+
+  delete: (schoolId: string, rewardId: string) =>
+    rallyFetch<{ message: string }>(`/schools/${schoolId}/rewards/${rewardId}`, { method: 'DELETE' }),
 };
 
 // Users (admin)
@@ -170,6 +229,65 @@ export interface School {
   conference: string;
   primaryColor: string;
   secondaryColor: string;
+}
+
+export interface EventActivation {
+  id: string;
+  type: string;
+  name: string;
+  points: number;
+  description: string;
+}
+
+export interface RallyEvent {
+  id: string;
+  title: string;
+  sport: string;
+  homeSchoolId: string;
+  homeTeam: string;
+  awaySchoolId?: string | null;
+  awayTeam?: string;
+  venue: string;
+  city: string;
+  dateTime: string;
+  status: 'upcoming' | 'live' | 'completed';
+  activations: EventActivation[];
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateEventParams {
+  title: string;
+  sport?: string;
+  homeSchoolId: string;
+  homeTeam?: string;
+  awaySchoolId?: string | null;
+  awayTeam?: string;
+  venue?: string;
+  city?: string;
+  dateTime: string;
+  status?: string;
+  activations?: Omit<EventActivation, 'id'>[];
+}
+
+export interface PointsEntry {
+  id: string;
+  userId: string;
+  eventId: string;
+  activationId: string;
+  activationName: string;
+  points: number;
+  schoolId: string;
+  timestamp: string;
+}
+
+export interface Reward {
+  id: string;
+  name: string;
+  pointsCost: number;
+  description: string;
+  createdAt?: string;
 }
 
 export interface AnalyticsSummary {

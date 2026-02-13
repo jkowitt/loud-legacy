@@ -1,7 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRallyAuth } from "@/lib/rally-auth";
+import { rallyEvents, rallyPoints } from "@/lib/rally-api";
+import type { RallyEvent, PointsEntry } from "@/lib/rally-api";
 
 const quickActions = [
   { label: "Trivia", desc: "Test your knowledge", href: "/dashboard/gameday", icon: "?" },
@@ -11,8 +14,45 @@ const quickActions = [
 ];
 
 export default function DashboardPage() {
-  const { user, trackEvent } = useRallyAuth();
+  const { user, isAuthenticated, trackEvent } = useRallyAuth();
   const firstName = user?.name?.split(" ")[0] || "Fan";
+
+  const [nextEvent, setNextEvent] = useState<RallyEvent | null>(null);
+  const [liveEvent, setLiveEvent] = useState<RallyEvent | null>(null);
+  const [points, setPoints] = useState({ total: 0, tier: "Bronze", history: [] as PointsEntry[] });
+
+  useEffect(() => {
+    rallyEvents.list({ status: "upcoming" }).then((res) => {
+      if (res.ok && res.data?.events?.length) setNextEvent(res.data.events[0]);
+    });
+    rallyEvents.list({ status: "live" }).then((res) => {
+      if (res.ok && res.data?.events?.length) setLiveEvent(res.data.events[0]);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      rallyPoints.me().then((res) => {
+        if (res.ok && res.data) setPoints({ total: res.data.totalPoints, tier: res.data.tier, history: res.data.history || [] });
+      });
+    }
+  }, [isAuthenticated]);
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }) + " · " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  };
+
+  const timeAgo = (iso: string) => {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
+  const displayEvent = liveEvent || nextEvent;
 
   return (
     <div className="rally-dash-page">
@@ -28,50 +68,44 @@ export default function DashboardPage() {
       <div className="rally-dash-stats">
         <div className="rally-dash-stat-card">
           <span className="rally-dash-stat-label">Points</span>
-          <span className="rally-dash-stat-value">{(user?.points || 2450).toLocaleString()}</span>
-          <span className="rally-dash-stat-change" style={{ color: "#34C759" }}>+125 this week</span>
+          <span className="rally-dash-stat-value">{points.total.toLocaleString()}</span>
         </div>
         <div className="rally-dash-stat-card">
           <span className="rally-dash-stat-label">Tier</span>
-          <span className="rally-dash-stat-value rally-dash-stat-tier">{user?.tier || "Gold"}</span>
-          <span className="rally-dash-stat-change">550 to Platinum</span>
+          <span className="rally-dash-stat-value rally-dash-stat-tier">{points.tier}</span>
         </div>
         <div className="rally-dash-stat-card">
-          <span className="rally-dash-stat-label">Rank</span>
-          <span className="rally-dash-stat-value">#12</span>
-          <span className="rally-dash-stat-change" style={{ color: "#34C759" }}>Up 3 spots</span>
-        </div>
-        <div className="rally-dash-stat-card">
-          <span className="rally-dash-stat-label">Games Attended</span>
-          <span className="rally-dash-stat-value">8</span>
-          <span className="rally-dash-stat-change">This season</span>
+          <span className="rally-dash-stat-label">Activities</span>
+          <span className="rally-dash-stat-value">{points.history.length}</span>
         </div>
       </div>
 
-      {/* Next Game Card */}
-      <div className="rally-dash-next-game">
-        <div className="rally-dash-next-game-header">
-          <span className="rally-dash-label">NEXT GAME</span>
-          <span className="rally-dash-live-dot" />
+      {/* Next / Live Game Card */}
+      {displayEvent && (
+        <div className="rally-dash-next-game">
+          <div className="rally-dash-next-game-header">
+            <span className="rally-dash-label">{liveEvent ? "LIVE NOW" : "NEXT GAME"}</span>
+            {liveEvent && <span className="rally-dash-live-dot" />}
+          </div>
+          <h2>{displayEvent.title}</h2>
+          <p>{formatDate(displayEvent.dateTime)}{displayEvent.venue && ` · ${displayEvent.venue}`}</p>
+          {displayEvent.activations?.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
+              {displayEvent.activations.map((a) => (
+                <span key={a.id} style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "6px", background: "rgba(255,107,53,0.15)", color: "#FF6B35", fontWeight: 500 }}>
+                  {a.name} +{a.points}pts
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        <h2>Rally U Ralliers vs Kent State Golden Flashes</h2>
-        <p>Saturday, Feb 15 &middot; 7:00 PM &middot; Rally Stadium</p>
-        <div className="rally-dash-countdown">
-          <div className="rally-cd-box"><span>02</span><small>Days</small></div>
-          <div className="rally-cd-box"><span>14</span><small>Hrs</small></div>
-          <div className="rally-cd-box"><span>32</span><small>Min</small></div>
-          <div className="rally-cd-box"><span>08</span><small>Sec</small></div>
+      )}
+
+      {!displayEvent && (
+        <div className="rally-dash-next-game" style={{ textAlign: "center", padding: "24px" }}>
+          <p style={{ color: "rgba(255,255,255,0.5)" }}>No upcoming events. Check back soon!</p>
         </div>
-        <div className="rally-dash-game-actions">
-          <span className="rally-dash-mobile-only">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-              <circle cx="12" cy="9" r="2.5" />
-            </svg>
-            Check-In available on mobile app only
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Quick Actions */}
       <div className="rally-dash-section">
@@ -94,22 +128,23 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity - from points ledger */}
       <div className="rally-dash-section">
         <h3>Recent Activity</h3>
         <div className="rally-dash-activity-list">
-          {[
-            { action: "Checked in at Rally Arena", points: "+100", time: "Today" },
-            { action: "Rally U vs Gonzaga: Trivia 9/10", points: "+50", time: "Today" },
-            { action: "Score prediction: Rally U 72", points: "+25", time: "Today" },
-            { action: "Gameday photo submitted", points: "+30", time: "Yesterday" },
-          ].map((item, i) => (
-            <div key={i} className="rally-dash-activity-item">
-              <span className="rally-dash-activity-text">{item.action}</span>
-              <span className="rally-dash-activity-points">{item.points}</span>
-              <span className="rally-dash-activity-time">{item.time}</span>
-            </div>
-          ))}
+          {points.history.length === 0 ? (
+            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", padding: "8px 0" }}>
+              No activity yet. Attend an event and earn your first points!
+            </p>
+          ) : (
+            points.history.slice(0, 6).map((entry) => (
+              <div key={entry.id} className="rally-dash-activity-item">
+                <span className="rally-dash-activity-text">{entry.activationName}</span>
+                <span className="rally-dash-activity-points">+{entry.points}</span>
+                <span className="rally-dash-activity-time">{timeAgo(entry.timestamp)}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
