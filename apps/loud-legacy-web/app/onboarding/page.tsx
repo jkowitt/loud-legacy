@@ -31,7 +31,7 @@ const primaryProducts = [
 export default function OnboardingPage() {
   const router = useRouter();
   const session: any = null;
-  const status = "unauthenticated" as const;
+  const status: string = "unauthenticated";
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
