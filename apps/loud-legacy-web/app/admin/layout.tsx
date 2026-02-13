@@ -73,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="rally-admin-sidebar">
         <div className="rally-admin-sidebar-header">
           <Link href="/admin" className="rally-admin-logo">
-            <Image src="/logos/rally-white.png" alt="Rally Admin" width={80} height={24} />
+            <Image src="/logos/rally-logo-transparent-white.png" alt="Rally Admin" width={100} height={24} />
             <span className="rally-admin-badge">Admin</span>
           </Link>
         </div>

@@ -8,9 +8,9 @@ const Footer = () => {
         <div className="footer-grid">
           <div className="footer-section footer-brand">
             <Image
-              src="/logos/rally-white.png"
+              src="/logos/rally-logo-transparent-white.png"
               alt="Rally"
-              width={100}
+              width={120}
               height={30}
               className="footer-rally-logo"
             />
@@ -18,7 +18,7 @@ const Footer = () => {
               The gameday experience platform built for collegiate athletics.
             </p>
             <p className="footer-vw">
-              Built by Van Wagner Sports & Entertainment
+              Built by Loud Legacy
             </p>
           </div>
 
@@ -35,7 +35,6 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-title">Company</h4>
             <ul className="footer-links">
-              <li><Link href="/about">About</Link></li>
               <li><Link href="/contact">Contact</Link></li>
             </ul>
           </div>
@@ -51,7 +50,7 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <p className="footer-copyright">
-            &copy; {new Date().getFullYear()} Rally by Van Wagner. All rights reserved.
+            &copy; {new Date().getFullYear()} Rally by Loud Legacy. All rights reserved.
           </p>
           <div className="footer-bottom-links">
             <Link href="/privacy">Privacy</Link>

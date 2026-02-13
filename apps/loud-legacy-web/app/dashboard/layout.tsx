@@ -71,7 +71,7 @@ export default function DashboardLayout({
       <aside className="rally-sidebar">
         <div className="rally-sidebar-header">
           <Link href="/" className="rally-sidebar-logo">
-            <Image src="/logos/rally-white.png" alt="Rally" width={90} height={28} />
+            <Image src="/logos/rally-logo-transparent-white.png" alt="Rally" width={110} height={28} />
           </Link>
         </div>
 

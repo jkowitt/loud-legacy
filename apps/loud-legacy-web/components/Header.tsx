@@ -39,9 +39,9 @@ export function Header() {
       <div className="container header-content">
         <Link href="/" className="logo" aria-label="Rally Home">
           <Image
-            src="/logos/rally-white.png"
+            src="/logos/rally-logo-transparent-white.png"
             alt="Rally"
-            width={120}
+            width={140}
             height={36}
             className="logo-image"
             priority
@@ -54,7 +54,6 @@ export function Header() {
               <Link href="/#features" className="nav-link">Features</Link>
               <Link href="/#schools" className="nav-link">Schools</Link>
               <Link href="/#how-it-works" className="nav-link">How It Works</Link>
-              <Link href="/about" className="nav-link">About</Link>
             </>
           )}
           {isDashboard && (

@@ -90,10 +90,10 @@ export default function HomePage() {
       <section className="rally-hero">
         <div className="container">
           <Image
-            src="/logos/rally-white.png"
+            src="/logos/rally-logo-transparent-white.png"
             alt="Rally"
-            width={200}
-            height={56}
+            width={240}
+            height={60}
             className="rally-hero-logo"
             priority
           />
@@ -260,7 +260,7 @@ export default function HomePage() {
       <section className="rally-cta">
         <div className="container">
           <h2>Ready to Rally Your Fanbase?</h2>
-          <p>Built by Van Wagner Sports & Entertainment for the next generation of fan engagement.</p>
+          <p>The next generation of fan engagement, built by Loud Legacy.</p>
           <div className="rally-cta-actions">
             <Link href="/contact" className="rally-btn rally-btn--primary rally-btn--large">
               Request a Demo
