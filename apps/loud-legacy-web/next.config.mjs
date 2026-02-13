@@ -52,7 +52,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: http:",
               "font-src 'self' https://fonts.gstatic.com data:",
-              "connect-src 'self' https://maps.googleapis.com https://api.openai.com https://api.anthropic.com https://api.stlouisfed.org https://api.rentcast.io https://www.google.com https://recaptchaenterprise.googleapis.com https://api.stripe.com wss: ws:",
+              "connect-src 'self' https://maps.googleapis.com https://api.openai.com https://api.anthropic.com https://api.stlouisfed.org https://api.rentcast.io https://www.google.com https://recaptchaenterprise.googleapis.com https://api.stripe.com https://*.up.railway.app wss: ws:",
               "frame-src 'self' https://www.google.com https://js.stripe.com https://maps.google.com https://recaptcha.google.com",
               "object-src 'none'",
               "base-uri 'self'",
