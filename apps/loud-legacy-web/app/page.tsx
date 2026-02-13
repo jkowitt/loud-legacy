@@ -144,20 +144,14 @@ export default function HomePage() {
                   <div className="rally-screen-avatar" />
                 </div>
                 <div className="rally-screen-card">
-                  <div className="rally-screen-label">NEXT GAME</div>
-                  <div className="rally-screen-title">Eagles vs Tigers</div>
-                  <div className="rally-screen-date">Sat, Feb 15 &middot; 7:00 PM</div>
-                  <div className="rally-screen-countdown">
-                    <div className="rally-cd-box"><span>02</span><small>D</small></div>
-                    <div className="rally-cd-box"><span>14</span><small>H</small></div>
-                    <div className="rally-cd-box"><span>32</span><small>M</small></div>
-                    <div className="rally-cd-box"><span>08</span><small>S</small></div>
-                  </div>
+                  <div className="rally-screen-label">YOUR SCHOOL</div>
+                  <div className="rally-screen-title">Gameday Experience</div>
+                  <div className="rally-screen-date">Events &middot; Points &middot; Rewards</div>
                 </div>
                 <div className="rally-screen-stats-row">
-                  <div className="rally-screen-stat"><span className="rally-accent">2,450</span><small>Points</small></div>
-                  <div className="rally-screen-stat"><span className="rally-tier-pill">Gold</span><small>Tier</small></div>
-                  <div className="rally-screen-stat"><span className="rally-accent">#12</span><small>Rank</small></div>
+                  <div className="rally-screen-stat"><span className="rally-accent">---</span><small>Points</small></div>
+                  <div className="rally-screen-stat"><span className="rally-tier-pill">Tier</span><small>Level</small></div>
+                  <div className="rally-screen-stat"><span className="rally-accent">---</span><small>Rank</small></div>
                 </div>
                 <div className="rally-screen-actions">
                   <div className="rally-screen-action"><div className="rally-sa-icon rally-sa-icon--orange" /><small>Check In</small></div>
