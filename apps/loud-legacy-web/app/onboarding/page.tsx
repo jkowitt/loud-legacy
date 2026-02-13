@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-
 const industries = [
   { value: "real-estate", label: "Real Estate" },
   { value: "sports", label: "Sports & Athletics" },
@@ -32,7 +30,8 @@ const primaryProducts = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const session: any = null;
+  const status = "unauthenticated" as const;
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({

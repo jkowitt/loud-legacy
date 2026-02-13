@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -144,7 +143,7 @@ export default function PricingPage() {
   const [viewMode, setViewMode] = useState<"bundles" | "individual">("bundles");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("valora");
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { data: session } = useSession();
+  const session: any = null;
   const router = useRouter();
 
   const handleSubscribe = async (planId: string, contactSales?: boolean, isTrial?: boolean) => {
