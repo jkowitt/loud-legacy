@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/Header";
@@ -327,7 +326,8 @@ const DEFAULT_EXPENSES: OperatingExpense[] = [
 ];
 
 export default function ValoraDashboard() {
-  const { data: session, status } = useSession();
+  const session: any = null;
+  const status = "unauthenticated" as const;
   const authRouter = useRouter();
 
   // Address & Property State
