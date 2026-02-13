@@ -107,7 +107,7 @@ export default function AdminEventsPage() {
 
   const updateActivation = (index: number, field: keyof ActivationDraft, value: string | number) => {
     const updated = [...activations];
-    (updated[index] as Record<string, string | number>)[field] = value;
+    (updated[index] as unknown as Record<string, string | number>)[field] = value;
     if (field === "type") {
       const label = ACTIVATION_TYPES.find((t) => t.value === value)?.label || "";
       if (!updated[index].name) updated[index].name = label;
