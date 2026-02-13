@@ -54,8 +54,8 @@ export default function DashboardPage() {
           <span className="rally-dash-label">NEXT GAME</span>
           <span className="rally-dash-live-dot" />
         </div>
-        <h2>Eagles vs Tigers</h2>
-        <p>Saturday, Feb 15 &middot; 7:00 PM &middot; Cameron Indoor Stadium</p>
+        <h2>Rally U Ralliers vs Kent State Golden Flashes</h2>
+        <p>Saturday, Feb 15 &middot; 7:00 PM &middot; Rally Stadium</p>
         <div className="rally-dash-countdown">
           <div className="rally-cd-box"><span>02</span><small>Days</small></div>
           <div className="rally-cd-box"><span>14</span><small>Hrs</small></div>
@@ -99,10 +99,10 @@ export default function DashboardPage() {
         <h3>Recent Activity</h3>
         <div className="rally-dash-activity-list">
           {[
-            { action: "Attended Duke vs UNC", points: "+100", time: "2 days ago" },
-            { action: "Trivia Challenge: 8/10 correct", points: "+50", time: "3 days ago" },
-            { action: "Score prediction: Eagles 78", points: "+25", time: "5 days ago" },
-            { action: "Photo challenge submitted", points: "+30", time: "1 week ago" },
+            { action: "Checked in at Rally Arena", points: "+100", time: "Today" },
+            { action: "Rally U vs Gonzaga: Trivia 9/10", points: "+50", time: "Today" },
+            { action: "Score prediction: Rally U 72", points: "+25", time: "Today" },
+            { action: "Gameday photo submitted", points: "+30", time: "Yesterday" },
           ].map((item, i) => (
             <div key={i} className="rally-dash-activity-item">
               <span className="rally-dash-activity-text">{item.action}</span>

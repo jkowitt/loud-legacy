@@ -10,13 +10,13 @@ const tiers = [
 ];
 
 const rewards = [
-  { name: "Rally T-Shirt", points: 500, tier: "Bronze", available: true },
-  { name: "Team Sticker Pack", points: 250, tier: "Bronze", available: true },
-  { name: "Priority Seating Upgrade", points: 1500, tier: "Silver", available: true },
-  { name: "Meet & Greet Pass", points: 3000, tier: "Gold", available: true },
-  { name: "Signed Jersey", points: 5000, tier: "Gold", available: false },
-  { name: "VIP Gameday Experience", points: 8000, tier: "Platinum", available: false },
-  { name: "Season Tickets Drawing", points: 10000, tier: "Platinum", available: false },
+  { name: "Rally U Sticker Pack", points: 150, tier: "Bronze", available: true },
+  { name: "Rally University T-Shirt", points: 300, tier: "Bronze", available: true },
+  { name: "Rally U Merch Bundle", points: 750, tier: "Silver", available: true },
+  { name: "Courtside Seats at Rally Arena", points: 2000, tier: "Gold", available: true },
+  { name: "Meet the Ralliers Athletes", points: 5000, tier: "Gold", available: false },
+  { name: "VIP Rally U Gameday Experience", points: 8000, tier: "Platinum", available: false },
+  { name: "Rally U Season Tickets Drawing", points: 10000, tier: "Platinum", available: false },
 ];
 
 function getTierColor(tier: string) {

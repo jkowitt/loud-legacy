@@ -8,10 +8,21 @@ const triviaQuestions = [
   { q: "Which conference has the most tournament wins?", options: ["Big Ten", "ACC", "SEC", "Big 12"], answer: 1 },
 ];
 
+const liveGame = {
+  home: "Rally U Ralliers",
+  away: "Gonzaga Bulldogs",
+  homeScore: 45,
+  awayScore: 42,
+  period: "2nd Half",
+  clock: "12:34",
+  venue: "Rally Arena",
+  sport: "Basketball",
+};
+
 const upcomingGames = [
-  { home: "Eagles", away: "Tigers", date: "Sat, Feb 15", time: "7:00 PM", venue: "Cameron Indoor Stadium" },
-  { home: "Wildcats", away: "Bulldogs", date: "Mon, Feb 17", time: "8:30 PM", venue: "Rupp Arena" },
-  { home: "Cavaliers", away: "Tar Heels", date: "Wed, Feb 19", time: "7:00 PM", venue: "John Paul Jones Arena" },
+  { home: "Rally U Ralliers", away: "Kent State Golden Flashes", date: "Sat, Feb 15", time: "7:00 PM", venue: "Rally Stadium", sport: "Football" },
+  { home: "Rally U Ralliers", away: "Duke Blue Devils", date: "Mon, Feb 17", time: "8:30 PM", venue: "Rally Arena", sport: "Basketball" },
+  { home: "Ohio State Buckeyes", away: "Rally U Ralliers", date: "Sat, Feb 22", time: "3:30 PM", venue: "Ohio Stadium", sport: "Football" },
 ];
 
 export default function GamedayPage() {
@@ -22,6 +33,34 @@ export default function GamedayPage() {
       <div className="rally-dash-welcome">
         <h1>Gameday</h1>
         <p className="rally-dash-subtitle">Games, trivia, predictions, and more</p>
+      </div>
+
+      {/* Live Game */}
+      <div className="rally-dash-section">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ef4444', animation: 'pulse 2s infinite' }} />
+          <h3 style={{ margin: 0 }}>Live Now</h3>
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginLeft: '4px' }}>{liveGame.sport}</span>
+        </div>
+        <div className="rally-dash-game-card" style={{ border: '1px solid rgba(255,107,53,0.4)', background: 'rgba(255,107,53,0.08)' }}>
+          <div className="rally-dash-game-teams" style={{ fontSize: '18px', fontWeight: 600 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <span className="rally-dash-team">{liveGame.home}</span>
+              <span style={{ fontSize: '32px', fontWeight: 700, color: '#FF6B35' }}>{liveGame.homeScore}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+              <span className="rally-dash-vs">vs</span>
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>{liveGame.period} &middot; {liveGame.clock}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <span className="rally-dash-team">{liveGame.away}</span>
+              <span style={{ fontSize: '32px', fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{liveGame.awayScore}</span>
+            </div>
+          </div>
+          <div className="rally-dash-game-details">
+            <span>{liveGame.venue}</span>
+          </div>
+        </div>
       </div>
 
       {/* Upcoming Games */}
@@ -36,7 +75,7 @@ export default function GamedayPage() {
                 <span className="rally-dash-team">{game.away}</span>
               </div>
               <div className="rally-dash-game-details">
-                <span>{game.date} &middot; {game.time}</span>
+                <span>{game.sport} &middot; {game.date} &middot; {game.time}</span>
                 <span>{game.venue}</span>
               </div>
               <div className="rally-dash-game-actions">
@@ -84,18 +123,18 @@ export default function GamedayPage() {
         <div className="rally-dash-prediction-card">
           <div className="rally-dash-prediction-matchup">
             <div className="rally-dash-prediction-team">
-              <span>Eagles</span>
+              <span>Rally U</span>
               <input type="number" className="rally-dash-prediction-input" placeholder="0" min="0" max="200" />
             </div>
             <span className="rally-dash-vs">vs</span>
             <div className="rally-dash-prediction-team">
-              <span>Tigers</span>
+              <span>Gonzaga</span>
               <input type="number" className="rally-dash-prediction-input" placeholder="0" min="0" max="200" />
             </div>
           </div>
           <button
             className="rally-btn rally-btn--primary"
-            onClick={() => trackEvent("prediction_submit", { game: "Eagles vs Tigers" })}
+            onClick={() => trackEvent("prediction_submit", { game: "Rally U vs Gonzaga" })}
           >
             Submit Prediction (+25 pts)
           </button>
