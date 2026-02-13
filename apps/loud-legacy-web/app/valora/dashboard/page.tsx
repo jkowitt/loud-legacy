@@ -327,7 +327,7 @@ const DEFAULT_EXPENSES: OperatingExpense[] = [
 
 export default function ValoraDashboard() {
   const session: any = null;
-  const status = "unauthenticated" as const;
+  const status: string = "unauthenticated";
   const authRouter = useRouter();
 
   // Address & Property State
