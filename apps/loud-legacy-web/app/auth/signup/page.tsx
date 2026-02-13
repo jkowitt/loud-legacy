@@ -1,298 +1,269 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn as nextAuthSignIn, getProviders } from "next-auth/react";
-
-const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+import Image from "next/image";
+import { useRallyAuth } from "@/lib/rally-auth";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { signUp } = useRallyAuth();
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    handle: "",
     password: "",
     confirmPassword: "",
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hasGoogle, setHasGoogle] = useState(false);
 
-  // Check for BETA or trial params
-  const isBeta = searchParams.get("beta") === "true";
-  const plan = searchParams.get("plan");
-  const trial = searchParams.get("trial");
-
-  // Check which auth providers are available
-  useEffect(() => {
-    getProviders().then((providers) => {
-      setHasGoogle(!!providers?.google);
-    });
-  }, []);
-
-  // Load Google reCAPTCHA Enterprise script
-  useEffect(() => {
-    if (!RECAPTCHA_SITE_KEY) return;
-    const id = "recaptcha-enterprise-script";
-    if (document.getElementById(id)) return;
-    const script = document.createElement("script");
-    script.id = id;
-    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${RECAPTCHA_SITE_KEY}`;
-    script.async = true;
-    document.head.appendChild(script);
-  }, []);
-
-  const getRecaptchaToken = useCallback(async (): Promise<string | null> => {
-    if (!RECAPTCHA_SITE_KEY) return null;
-    try {
-      const grecaptcha = (window as unknown as { grecaptcha: { enterprise: { ready: (cb: () => void) => void; execute: (key: string, opts: { action: string }) => Promise<string> } } }).grecaptcha;
-      return await new Promise<string>((resolve) => {
-        grecaptcha.enterprise.ready(async () => {
-          const token = await grecaptcha.enterprise.execute(RECAPTCHA_SITE_KEY, { action: "signup" });
-          resolve(token);
-        });
-      });
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleStep1 = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+    if (!formData.name.trim()) { setError("Please enter your name"); return; }
+    if (!formData.email.trim()) { setError("Please enter your email"); return; }
+    if (!formData.handle.trim()) { setError("Please enter a handle"); return; }
+    if (formData.password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (formData.password !== formData.confirmPassword) { setError("Passwords do not match"); return; }
+    if (!agreedToTerms) { setError("You must agree to the Terms of Service"); return; }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
-    }
+    setStep(2);
+  };
 
-    if (!agreedToTerms) {
-      setError("You must agree to the Terms of Service and Privacy Policy to create an account");
-      return;
-    }
-
+  const handleSubmit = async () => {
+    setError("");
     setLoading(true);
 
     try {
-      // Get reCAPTCHA token (null if not configured)
-      const recaptchaToken = await getRecaptchaToken();
-
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          isBeta: isBeta || true, // Always mark as BETA for now
-          plan: plan || "BETA",
-          trialDays: trial ? parseInt(trial) : 0,
-          recaptchaToken,
-        }),
+      const handle = formData.handle.startsWith("@") ? formData.handle : `@${formData.handle}`;
+      const result = await signUp({
+        email: formData.email.trim(),
+        password: formData.password,
+        name: formData.name.trim(),
+        handle,
+        acceptedTerms: agreedToTerms,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to create account");
+      if (result.success) {
+        router.push("/dashboard");
+      } else {
+        setError(result.error || "Failed to create account");
       }
-
-      // Redirect to dashboard for BETA users (no payment needed)
-      router.push("/auth/signin?registered=true&beta=true");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create account");
+    } catch {
+      setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-card">
-          {/* BETA Badge */}
-          <div className="auth-beta-banner">
-            <span className="beta-pulse"></span>
-            <span>BETA Access - Free, No Credit Card Required</span>
-          </div>
+    <div className="rally-auth-page">
+      <div className="rally-auth-container">
+        <div className="rally-auth-card">
+          <Link href="/" className="rally-auth-logo">
+            <Image src="/logos/rally-white.png" alt="Rally" width={120} height={36} />
+          </Link>
 
-          <div className="auth-logo">
-            <Link href="/">
-              <svg viewBox="0 0 40 40" width="48" height="48" fill="none">
-                <rect width="40" height="40" rx="10" fill="#0F172A" />
-                <path d="M10 28V12h3v13.5h7.5V28H10z" fill="#F97316" />
-                <path d="M22 28V12h3v13.5h5V28H22z" fill="#22C55E" />
-              </svg>
-            </Link>
-          </div>
-          <div className="auth-header">
-            <h1>Join the BETA</h1>
-            <p>Get free access to all Loud Legacy platforms during our BETA period</p>
-          </div>
-
-          {/* What you get */}
-          <div className="auth-beta-benefits">
-            <div className="benefit-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" width="18" height="18">
-                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>Free access to all 5 platforms</span>
-            </div>
-            <div className="benefit-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" width="18" height="18">
-                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>No credit card required</span>
-            </div>
-            <div className="benefit-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" width="18" height="18">
-                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>Special pricing at launch</span>
-            </div>
-          </div>
-
-          {error && (
-            <div className="auth-error">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="auth-form">
-            <div className="auth-form-group">
-              <label htmlFor="name">Full Name</label>
-              <input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="John Doe"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="auth-form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="you@company.com"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="auth-form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Create a secure password"
-                required
-                minLength={8}
-                disabled={loading}
-              />
-              <small>At least 8 characters</small>
-            </div>
-
-            <div className="auth-form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                placeholder="Confirm your password"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="auth-form-group" style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
-              <input
-                id="agreeTerms"
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                disabled={loading}
-                style={{ marginTop: "0.25rem", accentColor: "#F97316", width: "18px", height: "18px", flexShrink: 0 }}
-              />
-              <label htmlFor="agreeTerms" style={{ fontSize: "0.8rem", lineHeight: "1.4", color: "#64748B", cursor: "pointer" }}>
-                I agree to the{" "}
-                <Link href="/terms" target="_blank" style={{ color: "#F97316", textDecoration: "underline" }}>Terms of Service</Link>{" "}
-                and{" "}
-                <Link href="/privacy" target="_blank" style={{ color: "#F97316", textDecoration: "underline" }}>Privacy Policy</Link>,
-                and I acknowledge that AI-powered property valuations are estimates only and not a substitute for professional appraisals.
-              </label>
-            </div>
-
-            <button type="submit" className="auth-submit-btn auth-submit-beta" disabled={loading || !agreedToTerms}>
-              {loading ? (
-                <span className="auth-spinner" />
-              ) : null}
-              {loading ? "Creating account..." : "Join BETA Free"}
-            </button>
-          </form>
-
-          {hasGoogle && (
+          {step === 1 && (
             <>
-              <div className="auth-divider">
-                <span>or continue with</span>
-              </div>
+              <div className="rally-auth-badge">Early Access</div>
+              <h1 className="rally-auth-heading">Join Rally</h1>
+              <p className="rally-auth-subheading">Create your account and start engaging with your favorite teams</p>
 
-              <button
-                onClick={() => nextAuthSignIn("google", { callbackUrl: "/dashboard" })}
-                className="auth-google-btn"
-                disabled={loading}
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20">
-                  <path fill="#4285F4" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" />
-                  <path fill="#34A853" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" />
-                  <path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" />
-                  <path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" />
-                </svg>
-                Continue with Google
-              </button>
+              {error && (
+                <div className="rally-auth-error">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleStep1} className="rally-auth-form">
+                <div className="rally-auth-field">
+                  <label htmlFor="name">Full Name</label>
+                  <div className="rally-auth-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    <input
+                      id="name"
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Your full name"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="rally-auth-field">
+                  <label htmlFor="email">Email</label>
+                  <div className="rally-auth-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <path d="M22 4l-10 8L2 4" />
+                    </svg>
+                    <input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="you@school.edu"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="rally-auth-field">
+                  <label htmlFor="handle">Handle</label>
+                  <div className="rally-auth-input-wrap">
+                    <span className="rally-auth-at">@</span>
+                    <input
+                      id="handle"
+                      type="text"
+                      value={formData.handle.replace(/^@/, '')}
+                      onChange={(e) => setFormData({ ...formData, handle: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
+                      placeholder="yourhandle"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="rally-auth-field">
+                  <label htmlFor="password">Password</label>
+                  <div className="rally-auth-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Min 6 characters"
+                      required
+                      minLength={6}
+                    />
+                    <button type="button" className="rally-auth-eye" onClick={() => setShowPassword(!showPassword)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rally-auth-field">
+                  <label htmlFor="confirmPassword">Confirm Password</label>
+                  <div className="rally-auth-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      placeholder="Confirm password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="rally-auth-terms">
+                  <input
+                    id="agreeTerms"
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  />
+                  <label htmlFor="agreeTerms">
+                    I agree to the{" "}
+                    <Link href="/terms" target="_blank">Terms of Service</Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" target="_blank">Privacy Policy</Link>
+                  </label>
+                </div>
+
+                <button type="submit" className="rally-btn rally-btn--primary rally-btn--full">
+                  Continue
+                </button>
+              </form>
             </>
           )}
 
-          <div className="auth-footer">
+          {step === 2 && (
+            <>
+              <h1 className="rally-auth-heading">Almost There!</h1>
+              <p className="rally-auth-subheading">
+                You can select your favorite school later from your profile.
+                Ready to create your account?
+              </p>
+
+              {error && (
+                <div className="rally-auth-error">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
+                  {error}
+                </div>
+              )}
+
+              <div className="rally-auth-summary">
+                <div className="rally-auth-summary-row">
+                  <span>Name</span>
+                  <span>{formData.name}</span>
+                </div>
+                <div className="rally-auth-summary-row">
+                  <span>Email</span>
+                  <span>{formData.email}</span>
+                </div>
+                <div className="rally-auth-summary-row">
+                  <span>Handle</span>
+                  <span>@{formData.handle.replace(/^@/, '')}</span>
+                </div>
+              </div>
+
+              <div className="rally-auth-form" style={{ gap: "12px" }}>
+                <button
+                  className="rally-btn rally-btn--primary rally-btn--full"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                >
+                  {loading ? <span className="rally-spinner" /> : null}
+                  {loading ? "Creating account..." : "Create Account"}
+                </button>
+                <button
+                  className="rally-btn rally-btn--secondary rally-btn--full"
+                  onClick={() => setStep(1)}
+                  disabled={loading}
+                >
+                  Go Back
+                </button>
+              </div>
+            </>
+          )}
+
+          <div className="rally-auth-footer">
             <p>
               Already have an account?{" "}
               <Link href="/auth/signin">Sign in</Link>
             </p>
           </div>
-
-          {/* Platform logos */}
-          <div className="auth-platforms">
-            <span>Access all platforms:</span>
-            <div className="auth-platform-icons">
-              <span className="auth-platform-tag">Legacy RE</span>
-              <span className="auth-platform-tag">Sportify</span>
-              <span className="auth-platform-tag">Business Now</span>
-              <span className="auth-platform-tag">Legacy CRM</span>
-              <span className="auth-platform-tag">Loud Works</span>
-            </div>
-          </div>
-
-          <p className="auth-terms">
-            By signing up, you agree to our{" "}
-            <Link href="/terms">Terms of Service</Link> and{" "}
-            <Link href="/privacy">Privacy Policy</Link>, including our{" "}
-            <Link href="/terms#ai-disclaimer">AI Disclaimer</Link>.
-          </p>
         </div>
       </div>
     </div>

@@ -1,15 +1,11 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
-import { AuthProvider } from "@/components/AuthProvider";
-import { EditableProvider } from "@/components/EditableProvider";
+import { RallyAuthProvider } from "@/lib/rally-auth";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <AuthProvider>
-        <EditableProvider>{children}</EditableProvider>
-      </AuthProvider>
-    </SessionProvider>
+    <RallyAuthProvider>
+      {children}
+    </RallyAuthProvider>
   );
 }

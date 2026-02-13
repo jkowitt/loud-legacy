@@ -1,44 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn as nextAuthSignIn, getProviders } from "next-auth/react";
-import { useAuth } from "@/components/AuthProvider";
+import Image from "next/image";
+import { useRallyAuth } from "@/lib/rally-auth";
 
 export default function SignInPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { signIn } = useAuth();
+  const { signIn } = useRallyAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hasGoogle, setHasGoogle] = useState(false);
-
-  const justRegistered = searchParams.get("registered") === "true";
-  const oauthError = searchParams.get("error");
-
-  useEffect(() => {
-    getProviders().then((providers) => {
-      setHasGoogle(!!providers?.google);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (oauthError) {
-      const messages: Record<string, string> = {
-        OAuthAccountNotLinked: "This email is already linked to another sign-in method.",
-        OAuthCallback: "Could not complete Google sign-in. Please try again.",
-        OAuthSignin: "Could not start Google sign-in. Please try again.",
-        OAuthCreateAccount: "Could not create account via Google. Please try signing up first.",
-        Callback: "Authentication callback failed. Please try again.",
-        AccessDenied: "Access denied. Please try again.",
-        Configuration: "Server configuration error. Please try again later.",
-      };
-      setError(messages[oauthError] || `Authentication error (${oauthError}). Please try again.`);
-    }
-  }, [oauthError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,29 +21,11 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      // Try demo auth first
-      const demoResult = await signIn(email, password);
-      if (demoResult.success) {
+      const result = await signIn(email, password);
+      if (result.success) {
         router.push("/dashboard");
-        return;
-      }
-
-      // Fall back to NextAuth
-      const result = await nextAuthSignIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        // NextAuth returns status 401 for credential errors, 500+ for server errors
-        if (result.status === 401) {
-          setError("Invalid email or password. Please try again.");
-        } else {
-          setError("Unable to sign in — a server error occurred. Please try again later.");
-        }
       } else {
-        router.push("/dashboard");
+        setError(result.error || "Invalid email or password");
       }
     } catch {
       setError("An error occurred. Please try again.");
@@ -78,105 +35,112 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-logo">
-            <Link href="/">
-              <svg viewBox="0 0 40 40" width="48" height="48" fill="none">
-                <rect width="40" height="40" rx="10" fill="#0F172A" />
-                <path d="M10 28V12h3v13.5h7.5V28H10z" fill="#F97316" />
-                <path d="M22 28V12h3v13.5h5V28H22z" fill="#22C55E" />
-              </svg>
-            </Link>
-          </div>
-          <div className="auth-header">
-            <h1>Welcome to Loud Legacy</h1>
-            <p>Sign in to access all your business tools</p>
-          </div>
+    <div className="rally-auth-page">
+      <div className="rally-auth-container">
+        <div className="rally-auth-card">
+          <Link href="/" className="rally-auth-logo">
+            <Image src="/logos/rally-white.png" alt="Rally" width={120} height={36} />
+          </Link>
 
-          {justRegistered && (
-            <div className="auth-success">
-              Account created! Sign in with your credentials or Google to get started.
+          <h1 className="rally-auth-heading">Welcome Back</h1>
+          <p className="rally-auth-subheading">Sign in to access your Rally dashboard</p>
+
+          {error && (
+            <div className="rally-auth-error">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+              {error}
             </div>
           )}
 
-          {error && <div className="auth-error">{error}</div>}
-
-          <form onSubmit={handleSubmit} className="auth-form">
-            <div className="auth-form-group">
+          <form onSubmit={handleSubmit} className="rally-auth-form">
+            <div className="rally-auth-field">
               <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                required
-                disabled={loading}
-              />
+              <div className="rally-auth-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M22 4l-10 8L2 4" />
+                </svg>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@school.edu"
+                  required
+                  disabled={loading}
+                />
+              </div>
             </div>
 
-            <div className="auth-form-group">
+            <div className="rally-auth-field">
               <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-                disabled={loading}
-              />
+              <div className="rally-auth-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  disabled={loading}
+                />
+                <button type="button" className="rally-auth-eye" onClick={() => setShowPassword(!showPassword)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+                    {showPassword ? (
+                      <>
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </div>
             </div>
 
-            <button type="submit" className="auth-submit-btn" disabled={loading}>
-              {loading ? (
-                <span className="auth-spinner" />
-              ) : null}
+            <div className="rally-auth-forgot">
+              <Link href="/auth/forgot-password">Forgot password?</Link>
+            </div>
+
+            <button type="submit" className="rally-btn rally-btn--primary rally-btn--full" disabled={loading}>
+              {loading ? <span className="rally-spinner" /> : null}
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
-          {hasGoogle && (
-            <>
-              <div className="auth-divider">
-                <span>or continue with</span>
-              </div>
-
-              <button
-                onClick={() => nextAuthSignIn("google", { callbackUrl: "/dashboard" })}
-                className="auth-google-btn"
-                disabled={loading}
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20">
-                  <path fill="#4285F4" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" />
-                  <path fill="#34A853" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" />
-                  <path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" />
-                  <path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" />
-                </svg>
-                Google
+          <div className="rally-auth-demo">
+            <p>Demo accounts:</p>
+            <div className="rally-auth-demo-accounts">
+              <button onClick={() => { setEmail("jason@rally.com"); setPassword("Rally2026!"); }} className="rally-auth-demo-btn">
+                Developer
               </button>
-            </>
-          )}
+              <button onClick={() => { setEmail("admin@rally.com"); setPassword("Rally2026!"); }} className="rally-auth-demo-btn">
+                Admin
+              </button>
+              <button onClick={() => { setEmail("user@rally.com"); setPassword("Rally2026!"); }} className="rally-auth-demo-btn">
+                User
+              </button>
+            </div>
+          </div>
 
-          <div className="auth-footer">
+          <div className="rally-auth-footer">
             <p>
               Don&apos;t have an account?{" "}
               <Link href="/auth/signup">Sign up free</Link>
             </p>
-          </div>
-
-          {/* Platform logos */}
-          <div className="auth-platforms">
-            <span>Access all platforms:</span>
-            <div className="auth-platform-icons">
-              <span className="auth-platform-tag">Legacy RE</span>
-              <span className="auth-platform-tag">Sportify</span>
-              <span className="auth-platform-tag">Business Now</span>
-              <span className="auth-platform-tag">Legacy CRM</span>
-              <span className="auth-platform-tag">Loud Works</span>
-            </div>
           </div>
         </div>
       </div>

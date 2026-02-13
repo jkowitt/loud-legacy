@@ -3,10 +3,17 @@ import Image from "next/image";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 
+export const metadata = {
+  title: "Rally - Fan Engagement & Loyalty Platform | Loud Legacy",
+  description:
+    "The fan engagement and loyalty platform built for collegiate athletics. Check-ins, predictions, trivia, rewards, and real-time gameday experiences for 353+ NCAA D1 schools.",
+};
+
 const features = [
   {
     title: "Gameday Check-In",
-    description: "Fans earn points for attending games via geofence, Bluetooth beacons, or QR codes. Auto-detects presence at the venue.",
+    description:
+      "Fans earn points for attending games via geofence, Bluetooth beacons, or QR codes. Auto-detects presence at the venue.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
@@ -16,7 +23,8 @@ const features = [
   },
   {
     title: "Predictions & Trivia",
-    description: "Engage fans with score predictions, trivia challenges, and live polls tied to real game moments.",
+    description:
+      "Engage fans with score predictions, trivia challenges, and live polls tied to real game moments.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="12" cy="12" r="10" />
@@ -27,7 +35,8 @@ const features = [
   },
   {
     title: "Loyalty Tiers & Rewards",
-    description: "Points engine with Bronze, Silver, Gold, and Platinum tiers. Redeem for merch, priority seating, meet-and-greets.",
+    description:
+      "Points engine with Bronze, Silver, Gold, and Platinum tiers. Redeem for merch, priority seating, meet-and-greets, and more.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -36,7 +45,8 @@ const features = [
   },
   {
     title: "Live Activity & Push",
-    description: "Real-time score updates, gameday countdowns, and targeted push notifications that keep fans in the loop.",
+    description:
+      "Real-time score updates, gameday countdowns, and targeted push notifications that keep fans in the loop.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -47,7 +57,8 @@ const features = [
   },
   {
     title: "Fan Content Feed",
-    description: "Photo challenges, video highlights, polls, and articles curated per school. User-generated content drives engagement.",
+    description:
+      "Photo challenges, video highlights, polls, and articles curated per school. User-generated content drives engagement.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -58,7 +69,8 @@ const features = [
   },
   {
     title: "School-Branded Theming",
-    description: "Every school gets its own branded experience — colors, mascot, and content automatically adapt to the user's team.",
+    description:
+      "Every school gets its own branded experience — colors, mascot, and content automatically adapt to the user's favorite team.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -75,13 +87,41 @@ const stats = [
   { value: "10+", label: "Engagement Features" },
 ];
 
+const audiences = [
+  {
+    title: "Athletic Departments",
+    description:
+      "Drive attendance, deepen fan loyalty, and generate actionable engagement data across every sport.",
+  },
+  {
+    title: "Marketing & Sponsorship Teams",
+    description:
+      "Activate sponsor impressions during gameday, track fan interaction metrics, and prove ROI.",
+  },
+  {
+    title: "Student Sections & Fan Groups",
+    description:
+      "Compete on leaderboards, unlock exclusive rewards, and rally your section to the top.",
+  },
+  {
+    title: "Conference & NCAA Partners",
+    description:
+      "Unified analytics across member schools with cross-school engagement tracking.",
+  },
+  {
+    title: "Brand & Merchandise Partners",
+    description:
+      "Reach highly engaged fans with targeted reward redemptions and sponsor activations.",
+  },
+];
+
 const conferences = [
   "ACC", "Big Ten", "Big 12", "SEC", "Pac-12", "Big East",
   "AAC", "Mountain West", "Sun Belt", "Conference USA", "MAC",
   "A-10", "WCC", "Missouri Valley", "Ivy League", "SWAC",
 ];
 
-export default function HomePage() {
+export default function RallyPage() {
   return (
     <main className="rally-landing">
       <Header />
@@ -103,8 +143,8 @@ export default function HomePage() {
             Check-ins, predictions, trivia, rewards, and real-time engagement for 353+ NCAA D1 schools.
           </p>
           <div className="hero-actions">
-            <Link href="/auth/signup" className="rally-btn rally-btn--primary">
-              Get Started Free
+            <Link href="#features" className="rally-btn rally-btn--primary">
+              Explore Features
             </Link>
             <Link href="/contact" className="rally-btn rally-btn--secondary">
               Request Demo
@@ -132,12 +172,13 @@ export default function HomePage() {
         <div className="container">
           <h2>One App. Every School. Every Gameday.</h2>
           <p className="rally-section-subtitle">
-            Rally adapts to each school&apos;s brand — colors, mascot, and content —
+            Rally adapts to each school's brand — colors, mascot, and content —
             creating a unique experience for every fanbase.
           </p>
 
           <div className="rally-phone-mockup">
             <div className="rally-phone">
+              {/* Simulated App Screen */}
               <div className="rally-screen">
                 <div className="rally-screen-header">
                   <div className="rally-screen-logo-text">RALLY</div>
@@ -146,7 +187,7 @@ export default function HomePage() {
                 <div className="rally-screen-card">
                   <div className="rally-screen-label">NEXT GAME</div>
                   <div className="rally-screen-title">Eagles vs Tigers</div>
-                  <div className="rally-screen-date">Sat, Feb 15 &middot; 7:00 PM</div>
+                  <div className="rally-screen-date">Sat, Feb 15 · 7:00 PM</div>
                   <div className="rally-screen-countdown">
                     <div className="rally-cd-box"><span>02</span><small>D</small></div>
                     <div className="rally-cd-box"><span>14</span><small>H</small></div>
@@ -190,8 +231,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Schools / Conferences */}
-      <section id="schools" className="rally-conferences">
+      {/* Conferences */}
+      <section className="rally-conferences">
         <div className="container">
           <h2>353+ Schools Across 31 Conferences</h2>
           <p className="rally-section-subtitle">
@@ -206,18 +247,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Who It's For */}
+      {/* Audience */}
       <section className="rally-audience">
         <div className="container">
           <h2>Who Rally Is For</h2>
           <div className="rally-audience-grid">
-            {[
-              { title: "Athletic Departments", description: "Drive attendance, deepen fan loyalty, and generate actionable engagement data across every sport." },
-              { title: "Marketing & Sponsorship Teams", description: "Activate sponsor impressions during gameday, track fan interaction metrics, and prove ROI." },
-              { title: "Student Sections & Fan Groups", description: "Compete on leaderboards, unlock exclusive rewards, and rally your section to the top." },
-              { title: "Conference & NCAA Partners", description: "Unified analytics across member schools with cross-school engagement tracking." },
-              { title: "Brand & Merchandise Partners", description: "Reach highly engaged fans with targeted reward redemptions and sponsor activations." },
-            ].map((a) => (
+            {audiences.map((a) => (
               <div key={a.title} className="rally-audience-card">
                 <h4>{a.title}</h4>
                 <p>{a.description}</p>
@@ -228,7 +263,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="rally-how">
+      <section className="rally-how">
         <div className="container">
           <h2>How It Works</h2>
           <div className="rally-steps">
@@ -266,7 +301,7 @@ export default function HomePage() {
               Request a Demo
             </Link>
             <Link href="/auth/signup" className="rally-btn rally-btn--secondary rally-btn--large">
-              Get Started Free
+              Start Free Trial
             </Link>
           </div>
         </div>
