@@ -1,6 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRallyAuth } from "@/lib/rally-auth";
+import { rallyRewards, rallyPoints } from "@/lib/rally-api";
+import type { Reward } from "@/lib/rally-api";
 
 const tiers = [
   { name: "Bronze", min: 0, max: 999, color: "#D97706" },
@@ -9,29 +12,45 @@ const tiers = [
   { name: "Platinum", min: 5000, max: Infinity, color: "#A78BFA" },
 ];
 
-const rewards = [
-  { name: "Rally T-Shirt", points: 500, tier: "Bronze", available: true },
-  { name: "Team Sticker Pack", points: 250, tier: "Bronze", available: true },
-  { name: "Priority Seating Upgrade", points: 1500, tier: "Silver", available: true },
-  { name: "Meet & Greet Pass", points: 3000, tier: "Gold", available: true },
-  { name: "Signed Jersey", points: 5000, tier: "Gold", available: false },
-  { name: "VIP Gameday Experience", points: 8000, tier: "Platinum", available: false },
-  { name: "Season Tickets Drawing", points: 10000, tier: "Platinum", available: false },
-];
-
-function getTierColor(tier: string) {
-  return tiers.find(t => t.name === tier)?.color || "#8B95A5";
-}
-
 export default function RewardsPage() {
-  const { user, trackEvent } = useRallyAuth();
-  const userPoints = user?.points || 2450;
-  const userTier = user?.tier || "Gold";
-  const currentTier = tiers.find(t => t.name === userTier) || tiers[2];
+  const { user, isAuthenticated, trackEvent } = useRallyAuth();
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userPoints, setUserPoints] = useState(0);
+  const [userTier, setUserTier] = useState("Bronze");
+
+  const schoolId = user?.favoriteSchool || user?.schoolId || "rally-university";
+
+  useEffect(() => {
+    rallyRewards.list(schoolId).then((res) => {
+      if (res.ok && res.data) setRewards(res.data.rewards);
+      setLoading(false);
+    });
+  }, [schoolId]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      rallyPoints.me().then((res) => {
+        if (res.ok && res.data) {
+          setUserPoints(res.data.totalPoints);
+          setUserTier(res.data.tier);
+        }
+      });
+    }
+  }, [isAuthenticated]);
+
+  const currentTier = tiers.find((t) => t.name === userTier) || tiers[0];
   const nextTier = tiers[tiers.indexOf(currentTier) + 1];
   const progress = nextTier
     ? ((userPoints - currentTier.min) / (nextTier.min - currentTier.min)) * 100
     : 100;
+
+  const tierForPoints = (pts: number) => {
+    if (pts >= 5000) return tiers[3];
+    if (pts >= 2500) return tiers[2];
+    if (pts >= 1000) return tiers[1];
+    return tiers[0];
+  };
 
   return (
     <div className="rally-dash-page">
@@ -58,63 +77,53 @@ export default function RewardsPage() {
         </div>
         <div className="rally-dash-tier-labels">
           {tiers.map((tier) => (
-            <span key={tier.name} className={`rally-dash-tier-label ${tier.name === userTier ? 'active' : ''}`} style={tier.name === userTier ? { color: tier.color } : {}}>
+            <span key={tier.name} className={`rally-dash-tier-label ${tier.name === userTier ? "active" : ""}`} style={{ color: tier.name === userTier ? tier.color : undefined }}>
               {tier.name}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Rewards List */}
+      {/* Rewards */}
       <div className="rally-dash-section">
         <h3>Available Rewards</h3>
-        <div className="rally-dash-rewards-grid">
-          {rewards.map((reward, i) => {
-            const canRedeem = userPoints >= reward.points && reward.available;
-            return (
-              <div key={i} className={`rally-dash-reward-card ${!reward.available ? 'locked' : ''}`}>
-                <div className="rally-dash-reward-header">
-                  <span className="rally-dash-reward-name">{reward.name}</span>
-                  <span className="rally-dash-reward-tier" style={{ color: getTierColor(reward.tier) }}>{reward.tier}+</span>
-                </div>
-                <span className="rally-dash-reward-points">{reward.points.toLocaleString()} pts</span>
-                {canRedeem ? (
+        {loading ? (
+          <div className="rally-admin-loading">Loading rewards...</div>
+        ) : rewards.length === 0 ? (
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", padding: "12px 0" }}>
+            No rewards available yet. Check back soon!
+          </p>
+        ) : (
+          <div className="rally-dash-rewards-grid">
+            {rewards.sort((a, b) => a.pointsCost - b.pointsCost).map((reward) => {
+              const canAfford = userPoints >= reward.pointsCost;
+              const rewardTier = tierForPoints(reward.pointsCost);
+              return (
+                <div key={reward.id} className="rally-dash-reward-card">
+                  <div className="rally-dash-reward-header">
+                    <span className="rally-dash-reward-name">{reward.name}</span>
+                    <span className="rally-dash-reward-tier" style={{ color: rewardTier.color, backgroundColor: `${rewardTier.color}22` }}>
+                      {rewardTier.name}
+                    </span>
+                  </div>
+                  <div className="rally-dash-reward-points">
+                    {reward.pointsCost.toLocaleString()} pts
+                  </div>
+                  {reward.description && (
+                    <p className="rally-dash-reward-desc">{reward.description}</p>
+                  )}
                   <button
-                    className="rally-btn rally-btn--primary rally-btn--small"
-                    onClick={() => trackEvent("redeem_reward", { reward: reward.name })}
+                    className={`rally-btn ${canAfford ? "rally-btn--primary" : "rally-btn--disabled"}`}
+                    disabled={!canAfford}
+                    onClick={() => canAfford && trackEvent("redeem_reward", { reward: reward.name })}
                   >
-                    Redeem
+                    {canAfford ? "Redeem" : `Need ${(reward.pointsCost - userPoints).toLocaleString()} more`}
                   </button>
-                ) : (
-                  <span className="rally-dash-reward-locked">
-                    {!reward.available ? "Coming Soon" : `Need ${(reward.points - userPoints).toLocaleString()} more`}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Points History */}
-      <div className="rally-dash-section">
-        <h3>How to Earn Points</h3>
-        <div className="rally-dash-earn-grid">
-          {[
-            { action: "Game Check-In", points: "100 pts", note: "Mobile app only" },
-            { action: "Trivia (per correct)", points: "10 pts", note: "" },
-            { action: "Score Prediction", points: "25 pts", note: "50 if exact" },
-            { action: "Photo Challenge", points: "30 pts", note: "Mobile app only" },
-            { action: "Poll Vote", points: "5 pts", note: "" },
-            { action: "Referral Bonus", points: "200 pts", note: "" },
-          ].map((item, i) => (
-            <div key={i} className="rally-dash-earn-item">
-              <span className="rally-dash-earn-action">{item.action}</span>
-              <span className="rally-dash-earn-points">{item.points}</span>
-              {item.note && <span className="rally-dash-earn-note">{item.note}</span>}
-            </div>
-          ))}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

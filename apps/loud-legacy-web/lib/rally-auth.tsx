@@ -18,6 +18,7 @@ interface RallyAuthContextType {
     supportingSchools?: string[];
     acceptedTerms?: boolean;
   }) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (fields: Partial<Pick<RallyUser, 'name' | 'handle' | 'favoriteSchool' | 'supportingSchools' | 'emailUpdates' | 'pushNotifications'>>) => Promise<{ success: boolean; error?: string }>;
   signOut: () => void;
   trackPage: (page: string) => void;
   trackEvent: (event: string, metadata?: Record<string, string>) => void;
@@ -30,6 +31,7 @@ const RallyAuthContext = createContext<RallyAuthContextType>({
   isAdmin: false,
   signIn: async () => ({ success: false }),
   signUp: async () => ({ success: false }),
+  updateProfile: async () => ({ success: false }),
   signOut: () => {},
   trackPage: () => {},
   trackEvent: () => {},
@@ -90,6 +92,15 @@ export function RallyAuthProvider({ children }: { children: ReactNode }) {
     return { success: false, error: res.error || "Failed to create account" };
   }, []);
 
+  const updateProfile = useCallback(async (fields: Partial<Pick<RallyUser, 'name' | 'handle' | 'favoriteSchool' | 'supportingSchools' | 'emailUpdates' | 'pushNotifications'>>) => {
+    const res = await rallyAuth.updateProfile(fields);
+    if (res.ok && res.data) {
+      setUser(res.data as RallyUser);
+      return { success: true };
+    }
+    return { success: false, error: res.error || "Failed to update profile" };
+  }, []);
+
   const signOut = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
@@ -115,6 +126,7 @@ export function RallyAuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         signIn,
         signUp,
+        updateProfile,
         signOut,
         trackPage,
         trackEvent,

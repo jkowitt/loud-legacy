@@ -67,49 +67,13 @@ interface BetaTester {
   status: "active" | "invited" | "churned";
 }
 
-// Demo data
-const demoLogs: LogEntry[] = [
-  { id: "1", timestamp: new Date().toISOString(), level: "info", message: "Server started successfully", source: "system" },
-  { id: "2", timestamp: new Date(Date.now() - 60000).toISOString(), level: "info", message: "User login: admin@loud-legacy.com", source: "auth" },
-  { id: "3", timestamp: new Date(Date.now() - 120000).toISOString(), level: "warn", message: "Rate limit approaching for API key: dev_xxx", source: "api" },
-  { id: "4", timestamp: new Date(Date.now() - 180000).toISOString(), level: "error", message: "Failed to connect to external service", source: "integration" },
-  { id: "5", timestamp: new Date(Date.now() - 240000).toISOString(), level: "debug", message: "Cache invalidated for key: homepage_content", source: "cache" },
-];
+const demoLogs: LogEntry[] = [];
+const demoAPIKeys: APIKey[] = [];
 
-const demoAPIKeys: APIKey[] = [
-  { id: "1", name: "Development Key", key: "dev_sk_live_xxxxxxxxxxxxxxxxxxxxxxxx", permissions: ["read", "write"], lastUsed: new Date().toISOString(), createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), isActive: true },
-  { id: "2", name: "Production Key", key: "prod_sk_live_xxxxxxxxxxxxxxxxxxxxxxxx", permissions: ["read", "write", "admin"], createdAt: new Date(Date.now() - 86400000 * 60).toISOString(), isActive: true },
-  { id: "3", name: "Read-Only Key", key: "ro_sk_live_xxxxxxxxxxxxxxxxxxxxxxxx", permissions: ["read"], createdAt: new Date(Date.now() - 86400000 * 15).toISOString(), isActive: false },
-];
+const FALLBACK_TABLES: DatabaseTable[] = [];
 
-const FALLBACK_TABLES: DatabaseTable[] = [
-  { name: "User", rowCount: 0, size: "—" },
-  { name: "Organization", rowCount: 0, size: "—" },
-  { name: "Valuation", rowCount: 0, size: "—" },
-  { name: "Property", rowCount: 0, size: "—" },
-  { name: "CRMLead", rowCount: 0, size: "—" },
-  { name: "CRMDeal", rowCount: 0, size: "—" },
-  { name: "Subscription", rowCount: 0, size: "—" },
-  { name: "Payment", rowCount: 0, size: "—" },
-  { name: "ActivityLog", rowCount: 0, size: "—" },
-  { name: "MediaAsset", rowCount: 0, size: "—" },
-];
-
-const demoPlatformSettings: PlatformSettings[] = [
-  { id: "1", name: "Legacy RE", slug: "valora", color: "#3B82F6", paymentRequired: false, trialDays: 7, betaEnabled: true },
-  { id: "2", name: "Sportify", slug: "sportify", color: "#8B5CF6", paymentRequired: false, trialDays: 7, betaEnabled: true },
-  { id: "3", name: "Business Now", slug: "business-now", color: "#2D9CDB", paymentRequired: false, trialDays: 7, betaEnabled: true },
-  { id: "4", name: "Legacy CRM", slug: "legacy-crm", color: "#D4AF37", paymentRequired: false, trialDays: 0, betaEnabled: true },
-  { id: "5", name: "Loud Works", slug: "loud-works", color: "#F97316", paymentRequired: false, trialDays: 7, betaEnabled: true },
-];
-
-const demoBetaTesters: BetaTester[] = [
-  { id: "1", email: "john@example.com", name: "John Smith", signupDate: new Date(Date.now() - 86400000 * 5).toISOString(), platforms: ["valora", "sportify"], status: "active" },
-  { id: "2", email: "sarah@company.co", name: "Sarah Johnson", signupDate: new Date(Date.now() - 86400000 * 3).toISOString(), platforms: ["legacy-crm", "business-now"], status: "active" },
-  { id: "3", email: "mike@startup.io", name: "Mike Williams", signupDate: new Date(Date.now() - 86400000 * 7).toISOString(), platforms: ["valora"], status: "active" },
-  { id: "4", email: "emma@agency.com", name: "Emma Davis", signupDate: new Date(Date.now() - 86400000 * 1).toISOString(), platforms: ["sportify", "loud-works"], status: "active" },
-  { id: "5", email: "invited@test.com", name: "Test User", signupDate: new Date().toISOString(), platforms: [], status: "invited" },
-];
+const demoPlatformSettings: PlatformSettings[] = [];
+const demoBetaTesters: BetaTester[] = [];
 
 export default function DeveloperPage() {
   const [activeTab, setActiveTab] = useState<"database" | "api" | "logs" | "env" | "webhooks" | "settings">("settings");

@@ -77,13 +77,125 @@ export const rallyAuth = {
       method: 'POST',
       body: JSON.stringify({ email, code, newPassword }),
     }),
+
+  updateProfile: (fields: Partial<Pick<RallyUser, 'name' | 'handle' | 'favoriteSchool' | 'supportingSchools' | 'emailUpdates' | 'pushNotifications'>>) =>
+    rallyFetch<RallyUser>('/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
 };
 
 // Content
 export const rallyContent = {
   getFeed: () => rallyFetch<{ content: ContentItem[] }>('/content'),
-
   getSchools: () => rallyFetch<{ schools: School[] }>('/schools'),
+};
+
+// Events
+export const rallyEvents = {
+  list: (params?: { schoolId?: string; status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.schoolId) qs.set('schoolId', params.schoolId);
+    if (params?.status) qs.set('status', params.status);
+    const query = qs.toString();
+    return rallyFetch<{ events: RallyEvent[]; total: number }>(`/events${query ? `?${query}` : ''}`);
+  },
+
+  get: (eventId: string) => rallyFetch<RallyEvent>(`/events/${eventId}`),
+
+  create: (event: CreateEventParams) =>
+    rallyFetch<RallyEvent>('/events', {
+      method: 'POST',
+      body: JSON.stringify(event),
+    }),
+
+  update: (eventId: string, fields: Partial<CreateEventParams>) =>
+    rallyFetch<RallyEvent>(`/events/${eventId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
+
+  delete: (eventId: string) =>
+    rallyFetch<{ message: string }>(`/events/${eventId}`, { method: 'DELETE' }),
+
+  earn: (eventId: string, activationId: string) =>
+    rallyFetch<{ earned: PointsEntry; totalPoints: number }>(`/events/${eventId}/earn`, {
+      method: 'POST',
+      body: JSON.stringify({ activationId }),
+    }),
+};
+
+// Points
+export const rallyPoints = {
+  me: () => rallyFetch<{ totalPoints: number; tier: string; history: PointsEntry[] }>('/points/me'),
+};
+
+// Rewards
+export const rallyRewards = {
+  list: (schoolId: string) =>
+    rallyFetch<{ rewards: Reward[] }>(`/schools/${schoolId}/rewards`),
+
+  create: (schoolId: string, reward: { name: string; pointsCost: number; description?: string }) =>
+    rallyFetch<Reward>(`/schools/${schoolId}/rewards`, {
+      method: 'POST',
+      body: JSON.stringify(reward),
+    }),
+
+  update: (schoolId: string, rewardId: string, fields: Partial<{ name: string; pointsCost: number; description: string }>) =>
+    rallyFetch<Reward>(`/schools/${schoolId}/rewards/${rewardId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
+
+  delete: (schoolId: string, rewardId: string) =>
+    rallyFetch<{ message: string }>(`/schools/${schoolId}/rewards/${rewardId}`, { method: 'DELETE' }),
+};
+
+// Notifications (admin)
+export const rallyNotifications = {
+  list: (schoolId?: string) => {
+    const qs = schoolId ? `?schoolId=${schoolId}` : '';
+    return rallyFetch<{ notifications: RallyNotification[] }>(`/notifications${qs}`);
+  },
+
+  create: (notif: CreateNotificationParams) =>
+    rallyFetch<RallyNotification>('/notifications', {
+      method: 'POST',
+      body: JSON.stringify(notif),
+    }),
+
+  update: (notifId: string, fields: Partial<CreateNotificationParams>) =>
+    rallyFetch<RallyNotification>(`/notifications/${notifId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
+
+  delete: (notifId: string) =>
+    rallyFetch<{ message: string }>(`/notifications/${notifId}`, { method: 'DELETE' }),
+
+  send: (notifId: string) =>
+    rallyFetch<RallyNotification>(`/notifications/${notifId}/send`, { method: 'POST' }),
+};
+
+// Bonus Offers (admin)
+export const rallyBonusOffers = {
+  list: (schoolId: string) =>
+    rallyFetch<{ bonusOffers: BonusOffer[] }>(`/schools/${schoolId}/bonus-offers`),
+
+  create: (schoolId: string, offer: CreateBonusOfferParams) =>
+    rallyFetch<BonusOffer>(`/schools/${schoolId}/bonus-offers`, {
+      method: 'POST',
+      body: JSON.stringify(offer),
+    }),
+
+  update: (schoolId: string, offerId: string, fields: Partial<CreateBonusOfferParams>) =>
+    rallyFetch<BonusOffer>(`/schools/${schoolId}/bonus-offers/${offerId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
+
+  delete: (schoolId: string, offerId: string) =>
+    rallyFetch<{ message: string }>(`/schools/${schoolId}/bonus-offers/${offerId}`, { method: 'DELETE' }),
 };
 
 // Users (admin)
@@ -164,6 +276,111 @@ export interface School {
   conference: string;
   primaryColor: string;
   secondaryColor: string;
+}
+
+export interface EventActivation {
+  id: string;
+  type: string;
+  name: string;
+  points: number;
+  description: string;
+}
+
+export interface RallyEvent {
+  id: string;
+  title: string;
+  sport: string;
+  homeSchoolId: string;
+  homeTeam: string;
+  awaySchoolId?: string | null;
+  awayTeam?: string;
+  venue: string;
+  city: string;
+  dateTime: string;
+  status: 'upcoming' | 'live' | 'completed';
+  activations: EventActivation[];
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateEventParams {
+  title: string;
+  sport?: string;
+  homeSchoolId: string;
+  homeTeam?: string;
+  awaySchoolId?: string | null;
+  awayTeam?: string;
+  venue?: string;
+  city?: string;
+  dateTime: string;
+  status?: string;
+  activations?: Omit<EventActivation, 'id'>[];
+}
+
+export interface PointsEntry {
+  id: string;
+  userId: string;
+  eventId: string;
+  activationId: string;
+  activationName: string;
+  points: number;
+  schoolId: string;
+  timestamp: string;
+}
+
+export interface Reward {
+  id: string;
+  name: string;
+  pointsCost: number;
+  description: string;
+  createdAt?: string;
+}
+
+export interface RallyNotification {
+  id: string;
+  title: string;
+  body: string;
+  schoolId: string;
+  targetAudience: 'all' | 'tier_gold' | 'tier_platinum' | 'event_attendees';
+  status: 'draft' | 'scheduled' | 'sent';
+  scheduledFor?: string;
+  sentAt?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateNotificationParams {
+  title: string;
+  body: string;
+  schoolId: string;
+  targetAudience?: string;
+  scheduledFor?: string;
+}
+
+export interface BonusOffer {
+  id: string;
+  name: string;
+  description: string;
+  bonusMultiplier?: number;
+  bonusPoints?: number;
+  activationType?: string;
+  startsAt: string;
+  expiresAt: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CreateBonusOfferParams {
+  name: string;
+  description?: string;
+  bonusMultiplier?: number;
+  bonusPoints?: number;
+  activationType?: string;
+  startsAt?: string;
+  expiresAt: string;
 }
 
 export interface AnalyticsSummary {

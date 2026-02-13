@@ -9,6 +9,10 @@ import "./admin.css";
 
 const navItems = [
   { href: "/admin", label: "Analytics", icon: "dashboard" },
+  { href: "/admin/events", label: "Events", icon: "events" },
+  { href: "/admin/rewards", label: "Rewards", icon: "rewards" },
+  { href: "/admin/bonus-offers", label: "Bonus Offers", icon: "bonus" },
+  { href: "/admin/notifications", label: "Notifications", icon: "notifications" },
   { href: "/admin/users", label: "Users", icon: "users" },
   { href: "/admin/schools", label: "Schools", icon: "schools" },
   { href: "/admin/settings", label: "Settings", icon: "settings" },
@@ -32,6 +36,28 @@ const icons: Record<string, JSX.Element> = {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M12 2L2 7l10 5 10-5-10-5z" />
       <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+    </svg>
+  ),
+  events: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  ),
+  rewards: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="8" r="6" /><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
+    </svg>
+  ),
+  bonus: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    </svg>
+  ),
+  notifications: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 01-3.46 0" />
     </svg>
   ),
   settings: (

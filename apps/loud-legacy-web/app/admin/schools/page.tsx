@@ -5,7 +5,7 @@ import { rallyContent } from "@/lib/rally-api";
 import type { School } from "@/lib/rally-api";
 
 const conferences = [
-  "All", "ACC", "Big Ten", "Big 12", "SEC", "Pac-12", "Big East",
+  "All", "Independent", "ACC", "Big Ten", "Big 12", "SEC", "Pac-12", "Big East",
   "AAC", "Mountain West", "Sun Belt", "Conference USA", "MAC",
 ];
 
