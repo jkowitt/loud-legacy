@@ -151,6 +151,53 @@ export const rallyRewards = {
     rallyFetch<{ message: string }>(`/schools/${schoolId}/rewards/${rewardId}`, { method: 'DELETE' }),
 };
 
+// Notifications (admin)
+export const rallyNotifications = {
+  list: (schoolId?: string) => {
+    const qs = schoolId ? `?schoolId=${schoolId}` : '';
+    return rallyFetch<{ notifications: RallyNotification[] }>(`/notifications${qs}`);
+  },
+
+  create: (notif: CreateNotificationParams) =>
+    rallyFetch<RallyNotification>('/notifications', {
+      method: 'POST',
+      body: JSON.stringify(notif),
+    }),
+
+  update: (notifId: string, fields: Partial<CreateNotificationParams>) =>
+    rallyFetch<RallyNotification>(`/notifications/${notifId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
+
+  delete: (notifId: string) =>
+    rallyFetch<{ message: string }>(`/notifications/${notifId}`, { method: 'DELETE' }),
+
+  send: (notifId: string) =>
+    rallyFetch<RallyNotification>(`/notifications/${notifId}/send`, { method: 'POST' }),
+};
+
+// Bonus Offers (admin)
+export const rallyBonusOffers = {
+  list: (schoolId: string) =>
+    rallyFetch<{ bonusOffers: BonusOffer[] }>(`/schools/${schoolId}/bonus-offers`),
+
+  create: (schoolId: string, offer: CreateBonusOfferParams) =>
+    rallyFetch<BonusOffer>(`/schools/${schoolId}/bonus-offers`, {
+      method: 'POST',
+      body: JSON.stringify(offer),
+    }),
+
+  update: (schoolId: string, offerId: string, fields: Partial<CreateBonusOfferParams>) =>
+    rallyFetch<BonusOffer>(`/schools/${schoolId}/bonus-offers/${offerId}`, {
+      method: 'PUT',
+      body: JSON.stringify(fields),
+    }),
+
+  delete: (schoolId: string, offerId: string) =>
+    rallyFetch<{ message: string }>(`/schools/${schoolId}/bonus-offers/${offerId}`, { method: 'DELETE' }),
+};
+
 // Users (admin)
 export const rallyUsers = {
   list: () => rallyFetch<{ users: RallyUser[] }>('/users'),
@@ -288,6 +335,52 @@ export interface Reward {
   pointsCost: number;
   description: string;
   createdAt?: string;
+}
+
+export interface RallyNotification {
+  id: string;
+  title: string;
+  body: string;
+  schoolId: string;
+  targetAudience: 'all' | 'tier_gold' | 'tier_platinum' | 'event_attendees';
+  status: 'draft' | 'scheduled' | 'sent';
+  scheduledFor?: string;
+  sentAt?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateNotificationParams {
+  title: string;
+  body: string;
+  schoolId: string;
+  targetAudience?: string;
+  scheduledFor?: string;
+}
+
+export interface BonusOffer {
+  id: string;
+  name: string;
+  description: string;
+  bonusMultiplier?: number;
+  bonusPoints?: number;
+  activationType?: string;
+  startsAt: string;
+  expiresAt: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CreateBonusOfferParams {
+  name: string;
+  description?: string;
+  bonusMultiplier?: number;
+  bonusPoints?: number;
+  activationType?: string;
+  startsAt?: string;
+  expiresAt: string;
 }
 
 export interface AnalyticsSummary {

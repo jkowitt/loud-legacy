@@ -11,6 +11,8 @@ const navItems = [
   { href: "/admin", label: "Analytics", icon: "dashboard" },
   { href: "/admin/events", label: "Events", icon: "events" },
   { href: "/admin/rewards", label: "Rewards", icon: "rewards" },
+  { href: "/admin/bonus-offers", label: "Bonus Offers", icon: "bonus" },
+  { href: "/admin/notifications", label: "Notifications", icon: "notifications" },
   { href: "/admin/users", label: "Users", icon: "users" },
   { href: "/admin/schools", label: "Schools", icon: "schools" },
   { href: "/admin/settings", label: "Settings", icon: "settings" },
@@ -45,6 +47,17 @@ const icons: Record<string, JSX.Element> = {
   rewards: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="8" r="6" /><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
+    </svg>
+  ),
+  bonus: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    </svg>
+  ),
+  notifications: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 01-3.46 0" />
     </svg>
   ),
   settings: (
