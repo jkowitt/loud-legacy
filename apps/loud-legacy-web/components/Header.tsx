@@ -54,7 +54,6 @@ export function Header() {
               <Link href="/#features" className="nav-link">Features</Link>
               <Link href="/#schools" className="nav-link">Schools</Link>
               <Link href="/#how-it-works" className="nav-link">How It Works</Link>
-              <Link href="/about" className="nav-link">About</Link>
             </>
           )}
           {isDashboard && (
